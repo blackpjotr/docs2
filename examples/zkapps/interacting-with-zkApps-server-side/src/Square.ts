@@ -8,9 +8,9 @@ export class Square extends SmartContract {
     this.num.set(Field(3));
   }
 
-  @method update(square: Field) {
+  @method async update(square: Field) {
     const currentState = this.num.get();
-    this.num.assertEquals(currentState);
+    this.num.requireEquals(currentState);
     square.assertEquals(currentState.mul(currentState));
     this.num.set(square);
   }

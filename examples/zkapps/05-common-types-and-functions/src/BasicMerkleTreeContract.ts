@@ -12,17 +12,17 @@ class MerkleWitness20 extends MerkleWitness(20) {}
 export class BasicMerkleTreeContract extends SmartContract {
   @state(Field) treeRoot = State<Field>();
 
-  @method initState(initialRoot: Field) {
+  @method async initState(initialRoot: Field) {
     this.treeRoot.set(initialRoot);
   }
 
-  @method update(
+  @method async update(
     leafWitness: MerkleWitness20,
     numberBefore: Field,
     incrementAmount: Field
   ) {
     const initialRoot = this.treeRoot.get();
-    this.treeRoot.assertEquals(initialRoot);
+    this.treeRoot.requireEquals(initialRoot);
 
     incrementAmount.assertLessThan(Field(10));
 

@@ -6,22 +6,25 @@ import {
   state,
   State,
   method,
-  DeployArgs,
   PublicKey,
   Permissions,
+  TransactionVersion,
 } from 'o1js';
 
 export class ProofsOnlyZkApp extends SmartContract {
   @state(Field) num = State<Field>();
   @state(Field) calls = State<Field>();
 
-  deploy(args: DeployArgs) {
-    super.deploy(args);
+  async deploy() {
+    await super.deploy();
     this.account.permissions.set({
       ...Permissions.default(),
       setDelegate: Permissions.proof(),
       setPermissions: Permissions.proof(),
-      setVerificationKey: Permissions.proof(),
+      setVerificationKey: {
+        auth: Permissions.proof(),
+        txnVersion: TransactionVersion.current(),
+      },
       setZkappUri: Permissions.proof(),
       setTokenSymbol: Permissions.proof(),
       incrementNonce: Permissions.proof(),
@@ -30,50 +33,41 @@ export class ProofsOnlyZkApp extends SmartContract {
     });
   }
 
-  @method init() {
-    this.account.provedState.assertEquals(this.account.provedState.get());
-    this.account.provedState.get().assertFalse();
+  @method async init() {
+    this.account.provedState.getAndRequireEquals().assertFalse();
 
     super.init();
     this.num.set(Field(1));
     this.calls.set(Field(0));
   }
 
-  @method add(incrementBy: Field) {
-    this.account.provedState.assertEquals(this.account.provedState.get());
-    this.account.provedState.get().assertTrue();
+  @method async add(incrementBy: Field) {
+    this.account.provedState.getAndRequireEquals().assertTrue();
 
-    const num = this.num.get();
-    this.num.assertEquals(num);
+    const num = this.num.getAndRequireEquals();
     this.num.set(num.add(incrementBy));
 
-    this.incrementCalls();
+    await this.incrementCalls();
   }
 
-  @method incrementCalls() {
-    this.account.provedState.assertEquals(this.account.provedState.get());
-    this.account.provedState.get().assertTrue();
+  @method async incrementCalls() {
+    this.account.provedState.getAndRequireEquals().assertTrue();
 
-    const calls = this.calls.get();
-    this.calls.assertEquals(calls);
+    const calls = this.calls.getAndRequireEquals();
     this.calls.set(calls.add(Field(1)));
   }
 
-  @method callSecondary(secondaryAddr: PublicKey) {
-    this.account.provedState.assertEquals(this.account.provedState.get());
-    this.account.provedState.get().assertTrue();
+  @method async callSecondary(secondaryAddr: PublicKey) {
+    this.account.provedState.getAndRequireEquals().assertTrue();
 
     const secondaryContract = new SecondaryZkApp(secondaryAddr);
+    const num = this.num.getAndRequireEquals();
 
-    const num = this.num.get();
-    this.num.assertEquals(num);
-
-    secondaryContract.add(num);
+    await secondaryContract.add(num);
 
     // NOTE this gets the state at the start of the transaction
     this.num.set(secondaryContract.num.get());
 
-    this.incrementCalls();
+    await this.incrementCalls();
   }
 }
-

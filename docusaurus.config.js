@@ -41,10 +41,6 @@ module.exports = {
             to: '/mina-protocol/time-locked-accounts',
           },
           {
-            from: '/node-operators/hardforks',
-            to: '/mina-protocol/hardforks',
-          },
-          {
             from: '/node-operators/lifecycle-of-a-payment',
             to: '/mina-protocol/lifecycle-of-a-payment',
           },
@@ -53,36 +49,28 @@ module.exports = {
             to: '/mina-protocol/sending-a-payment',
           },
           {
-            from: '/about-mina/overview',
-            to: '/about-mina',
-          },
-          {
             from: '/architecture/scan-state',
             to: '/mina-protocol/scan-state',
           },
           {
             from: '/architecture/snapps',
-            to: '/zkapps',
+            to: '/zkapps/writing-a-zkapp',
           },
           {
             from: '/snapps',
-            to: '/zkapps',
+            to: '/zkapps/writing-a-zkapp',
           },
           {
             from: '/node-developers/code-reviews',
             to: '/node-developers/code-review-guidelines',
           },
           {
-            from: '/architecture/consensus',
-            to: '/about-mina/consensus',
-          },
-          {
             from: '/tutorials',
-            to: '/zkapps/tutorials/hello-world',
+            to: '/zkapps/tutorials/',
           },
           {
-            from: '/zkapps/tutorials',
-            to: '/zkapps/tutorials/hello-world',
+            from: '/zkapps/how-to-test-a-zkapp',
+            to: '/zkapps/writing-a-zkapp/introduction-to-zkapps/testing-zkapps-locally',
           },
           {
             from: '/zkapps/simple-anonymous-message-board-tutorial',
@@ -98,19 +86,19 @@ module.exports = {
           },
           {
             from: '/architecture',
-            to: '/node-operators/getting-started',
+            to: '/node-operators/block-producer-node/getting-started',
           },
           {
             from: '/node-operators',
-            to: '/node-operators/getting-started',
+            to: '/node-operators/block-producer-node/getting-started',
           },
           {
             from: '/advanced',
-            to: '/node-operators/getting-started',
+            to: '/node-operators/block-producer-node/getting-started',
           },
           {
             from: '/node-operators/delegation',
-            to: '/node-operators/foundation-delegation-program',
+            to: '/node-operators/delegation-program/foundation-delegation-program',
           },
           {
             from: '/contributing',
@@ -130,7 +118,7 @@ module.exports = {
           },
           {
             from: '/connecting',
-            to: '/node-operators/connecting-to-the-network',
+            to: '/node-operators/block-producer-node/connecting-to-the-network',
           },
           {
             from: '/staking',
@@ -158,7 +146,7 @@ module.exports = {
           },
           {
             from: '/node-operators/operating-for-data',
-            to: '/node-operators/querying-data',
+            to: '/node-operators/data-and-history/querying-data',
           },
           {
             from: '/node-operators/cli-reference',
@@ -166,15 +154,11 @@ module.exports = {
           },
           {
             from: '/node-operators/uptime-system',
-            to: '/node-operators/uptime-tracking-system',
+            to: '/node-operators/delegation-program/uptime-tracking-system',
           },
           {
             from: '/node-operators/connecting-devnet',
-            to: '/node-operators/connecting-to-devnet',
-          },
-          {
-            from: '/node-operators/hardfork',
-            to: '/mina-protocol/hardforks',
+            to: '/node-operators/block-producer-node/connecting-to-devnet',
           },
           {
             from: '/node-operators/ledger-app-mina',
@@ -194,7 +178,7 @@ module.exports = {
           },
           {
             from: '/node-operators/connecting',
-            to: '/node-operators/connecting-to-the-network',
+            to: '/node-operators/block-producer-node/connecting-to-the-network',
           },
           {
             from: '/node-operators/send-payment',
@@ -274,6 +258,7 @@ module.exports = {
               'caution',
               'danger',
               'experimental',
+              'successTip',
             ],
           },
         },
