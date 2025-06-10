@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+
+cd $SCRIPT_DIR/..
+
 if [ $# -ne 2 ]; then
   echo "Usage: $0 <new_mainnet_tag> <new_devnet_tag>"
   exit 1
