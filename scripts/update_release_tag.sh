@@ -4,9 +4,16 @@ SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 
 cd $SCRIPT_DIR/..
 
-if [ $# -ne 2 ]; then
-  echo "Usage: $0 <new_mainnet_tag> <new_devnet_tag>"
-  exit 1
+if [[ "$1" == "-h" || "$1" == "--help" || $# -ne 2 ]]; then
+    cat << EOF
+Usage: ${0##*/} [-h|--help] <new_mainnet_tag> <new_devnet_tag>
+
+This script take new_mainnet_tag and new_devnet_tag, scan through the whole repo
+and replace old tags them with provided new tags.
+
+    -h|--help  display this help and exit
+EOF
+    exit 0
 fi
 
 NEW_MAINNET_TAG="$1"
