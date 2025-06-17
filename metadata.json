@@ -3,6 +3,10 @@
       "tags":{
          "mainnet":"3.1.0-ae112d3",
          "devnet":"3.1.0-alpha1-56cdb61"
+      },
+      "commits":{
+         "mainnet":"d800da86a764d8d37ffb8964dd8d54d9f522b358",
+         "devnet":"dc6bf78b8ddbbca3a1a248971b76af1514bf05aa"
       }
    }
 }
