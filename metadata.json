@@ -1,8 +1,8 @@
 {
    "release":{
       "tags":{
-         "mainnet":"minaprotocol/mina-daemon:3.0.3-d800da8-bullseye-mainnet",
-         "devnet":"gcr.io/o1labs-192920/mina-daemon:3.0.1-alpha1-0473756-bullseye-devnet"
+         "mainnet":"3.1.0-ae112d3",
+         "devnet":"3.1.0-alpha1-56cdb61"
       }
    }
 }
