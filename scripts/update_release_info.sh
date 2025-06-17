@@ -46,7 +46,7 @@ process_update() {
   fi
 
   local old_value
-  old_value=$(jq -r "$json_key" ./metadata.json)
+  old_value=$(jq -r "$json_key" metadata.json)
 
   if [ -z "$old_value" ]; then
     echo "Failed to read $json_key from metadata.json"
@@ -59,7 +59,7 @@ process_update() {
   escaped_new_value=$(printf '%s\n' "$new_value" | sed 's/[\/&]/\\&/g')
 
   grep -rl --exclude-dir=.git "$old_value" . | while read -r file; do
-    cd docs && sed -i "s/$escaped_old_value/$escaped_new_value/g" "$file"
+    sed -i "s/$escaped_old_value/$escaped_new_value/g" "$file"
   done
 }
 
