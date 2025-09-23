@@ -122,7 +122,7 @@ exactly once, when called repeatedly.
 
 The method makes a best effort to avoid visiting account updates that are not using the token,
 and in particular, to avoid returning dummy updates.
-However, neither can be ruled out. We're returning { update, usesThisToken: Bool } and let the
+However, neither can be ruled out. We're returning `{ update, usesThisToken: Bool }` and let the
 caller handle the irrelevant case where `usesThisToken` is false.
 
 #### Returns
