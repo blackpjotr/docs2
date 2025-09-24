@@ -10,6 +10,10 @@ keywords:
   - o1js
 ---
 
+import MigrateBanner from '@site/src/components/snippets/migrate-banner.mdx';
+
+<MigrateBanner />
+
 # Foreign Field Arithmetic
 
 A foreign field is a [finite field](https://en.wikipedia.org/wiki/Modular_arithmetic) different from the native field of the proof system. o1js exposes operations like modular addition and multiplication that work in any finite field of size less than `2^259`.
