@@ -315,7 +315,7 @@ It only guarantees that the result is in the correct residue class.
 Prove that each of the given Field3 elements is "almost" reduced modulo f,
 i.e., satisfies the assumptions required by Gadgets.ForeignField.mul and other gadgets:
 - each limb is in the range [0, 2^88)
-- the most significant limb is less or equal than the modulus, x[2] <= f[2]
+- the most significant limb is less or equal than the modulus, x[2] ≤ f[2]
 
 **Note**: This method is most efficient when the number of input elements is a multiple of 3.
 
@@ -393,7 +393,7 @@ Gadgets.ForeignField.assertLessThan(x, f);
 
 ### ForeignField.assertLessThanOrEqual()
 
-Prove that x <= f for any constant f < 2^264, or for another `Field3` f.
+Prove that x ≤ f for any constant f &lt; 2^264, or for another `Field3` f.
 
 See [ForeignField.assertLessThan](../classes/ForeignField.mdx#assertlessthan) for details and usage examples.
 
