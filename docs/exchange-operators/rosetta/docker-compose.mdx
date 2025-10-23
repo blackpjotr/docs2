@@ -110,7 +110,7 @@ services:
       bash -c '
         mina-rosetta --port 3087 \
              --archive-uri postgres://postgres:postgres@postgres:5432/archive \
-             --graphql-uri mina_node:3085/graphql \
+             --graphql-uri http://mina_node:3085/graphql \
              --log-level Info
       '
     ports:
