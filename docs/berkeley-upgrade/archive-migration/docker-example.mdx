@@ -42,7 +42,7 @@ psql -c "CREATE DATABASE mainnet_balances_migrated;"
 psql -c "CREATE DATABASE mainnet_really_migrated;"
 
 # Retrieve Archive Node Backup
-wget https://673156464838-mina-archive-node-backups.s3.us-west-2.amazonaws.com/mainnet/mainnet-archive-dump-2024-04-29_0000.sql.tar.gz
+wget https://storage.googleapis.com/mina-archive-dumps/mainnet-archive-dump-2024-04-29_0000.sql.tar.gz
 tar -xf mainnet-archive-dump-2024-04-29_0000.sql.tar.gz
 
 # Replace the database name in the dump

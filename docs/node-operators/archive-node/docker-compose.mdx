@@ -36,7 +36,7 @@ services:
     # image: 'gcr.io/o1labs-192920/mina-archive:3.1.0-alpha1-56cdb61-bullseye' # Use this image for Devnet
     command: >
       bash -c '
-      curl -O https://673156464838-mina-archive-node-backups.s3.us-west-2.amazonaws.com/mainnet/mainnet-archive-dump-$(date +%F_0000).sql.tar.gz;
+      curl -O https://storage.googleapis.com/mina-archive-dumps/mainnet-archive-dump-$(date +%F_0000).sql.tar.gz;
       tar -zxvf mainnet-archive-dump-$(date +%F_0000).sql.tar.gz;
       psql postgres://postgres:postgres@postgres:5432/archive -c "
       ALTER SYSTEM SET max_connections = 500;
