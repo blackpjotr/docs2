@@ -48,14 +48,14 @@ curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/
 We also ship the script in the Mina archive Docker image and Debian package.
 
 ```bash
-docker run --rm gcr.io/o1labs-192920/mina-archive-mesa:4.0.0-canary1-b649c79-bookworm-mesa cat /etc/mina/archive/upgrade-to-mesa.sql > upgrade-to-mesa.sql
+docker run --rm gcr.io/o1labs-192920/mina-archive-mesa:4.0.0-preflight1-b649c79-bookworm-mesa cat /etc/mina/archive/upgrade-to-mesa.sql > upgrade-to-mesa.sql
 ```
 
 ```bash
 # Setup the Mina repository and install the archive package
-# See canary-network.mdx for detailed repository setup instructions
+# See preflight-network.mdx for detailed repository setup instructions
 
-apt-get install mina-archive-mesa=4.0.0-canary1-b649c79
+apt-get install mina-archive-mesa=4.0.0-preflight1-b649c79
 
 # View the upgrade and downgrade scripts
 cat /etc/mina/archive/upgrade-to-mesa.sql
