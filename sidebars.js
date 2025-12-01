@@ -37,13 +37,10 @@ module.exports = {
         'berkeley-upgrade/appendix',
       ],
     },
-        {
+    {
       type: 'category',
       label: 'Mesa Upgrade',
-      items: [
-        'mesa-upgrade/preflight-network',
-        'mesa-upgrade/archive-upgrade',
-      ],
+      items: ['mesa-upgrade/preflight-network', 'mesa-upgrade/archive-upgrade'],
     },
     {
       type: 'category',
@@ -58,6 +55,7 @@ module.exports = {
         'using-mina/how-to-send-and-receive',
         'using-mina/how-to-delegate',
         'using-mina/how-to-use-zkapp',
+        'using-mina/Protect-Your-MINA',
       ],
     },
     {
