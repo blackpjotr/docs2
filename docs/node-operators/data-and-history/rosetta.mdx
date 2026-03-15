@@ -1,107 +1,231 @@
 ---
-title: Rosetta
+title: Rosetta API
 hide_title: true
-description: Learn how to install Mina’s implementation of Rosetta API.
+description: Install and run Mina's implementation of the Rosetta API for blockchain integration, historical data queries, and exchange support.
 keywords:
-  - historical data
+  - rosetta
+  - API
   - blockchain integration
-  - explorer
-  - wallet
+  - exchange
   - archive node
-  - graphQL
+  - docker
+  - historical data
 ---
 
-# Rosetta
+# Rosetta API
 
 import Subhead from "@site/src/components/common/Subhead";
 
 <Subhead>
-Learn how to use Mina’s implementation of Rosetta API.
+A standardized API for blockchain integration — query historical data, build transactions, and integrate with exchanges.
 </Subhead>
 
-[Rosetta API](https://www.rosetta-api.org/) is an open-source specification and set of tools that make deploying and interacting with the blockchain quickly and easily.
+[Rosetta API](https://www.rosetta-api.org/) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina's Rosetta implementation provides a standard interface for:
 
-We recommend using Rosetta API if you are:
-- Querying historical data from the Mina blockchain
-- Integrating the Mina blockchain with your exchange
-- Building blockchain applications, such as explorers and wallets
+- **Exchanges** — integrate MINA deposits, withdrawals, and balance queries
+- **Explorers and wallets** — query historical block and transaction data
+- **Infrastructure operators** — build and submit transactions programmatically
 
-### How to set up
+## Architecture
 
-1. [Install Docker](https://www.docker.com/get-started) and check that your Docker configuration has at least 12 GB RAM (the recommended amount is 16 GB).
+The Rosetta stack consists of four components that work together:
 
-2. Use the official image `minaprotocol/mina-rosetta:3.3.0-8c0c2e6-focal-mainnet`, which is built in exactly this way by buildkite CI/CD.
+| Component | Port | Description |
+|---|---|---|
+| **Mina Daemon** | 8302 (P2P), 3085 (GraphQL) | Syncs with the network, produces/validates blocks |
+| **Archive Node** | 3086 | Stores historical block data in PostgreSQL |
+| **PostgreSQL** | 5432 | Database backend for the archive node |
+| **Rosetta API** | 3087 (online), 3088 (offline) | Translates Mina data into the Rosetta specification |
 
-:::note
+## Installation
 
-If you want to build your own docker image, you can find more details in [Mina’s Rosetta repository](https://github.com/MinaProtocol/mina/blob/fb65acb3dce5cfa07567bddd64f17ed51d83d93e/src/app/rosetta/README.md). However, for most users, it’s not necessary to build your own image in order to interact with the API.
+There are three ways to run Rosetta, depending on your needs.
 
+### Option 1: All-in-One Docker Image (Recommended for getting started)
+
+The all-in-one image bundles the daemon, archive node, PostgreSQL, and Rosetta API into a single container. It automatically initializes the archive database from public o1Labs backups.
+
+**Requirements:** Docker with at least 12 GB RAM allocated (16 GB recommended).
+
+#### Mainnet
+
+```bash
+docker run -it --rm --name rosetta \
+  --entrypoint=./docker-start.sh \
+  -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
+  minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet
+```
+
+#### Devnet
+
+```bash
+docker run -it --rm --name rosetta \
+  --entrypoint=./docker-start.sh \
+  -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
+  -e MINA_NETWORK=devnet \
+  -e PEER_LIST_URL=https://bootnodes.minaprotocol.com/networks/devnet.txt \
+  minaprotocol/mina-rosetta:3.2.0-97ad487-bullseye-devnet
+```
+
+:::caution
+Do **not** set `MINA_GENESIS_LEDGER_URL` unless you have a specific reason to override the genesis ledger baked into the image. Providing an incorrect or outdated URL will cause the daemon to crash with a "Tarball hash mismatch" error. The image already contains the correct genesis configuration for its target network.
 :::
 
-### How to run
+The node will take 20 minutes to 1 hour to sync. You can check sync status with:
 
-The container in `/rosetta` includes 4 scripts, which each run a different set of services connected to a particular network.
+```bash
+docker exec rosetta mina client status
+```
 
-:::note
+#### Environment Variables
 
-- It can take 20 min to 1 hour for your node to sync
-- Port 8302 is the default P2P port and must be exposed to the open internet
-- The GraphQL API runs on port 3085 (accessible via localhost:3085/graphql)
-- PostgreSQL runs on port 3086
-- Rosetta runs on port 3087
+The all-in-one image supports the following environment variables for customization:
 
-:::
+| Variable | Default | Description |
+|---|---|---|
+| `MINA_NETWORK` | `mainnet` | Network to connect to (`mainnet` or `devnet`) |
+| `PEER_LIST_URL` | Network-specific seed list | URL for the peer list |
+| `LOG_LEVEL` | `Debug` | Log level (`Info`, `Debug`, `Warn`, `Error`) |
+| `MINA_GRAPHQL_PORT` | `3085` | GraphQL API port |
+| `MINA_ARCHIVE_PORT` | `3086` | Archive node port |
+| `MINA_ROSETTA_ONLINE_PORT` | `3087` | Rosetta online API port |
+| `MINA_ROSETTA_OFFLINE_PORT` | `3088` | Rosetta offline API port |
+| `POSTGRES_USERNAME` | `pguser` | PostgreSQL username |
+| `POSTGRES_DBNAME` | `archive` | PostgreSQL database name |
+| `POSTGRES_DATA_DIR` | `/data/postgresql` | PostgreSQL data directory |
+| `MINA_ARCHIVE_DUMP_URL` | `https://storage.googleapis.com/mina-archive-dumps` | Base URL for archive database dumps |
+| `MINA_CONFIG_DIR` | `/data/.mina-config` | Mina configuration directory |
 
-#### Mainnet:Online
+### Option 2: Docker Compose (Recommended for production)
 
-**docker-start.sh** (default) - connects the mina node to our Mainnet network and initializes the archive database from publicly-available nightly o1Labs backups. As with docker-demo-start.sh, this script runs a mina node, mina-archive, a postgresql DB, and mina-rosetta. The script also periodically checks for blocks that may be missing between the nightly backup and the tip of the chain and will fill in those gaps by walking back the linked list of blocks in the canonical chain and importing them one at a time. Take a look at the source for more information about what and how you can configure.
+For production deployments, use Docker Compose to run each component as a separate container. This gives you more control over resource allocation, logging, and restarts.
 
-To run docker-start.sh and connect to the live Mainnet:
+The Mina repository includes a ready-to-use Docker Compose configuration:
 
-    docker run -it --rm --name rosetta \
-        --entrypoint=./docker-start.sh \
-        -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
-        minaprotocol/mina-rosetta:3.3.0-8c0c2e6-focal-mainnet
+```bash
+# Clone the compose files
+curl -O https://raw.githubusercontent.com/MinaProtocol/mina/develop/src/app/rosetta/docker-compose/docker-compose.yml
+curl -O https://raw.githubusercontent.com/MinaProtocol/mina/develop/src/app/rosetta/docker-compose/example.env
 
+# Copy and edit the environment file
+cp example.env .env
+# Edit .env to set your image tags and configuration
+```
 
-#### Mainnet:Offline
+The compose setup runs four services:
+- **postgres** — PostgreSQL database
+- **archive** — `mina-archive` connected to PostgreSQL
+- **daemon** — Mina node connected to the archive
+- **rosetta** — Rosetta API in standalone mode, querying the daemon and database
 
-**docker-standalone-start.sh** - starts only the mina-rosetta API endpoint and any flags passed into the script go to mina-rosetta. Use this for the "offline" part of the Construction API.
+```bash
+docker compose up -d
+```
 
-To run docker-standalone-start.sh and connect to the offline Mainnet:
+See the [docker-compose directory](https://github.com/MinaProtocol/mina/tree/develop/src/app/rosetta/docker-compose) in the Mina repository for the full configuration and environment file reference.
 
-    docker run -it --rm --name rosetta \
-        --entrypoint=./docker-standalone-start.sh \
-        -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
-        minaprotocol/mina-rosetta:3.3.0-8c0c2e6-focal-mainnet
+### Option 3: Debian Packages (Manual setup)
 
-#### Demo:Offline
+You can install each component individually via Debian packages. This is useful if you already run a Mina daemon and archive node and only need to add the Rosetta API.
 
-**docker-demo-start.sh** launches a mina node with a very simple 1-address genesis ledger as a sandbox for developing and playing around in. This script starts the full suite of tools (a mina node, mina-archive, a postgresql DB, and mina-rosetta), but for a demo network with all operations occurring inside this container and no external network activity.
+```bash
+# Add the Mina repository (if not already configured)
+echo "deb [trusted=yes] http://packages.o1test.net/ focal stable" | sudo tee /etc/apt/sources.list.d/mina.list
+sudo apt-get update
 
-To run the docker-demo-start.sh and connect to the demo network:
+# Install the Rosetta package for your network
+sudo apt-get install mina-rosetta-mainnet
+# or: sudo apt-get install mina-rosetta-devnet
+```
 
-    docker run -it --rm --name rosetta \
-        --entrypoint=./docker-demo-start.sh \
-        -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
-        minaprotocol/mina-rosetta:3.3.0-8c0c2e6-focal-mainnet
+Then run the Rosetta API pointing to your existing daemon and archive database:
 
-#### Devnet:Online
+```bash
+mina-rosetta \
+  --archive-uri postgres://<user>:<password>@<host>:<port>/<db> \
+  --graphql-uri http://localhost:3085/graphql \
+  --log-json \
+  --port 3087
+```
 
-To run docker-start.sh and connect to the live Devnet:
+This requires a running [Mina daemon](/node-operators/block-producer-node) and [archive node](/node-operators/archive-node) with a populated PostgreSQL database.
 
-    docker run -it --rm --name rosetta \
-        --entrypoint=./docker-start.sh \
-        -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
-        -e MINA_NETWORK=devnet \
-        -e PEER_LIST_URL= https://bootnodes.minaprotocol.com/networks/devnet.txt \
-        -e MINA_ARCHIVE_DUMP_URL=https://storage.googleapis.com/mina-archive-dumps \
-        -e MINA_GENESIS_LEDGER_URL=http://673156464838-mina-genesis-ledgers.s3-website-us-west-2.amazonaws.com/devnet/genesis_ledger.json \
-        -e BLOCKS_BUCKET=https://storage.googleapis.com/mina_network_block_data \
-        minaprotocol/mina-rosetta:`<TAG>`
+## Offline Mode
 
-Please replace `<TAG>` with the latest release tag compatible with the network you are trying to connect to.
+The Rosetta Construction API requires an "offline" endpoint that can build and sign transactions without network access. Use the standalone entrypoint for this:
 
-### Questions?
+```bash
+docker run -it --rm --name rosetta-offline \
+  --entrypoint=./docker-standalone-start.sh \
+  -p 3088:3088 \
+  minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet
+```
 
-Post any questions in Mina’s Github Discussions: https://github.com/MinaProtocol/mina/discussions
+This starts only the Rosetta API process — no daemon, archive, or database. Point your Construction API calls to this endpoint for offline operations.
+
+## Demo Mode
+
+For development and testing, the demo mode launches a local sandbox with a simple genesis ledger and all components running inside a single container:
+
+```bash
+docker run -it --rm --name rosetta-demo \
+  --entrypoint=./docker-demo-start.sh \
+  -p 3085:3085 -p 3087:3087 \
+  minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet
+```
+
+This creates an isolated network with no external connectivity — useful for developing integrations before connecting to mainnet or devnet.
+
+## Available Images
+
+| Network | Image | Notes |
+|---|---|---|
+| **Mainnet** | `minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet` | Latest stable, amd64 |
+| **Mainnet (bookworm)** | `minaprotocol/mina-rosetta:3.3.1-7b34378-bookworm-mainnet` | Also available for arm64 |
+| **Devnet** | `minaprotocol/mina-rosetta:3.2.0-97ad487-bullseye-devnet` | Latest devnet |
+
+Images are published on [Docker Hub](https://hub.docker.com/r/minaprotocol/mina-rosetta/tags).
+
+## Verifying the API
+
+Once your node is synced, verify the Rosetta API is working:
+
+```bash
+# List available networks
+curl -s http://localhost:3087/network/list \
+  -H 'Content-Type: application/json' \
+  -d '{"metadata":{}}' | jq .
+
+# Get network status
+curl -s http://localhost:3087/network/status \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network_identifier": {
+      "blockchain": "mina",
+      "network": "mainnet"
+    }
+  }' | jq .
+
+# Query an account balance
+curl -s http://localhost:3087/account/balance \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network_identifier": {
+      "blockchain": "mina",
+      "network": "mainnet"
+    },
+    "account_identifier": {
+      "address": "<MINA_ADDRESS>"
+    }
+  }' | jq .
+```
+
+## Building Your Own Image
+
+For most users, the official images are sufficient. If you need to build a custom image, see the [Rosetta README](https://github.com/MinaProtocol/mina/blob/develop/src/app/rosetta/README.md) in the Mina repository for build instructions.
+
+## Questions and Support
+
+- Post questions in [Mina GitHub Discussions](https://github.com/MinaProtocol/mina/discussions)
+- Report bugs on [GitHub Issues](https://github.com/MinaProtocol/mina/issues)
+- Join the [Mina Discord](https://discord.gg/minaprotocol) for community support
