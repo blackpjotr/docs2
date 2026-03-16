@@ -193,19 +193,28 @@ Once your node is synced, verify the Rosetta API is working.
 **List available networks:**
 
 ```bash
-curl -s http://localhost:3087/network/list -H 'Content-Type: application/json' -d '{"metadata":{}}' | jq .
+curl -s http://localhost:3087/network/list \
+  -H 'Content-Type: application/json' \
+  -d '{"metadata":{}}' | jq .
 ```
 
 **Get network status:**
 
 ```bash
-curl -s http://localhost:3087/network/status -H 'Content-Type: application/json' -d '{"network_identifier":{"blockchain":"mina","network":"mainnet"}}' | jq .
+curl -s http://localhost:3087/network/status \
+  -H 'Content-Type: application/json' \
+  -d '{"network_identifier": {"blockchain": "mina", "network": "mainnet"}}' | jq .
 ```
 
 **Query an account balance:**
 
 ```bash
-curl -s http://localhost:3087/account/balance -H 'Content-Type: application/json' -d '{"network_identifier":{"blockchain":"mina","network":"mainnet"},"account_identifier":{"address":"<MINA_ADDRESS>"}}' | jq .
+curl -s http://localhost:3087/account/balance \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "network_identifier": {"blockchain": "mina", "network": "mainnet"},
+    "account_identifier": {"address": "<MINA_ADDRESS>"}
+  }' | jq .
 ```
 
 ## Building Your Own Image
