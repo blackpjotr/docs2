@@ -20,7 +20,7 @@ import Subhead from "@site/src/components/common/Subhead";
 A standardized API for blockchain integration — query historical data, build transactions, and integrate with exchanges.
 </Subhead>
 
-[Rosetta API](https://www.rosetta-api.org/) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina's Rosetta implementation provides a standard interface for:
+[Rosetta API](https://github.com/coinbase/mesh-specifications) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina's Rosetta implementation provides a standard interface for:
 
 - **Exchanges** — integrate MINA deposits, withdrawals, and balance queries
 - **Explorers and wallets** — query historical block and transaction data
@@ -53,7 +53,7 @@ The all-in-one image bundles the daemon, archive node, PostgreSQL, and Rosetta A
 docker run -it --rm --name rosetta \
   --entrypoint=./docker-start.sh \
   -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
-  minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet
+  minaprotocol/mina-rosetta:3.3.1-7b34378-noble-mainnet
 ```
 
 #### Devnet
@@ -64,7 +64,7 @@ docker run -it --rm --name rosetta \
   -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
   -e MINA_NETWORK=devnet \
   -e PEER_LIST_URL=https://bootnodes.minaprotocol.com/networks/devnet.txt \
-  minaprotocol/mina-rosetta:3.2.0-97ad487-bullseye-devnet
+  minaprotocol/mina-rosetta:3.2.0-97ad487-bookworm-devnet
 ```
 
 :::caution
@@ -104,8 +104,8 @@ The Mina repository includes a ready-to-use Docker Compose configuration:
 
 ```bash
 # Clone the compose files
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/develop/src/app/rosetta/docker-compose/docker-compose.yml
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/develop/src/app/rosetta/docker-compose/example.env
+curl -O https://raw.githubusercontent.com/MinaProtocol/mina/master/src/app/rosetta/docker-compose/docker-compose.yml
+curl -O https://raw.githubusercontent.com/MinaProtocol/mina/master/src/app/rosetta/docker-compose/example.env
 
 # Copy and edit the environment file
 cp example.env .env
@@ -122,7 +122,7 @@ The compose setup runs four services:
 docker compose up -d
 ```
 
-See the [docker-compose directory](https://github.com/MinaProtocol/mina/tree/develop/src/app/rosetta/docker-compose) in the Mina repository for the full configuration and environment file reference.
+See the [docker-compose directory](https://github.com/MinaProtocol/mina/tree/master/src/app/rosetta/docker-compose) in the Mina repository for the full configuration and environment file reference.
 
 ### Option 3: Debian Packages (Manual setup)
 
@@ -130,7 +130,7 @@ You can install each component individually via Debian packages. This is useful 
 
 ```bash
 # Add the Mina repository (if not already configured)
-echo "deb [trusted=yes] http://packages.o1test.net/ focal stable" | sudo tee /etc/apt/sources.list.d/mina.list
+echo "deb [trusted=yes] http://packages.o1test.net/ noble stable" | sudo tee /etc/apt/sources.list.d/mina.list
 sudo apt-get update
 
 # Install the Rosetta package for your network
@@ -158,7 +158,7 @@ The Rosetta Construction API requires an "offline" endpoint that can build and s
 docker run -it --rm --name rosetta-offline \
   --entrypoint=./docker-standalone-start.sh \
   -p 3088:3088 \
-  minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet
+  minaprotocol/mina-rosetta:3.3.1-7b34378-noble-mainnet
 ```
 
 This starts only the Rosetta API process — no daemon, archive, or database. Point your Construction API calls to this endpoint for offline operations.
@@ -171,7 +171,7 @@ For development and testing, the demo mode launches a local sandbox with a simpl
 docker run -it --rm --name rosetta-demo \
   --entrypoint=./docker-demo-start.sh \
   -p 3085:3085 -p 3087:3087 \
-  minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet
+  minaprotocol/mina-rosetta:3.3.1-7b34378-noble-mainnet
 ```
 
 This creates an isolated network with no external connectivity — useful for developing integrations before connecting to mainnet or devnet.
@@ -180,49 +180,37 @@ This creates an isolated network with no external connectivity — useful for de
 
 | Network | Image | Notes |
 |---|---|---|
-| **Mainnet** | `minaprotocol/mina-rosetta:3.3.1-7b34378-focal-mainnet` | Latest stable, amd64 |
+| **Mainnet (noble)** | `minaprotocol/mina-rosetta:3.3.1-7b34378-noble-mainnet` | amd64 |
 | **Mainnet (bookworm)** | `minaprotocol/mina-rosetta:3.3.1-7b34378-bookworm-mainnet` | Also available for arm64 |
-| **Devnet** | `minaprotocol/mina-rosetta:3.2.0-97ad487-bullseye-devnet` | Latest devnet |
+| **Devnet (bookworm)** | `minaprotocol/mina-rosetta:3.2.0-97ad487-bookworm-devnet` | Latest devnet |
 
 Images are published on [Docker Hub](https://hub.docker.com/r/minaprotocol/mina-rosetta/tags).
 
 ## Verifying the API
 
-Once your node is synced, verify the Rosetta API is working:
+Once your node is synced, verify the Rosetta API is working.
+
+**List available networks:**
 
 ```bash
-# List available networks
-curl -s http://localhost:3087/network/list \
-  -H 'Content-Type: application/json' \
-  -d '{"metadata":{}}' | jq .
+curl -s http://localhost:3087/network/list -H 'Content-Type: application/json' -d '{"metadata":{}}' | jq .
+```
 
-# Get network status
-curl -s http://localhost:3087/network/status \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "network_identifier": {
-      "blockchain": "mina",
-      "network": "mainnet"
-    }
-  }' | jq .
+**Get network status:**
 
-# Query an account balance
-curl -s http://localhost:3087/account/balance \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "network_identifier": {
-      "blockchain": "mina",
-      "network": "mainnet"
-    },
-    "account_identifier": {
-      "address": "<MINA_ADDRESS>"
-    }
-  }' | jq .
+```bash
+curl -s http://localhost:3087/network/status -H 'Content-Type: application/json' -d '{"network_identifier":{"blockchain":"mina","network":"mainnet"}}' | jq .
+```
+
+**Query an account balance:**
+
+```bash
+curl -s http://localhost:3087/account/balance -H 'Content-Type: application/json' -d '{"network_identifier":{"blockchain":"mina","network":"mainnet"},"account_identifier":{"address":"<MINA_ADDRESS>"}}' | jq .
 ```
 
 ## Building Your Own Image
 
-For most users, the official images are sufficient. If you need to build a custom image, see the [Rosetta README](https://github.com/MinaProtocol/mina/blob/develop/src/app/rosetta/README.md) in the Mina repository for build instructions.
+For most users, the official images are sufficient. If you need to build a custom image, see the [Rosetta README](https://github.com/MinaProtocol/mina/blob/master/src/app/rosetta/README.md) in the Mina repository for build instructions.
 
 ## Questions and Support
 
