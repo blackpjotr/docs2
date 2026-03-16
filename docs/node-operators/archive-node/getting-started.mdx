@@ -55,13 +55,13 @@ Running an archive node requires some knowledge of managing a PostgreSQL databas
    - Ubuntu/Debian:
 
      ```
-     sudo apt-get install mina-archive=3.1.0-ae112d3
+     sudo apt-get install mina-archive=3.3.0-8c0c2e6
      ```
 
    - Docker:
 
      ```
-     minaprotocol/mina-archive:3.1.0-ae112d3-bullseye
+     minaprotocol/mina-archive:3.3.0-8c0c2e6-bullseye-mainnet
      ```
 
 ## Set up the archive node
@@ -114,7 +114,7 @@ To run a local archive node to run it in the foreground for testing:
 
   ```
 
-  To connect to an archive process on another machine, specify a hostname with <ipaddress:portnumber> i.e. `154.97.53.97:3086`.
+  To connect to an archive process on another machine, specify a hostname with `<ipaddress:portnumber>` i.e. `154.97.53.97:3086`.
 
 ## Set up the archive node using Docker
 
@@ -125,7 +125,7 @@ To get started with installing and running the archive node using Docker, follow
 2. Pull the archive node image from Docker Hub.
 
    ```sh
-   docker pull minaprotocol/mina-archive:3.1.0-ae112d3-bullseye
+   docker pull minaprotocol/mina-archive:3.3.0-8c0c2e6-bullseye-mainnet
    ```
 
 3. Pull and install the postgres image from Docker Hub.
@@ -168,14 +168,14 @@ To get started with installing and running the archive node using Docker, follow
    --name archive \
    -p 3086:3086 \
    -v /tmp/archive:/data \
-   minaprotocol/mina-archive:3.1.0-ae112d3-bullseye \
+   minaprotocol/mina-archive:3.3.0-8c0c2e6-bullseye-mainnet \
    mina-archive run \
    --postgres-uri postgres://postgres:postgres@postgres:5432/archive \
    --server-port 3086
 
    ```
 
-:::warning
+:::caution
 
 Please be careful when using `--config` argument at archive node bootstrap.
 
@@ -195,7 +195,7 @@ short lived network created mainly for testing, local development or experimenta
      --archive-address 3086
 
    ```
-  To connect to an archive process on another machine, specify a hostname with <ipaddress:portnumber> i.e. `154.97.53.97:3086`.
+  To connect to an archive process on another machine, specify a hostname with `<ipaddress:portnumber>` i.e. `154.97.53.97:3086`.
 
 
 ## Set up the archive node using Docker Compose
@@ -212,7 +212,7 @@ To run the archive node using Docker Compose:
 3. Pull the archive node image from Docker Hub.
 
    ```sh
-   docker pull minaprotocol/mina-archive:3.1.0-ae112d3-bullseye
+   docker pull minaprotocol/mina-archive:3.3.0-8c0c2e6-bullseye-mainnet
    ```
 
 4. Pull and install the postgres image from Docker Hub.
@@ -232,7 +232,7 @@ To run the archive node using Docker Compose:
    ```yml
    services:
      postgres:
-       image: postgres
+       image: postgres:17
        environment:
          POSTGRES_PASSWORD: postgres
        volumes:
@@ -240,7 +240,7 @@ To run the archive node using Docker Compose:
        ports:
          - '5432:5432'
      archive:
-       image: 'minaprotocol/mina-archive:3.1.0-ae112d3-bullseye'
+       image: 'minaprotocol/mina-archive:3.3.0-8c0c2e6-bullseye-mainnet'
        command: >-
          mina-archive run --postgres-uri
          postgres://postgres:postgres@postgres:5432/archive --server-port 3086
@@ -267,7 +267,7 @@ To run the archive node using Docker Compose:
 
    ```
 
-     To connect to an archive process on another machine, specify a hostname with <ipaddress:portnumber> i.e. `154.97.53.97:3086`.
+     To connect to an archive process on another machine, specify a hostname with `<ipaddress:portnumber>` i.e. `154.97.53.97:3086`.
 
 
 ## Using the Archive Node
