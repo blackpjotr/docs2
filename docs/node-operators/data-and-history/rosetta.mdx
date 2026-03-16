@@ -20,22 +20,20 @@ import Subhead from "@site/src/components/common/Subhead";
 A standardized API for blockchain integration — query historical data, build transactions, and integrate with exchanges.
 </Subhead>
 
-[Rosetta API](https://github.com/coinbase/mesh-specifications) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina's Rosetta implementation provides a standard interface for:
-
-- **Exchanges** — integrate MINA deposits, withdrawals, and balance queries
-- **Explorers and wallets** — query historical block and transaction data
-- **Infrastructure operators** — build and submit transactions programmatically
+[Rosetta API](https://www.rosetta-api.org/) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina's Rosetta implementation is primarily used by exchanges to integrate MINA deposits, withdrawals, and balance queries.
 
 ## Architecture
 
 The Rosetta stack consists of four components that work together:
 
-| Component | Port | Description |
+| Component | Default Port | Description |
 |---|---|---|
 | **Mina Daemon** | 8302 (P2P), 3085 (GraphQL) | Syncs with the network, produces/validates blocks |
 | **Archive Node** | 3086 | Stores historical block data in PostgreSQL |
 | **PostgreSQL** | 5432 | Database backend for the archive node |
 | **Rosetta API** | 3087 (online), 3088 (offline) | Translates Mina data into the Rosetta specification |
+
+All ports listed above are defaults and can be overridden via configuration.
 
 ## Installation
 
@@ -67,10 +65,6 @@ docker run -it --rm --name rosetta \
   minaprotocol/mina-rosetta:3.2.0-97ad487-bookworm-devnet
 ```
 
-:::caution
-Do **not** set `MINA_GENESIS_LEDGER_URL` unless you have a specific reason to override the genesis ledger baked into the image. Providing an incorrect or outdated URL will cause the daemon to crash with a "Tarball hash mismatch" error. The image already contains the correct genesis configuration for its target network.
-:::
-
 The node will take 20 minutes to 1 hour to sync. You can check sync status with:
 
 ```bash
@@ -100,29 +94,7 @@ The all-in-one image supports the following environment variables for customizat
 
 For production deployments, use Docker Compose to run each component as a separate container. This gives you more control over resource allocation, logging, and restarts.
 
-The Mina repository includes a ready-to-use Docker Compose configuration:
-
-```bash
-# Clone the compose files
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/master/src/app/rosetta/docker-compose/docker-compose.yml
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/master/src/app/rosetta/docker-compose/example.env
-
-# Copy and edit the environment file
-cp example.env .env
-# Edit .env to set your image tags and configuration
-```
-
-The compose setup runs four services:
-- **postgres** — PostgreSQL database
-- **archive** — `mina-archive` connected to PostgreSQL
-- **daemon** — Mina node connected to the archive
-- **rosetta** — Rosetta API in standalone mode, querying the daemon and database
-
-```bash
-docker compose up -d
-```
-
-See the [docker-compose directory](https://github.com/MinaProtocol/mina/tree/master/src/app/rosetta/docker-compose) in the Mina repository for the full configuration and environment file reference.
+For production deployments, a complete Docker Compose configuration with all four services (PostgreSQL, archive node, Mina daemon, and Rosetta API) is available in the [Rosetta Docker Compose guide](/exchange-operators/rosetta/docker-compose).
 
 ### Option 3: Debian Packages (Manual setup)
 
