@@ -75,6 +75,25 @@ Initial sync typically takes between 20 minutes and 1 hour depending on your har
 docker exec rosetta mina client status
 ```
 
+#### Environment Variables
+
+The all-in-one image supports the following environment variables for customization:
+
+| Variable | Default | Description |
+|---|---|---|
+| `MINA_NETWORK` | `mainnet` | Network to connect to (`mainnet` or `devnet`) |
+| `PEER_LIST_URL` | Network-specific seed list | URL for the peer list |
+| `LOG_LEVEL` | `Debug` | Log level (`Info`, `Debug`, `Warn`, `Error`) |
+| `MINA_GRAPHQL_PORT` | `3085` | GraphQL API port |
+| `MINA_ARCHIVE_PORT` | `3086` | Archive node port |
+| `MINA_ROSETTA_ONLINE_PORT` | `3087` | Rosetta online API port |
+| `MINA_ROSETTA_OFFLINE_PORT` | `3088` | Rosetta offline API port |
+| `POSTGRES_USERNAME` | `pguser` | PostgreSQL username |
+| `POSTGRES_DBNAME` | `archive` | PostgreSQL database name |
+| `POSTGRES_DATA_DIR` | `/data/postgresql` | PostgreSQL data directory |
+| `MINA_ARCHIVE_DUMP_URL` | `https://storage.googleapis.com/mina-archive-dumps` | Base URL for archive database dumps |
+| `MINA_CONFIG_DIR` | `/data/.mina-config` | Mina configuration directory |
+
 ### Option 2: Docker Compose (Recommended for production)
 
 For production deployments, use Docker Compose to run each component as a separate container. This gives you more control over resource allocation, logging, and restarts.
