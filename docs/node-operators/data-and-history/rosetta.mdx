@@ -20,7 +20,11 @@ import Subhead from "@site/src/components/common/Subhead";
 A standardized API for blockchain integration — query historical data, build transactions, and integrate with exchanges.
 </Subhead>
 
-[Rosetta API](https://www.rosetta-api.org/) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina's Rosetta implementation is primarily used by exchanges to integrate MINA deposits, withdrawals, and balance queries.
+[Rosetta API](https://www.rosetta-api.org/) (rebranded as [Mesh](https://docs.cdp.coinbase.com/mesh/docs/welcome/) by Coinbase) is an open-source specification and set of tools that make deploying and interacting with blockchains quick and easy. Mina implements a subset of the Rosetta specification — not all endpoints defined in the spec are available. Mina's Rosetta implementation is primarily used by exchanges to integrate MINA deposits, withdrawals, and balance queries.
+
+:::note
+The Rosetta API is auxiliary to Mina's existing [GraphQL API](/node-operators/mina-cli-reference). Everything achievable through Rosetta can also be done with GraphQL and the Archive Node directly. Rosetta exists primarily to satisfy exchange integration requirements.
+:::
 
 ## Architecture
 
@@ -33,7 +37,7 @@ The Rosetta stack consists of four components that work together:
 | **PostgreSQL** | 5432 | Database backend for the archive node |
 | **Rosetta API** | 3087 (online), 3088 (offline) | Translates Mina data into the Rosetta specification |
 
-All ports listed above are defaults and can be overridden via configuration.
+All ports listed above are defaults and can be overridden via configuration. When using Docker, these are the ports inside the container — map them to your desired host ports with `-p`.
 
 ## Installation
 
@@ -65,30 +69,11 @@ docker run -it --rm --name rosetta \
   minaprotocol/mina-rosetta:3.2.0-97ad487-bookworm-devnet
 ```
 
-The node will take 20 minutes to 1 hour to sync. You can check sync status with:
+Initial sync typically takes between 20 minutes and 1 hour depending on your hardware and network connection. You can check sync status with:
 
 ```bash
 docker exec rosetta mina client status
 ```
-
-#### Environment Variables
-
-The all-in-one image supports the following environment variables for customization:
-
-| Variable | Default | Description |
-|---|---|---|
-| `MINA_NETWORK` | `mainnet` | Network to connect to (`mainnet` or `devnet`) |
-| `PEER_LIST_URL` | Network-specific seed list | URL for the peer list |
-| `LOG_LEVEL` | `Debug` | Log level (`Info`, `Debug`, `Warn`, `Error`) |
-| `MINA_GRAPHQL_PORT` | `3085` | GraphQL API port |
-| `MINA_ARCHIVE_PORT` | `3086` | Archive node port |
-| `MINA_ROSETTA_ONLINE_PORT` | `3087` | Rosetta online API port |
-| `MINA_ROSETTA_OFFLINE_PORT` | `3088` | Rosetta offline API port |
-| `POSTGRES_USERNAME` | `pguser` | PostgreSQL username |
-| `POSTGRES_DBNAME` | `archive` | PostgreSQL database name |
-| `POSTGRES_DATA_DIR` | `/data/postgresql` | PostgreSQL data directory |
-| `MINA_ARCHIVE_DUMP_URL` | `https://storage.googleapis.com/mina-archive-dumps` | Base URL for archive database dumps |
-| `MINA_CONFIG_DIR` | `/data/.mina-config` | Mina configuration directory |
 
 ### Option 2: Docker Compose (Recommended for production)
 
