@@ -1,8 +1,14 @@
 ---
-id: mina-signer
-hide_title: true
 title: Mina Signer
-description: A NodeJS/Browser-compatible JavaScript library for the Mina Protocol
+hide_title: true
+description: A NodeJS/Browser-compatible JavaScript library for signing transactions, generating keys, and integrating with o1js and Rosetta in the Mina Protocol.
+keywords:
+  - mina signer
+  - sign
+  - signature
+  - keypair
+  - o1js
+  - rosetta
 ---
 
 # Mina Signer
@@ -150,17 +156,63 @@ client.signTransaction(
 client.signTransaction('Hello World', keypair.privateKey);
 ```
 
-#### Rosetta
+### Broadcasting a Signed Payment
 
-For those developing with [Rosetta](https://www.rosetta-api.org/), Mina Signer provides an avenue to transform a signed Rosetta transaction into a Mina-compliant transaction, ready for broadcasting through the Mina Daemon.
+After signing a payment, you can broadcast it to the network via a Mina Node GraphQL endpoint:
 
-```js
+```javascript
 import Client from 'mina-signer';
+
 const client = new Client({ network: 'mainnet' });
 
-const signedRosettaTx = '...';
-const signedGraphQLCommand =
-  client.signedRosettaTransactionToSignedCommand(signedRosettaTx);
+const senderPrivateKey = 'EKFd1Gx...';
+const senderPublicKey = 'B62qrDM...';
+
+let payment = {
+  from: senderPublicKey,
+  to: 'B62qkBw...',
+  amount: 100,
+  nonce: 1,
+  fee: 1000000,
+};
+
+const signedPayment = client.signPayment(payment, senderPrivateKey);
+
+const url = 'https://your-mina-node/graphql';
+
+const sendPaymentMutationQuery = `
+mutation SendPayment($input: SendPaymentInput!, $signature: SignatureInput!) {
+  sendPayment(input: $input, signature: $signature) {
+    payment {
+      hash
+    }
+  }
+}
+`;
+const graphQlVariables = {
+  input: signedPayment.data,
+  signature: signedPayment.signature,
+};
+const body = JSON.stringify({
+  query: sendPaymentMutationQuery,
+  variables: graphQlVariables,
+  operationName: 'SendPayment',
+});
+
+const paymentResponse = await fetch(url, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body,
+});
+
+const paymentResponseJson = await paymentResponse.json();
+if (paymentResponse.ok) {
+  console.log(
+    `Transaction hash: ${paymentResponseJson.data.sendPayment.payment.hash}`
+  );
+} else {
+  console.error(JSON.stringify(paymentResponseJson));
+}
 ```
 
 ### Payment & Delegation Transaction Hashes
@@ -196,9 +248,24 @@ const delegation = client.signTransaction(
 const hashedDelegation = client.hashStakeDelegation(delegation);
 ```
 
-## o1js Usage
+### Rosetta Integration
 
-Mina Signer can seamlessly integrate with [o1js](/zkapps/o1js),delivering an array of features for zkApps like:
+For those developing with [Rosetta](https://www.rosetta-api.org/), Mina Signer provides an avenue to transform a signed Rosetta transaction into a Mina-compliant transaction, ready for broadcasting through the Mina Daemon.
+
+```js
+import Client from 'mina-signer';
+const client = new Client({ network: 'mainnet' });
+
+const signedRosettaTx = '...';
+const signedGraphQLCommand =
+  client.signedRosettaTransactionToSignedCommand(signedRosettaTx);
+```
+
+For detailed Rosetta usage including the offline signer CLI tool and `signRosettaTransaction`, see the [Rosetta Offline Signer](/exchange-operators/rosetta/samples/using-signer) documentation.
+
+## o1js Integration
+
+Mina Signer can seamlessly integrate with [o1js](/zkapps/o1js), delivering an array of features for zkApps like:
 
 - zkApp transaction signing and verification
 - Field payload signing and verification
@@ -262,7 +329,7 @@ const verifiedFields = client.verifyFields(signedFields);
 ```
 
 If you are using o1js to generate Field payloads, you must convert the Fields to BigInts before signing/verifying them.
-In Mina Signer, the Field type is a BigInt (while in o1js they are a seperate data structure), so you must convert the fields from o1js to BigInts before signing/verifying them.
+In Mina Signer, the Field type is a BigInt (while in o1js they are a separate data structure), so you must convert the fields from o1js to BigInts before signing/verifying them.
 
 ```js
 import Client from 'mina-signer';
