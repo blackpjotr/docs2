@@ -24,9 +24,9 @@ services:
     entrypoint: []
     command: >
       bash -c '
-        mina advanced generate-keypair --privkey-path /data/.mina-config/keys/wallet-key
-        chmod -R 0700 /data/.mina-config/keys
-        chmod -R 0600 /data/.mina-config/keys/wallet-key
+        mina advanced generate-keypair --privkey-path /root/.mina-config/keys/wallet-key
+        chmod -R 0700 /root/.mina-config/keys
+        chmod -R 0600 /root/.mina-config/keys/wallet-key
       '
     volumes:
       - './node/mina-config:/root/.mina-config'
@@ -41,7 +41,7 @@ services:
       bash -c '
         mina daemon \
              --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
-             --block-producer-key /data/.mina-config/keys/wallet-key
+             --block-producer-key /root/.mina-config/keys/wallet-key
       '
     # use  --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt for Devnet
     volumes:
