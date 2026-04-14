@@ -1647,7 +1647,7 @@ Full history is not available in Mina, so a newly connected node to the network 
 
 ### cold wallet
 
-A cold wallet is not, and never has been, available on the internet. Cold storage is safer for wallets associated with meaningful stake.
+A wallet is "cold" if the private key is not, and never has been, available on the internet. Cold storage is preferred for wallets associated with meaningful stake as it is harder to hack into cold wallet systems if they never have been on the internet. This could be as easy as generating a key pair on a laptop with the internet turned off or using a hardware wallet, like a [Ledger](https://shop.ledger.com/) device.
 
 ### compressing
 
@@ -1761,7 +1761,7 @@ A mathematical cryptographic function that converts an input of arbitrary length
 
 ### hot wallet
 
-A hot wallet has a private key that is available on a machine that is connected to the internet. To mitigate risk, avoid having hot wallets with substantial stake.
+A wallet is "hot" if the private key is available on a machine that is connected to the internet. To mitigate risk in the case of hackers breaking into their systems, careful block producers avoid having hot wallets with substantial stake on them.
 
 ## I
 
@@ -2781,6 +2781,14 @@ Read on to learn why SNARK workers are needed, how the economic incentives align
 Note: The theory of zk-SNARKs is not covered. Deep knowledge of SNARKs is not required to read this section, but it is helpful to understand in general how SNARKs work and what they are useful for. To learn more, check out this
  [What are zk-SNARKs?](https://minaprotocol.com/blog/what-are-zk-snarks) primer first.
 
+## How Mina Compresses the Blockchain
+
+The Mina protocol is unique because nodes are not required to maintain the full history of the blockchain like other cryptocurrency protocols. By recursively using cryptographic proofs, the Mina protocol effectively compresses the blockchain to constant size. This compression reduces terabytes of data to a few kilobytes.
+
+However, this isn't data encoding or compression in the traditional sense. Mina nodes _compress_ data in the network by generating cryptographic proofs. Node operators play a crucial role in this process by designating themselves as [SNARK workers](/glossary#snark-worker) that generate [zk-SNARKs](/glossary#zk-snark) for transactions that have been added to blocks.
+
+You can connect a SNARK worker to the network or use a SNARK coordinator. [SNARK coordinators](/glossary#snark-coordinator) can be used to coordinate and distribute work to any [SNARK workers](/glossary#snark-worker) that you are running. If you are running a SNARK coordinator, connect the SNARK coordinator to the network, then connect SNARK workers to the SNARK coordinator.
+
 ## Why SNARK Workers?
 
 Mina's unique property is the succinct blockchain. Each block producer, when they propose a new block to the network, must also include a zk-SNARK along with that block. This allows nodes to discard all historical data that's been finalized, and retain just the SNARK. If you are unfamiliar with the Mina protocol, [this video is a good start](https://www.youtube.com/watch?v=eWVGATxEB6M).
@@ -2831,6 +2839,8 @@ Note: To learn more about the details of how this SNARK work scheme evolved, it 
 The key dynamic to understand about SNARK work is:
 
 _Block producers use their block rewards to purchase SNARK work from SNARK workers._
+
+As a SNARK worker, you get to share some of the block rewards for each block that includes your compressed transactions. The block producer is responsible for gathering compressed transactions before including them into a block and is incentivized by the protocol to reward SNARK workers.
 
 There is no protocol involvement in pricing snarks, nor are there any protocol level rewards for SNARK workers to produce snarks. The incentives are purely peer-to-peer, and dynamically established in a public marketplace, aka the snarketplace.
 
@@ -6934,10 +6944,9 @@ These steps might be different for your operating system, if you're connecting t
 
 :::caution
 
-Please be careful when using `--config` argument at archive node bootstrap.
+Using the `--config` parameter ensures genesis accounts are inserted into the database, which is important to avoid gaps in account balances since the archive node stores only incremental changes.
 
-It should be provided only when archive node is connected to
-short lived network created mainly for testing, local development or experimental networks.
+However, inserting genesis accounts can take significant time and resources. You can skip `--config` if you're connecting to devnet or mainnet and starting from an existing archive database dump rather than an empty archive.
 
 *Never* use it on long lived network such as mainnet or devnet
 
@@ -7384,112 +7393,38 @@ url: /node-operators/block-producer-node/getting-started
 
 # Block Producer Getting Started
 
-Welcome to Mina!
+:::note
 
-Get started setting up a Mina node, learn how to [generate a key pair](/node-operators/validator-node/generating-a-keypair) for use with the network, and install the `mina daemon`.
+Before following this guide, complete the Validator Node setup — from [Requirements](/node-operators/validator-node/requirements) through [Connect to Mainnet or Devnet](/node-operators/validator-node/connecting-to-the-network). You should have a synced node and a [key pair](/node-operators/validator-node/generating-a-keypair) before proceeding.
 
-This documentation is for the **Mainnet** release. You can find the releases and version-specific flags on the [Mina Protocol releases](https://github.com/MinaProtocol/mina/releases) page.
+:::
 
-## Block Producer Requirements
+## Start the daemon
 
-**Software**: Supported environments include macOS, Linux (Debian 10, 11 and Ubuntu 20.04 LTS), and any host machine with Docker.
+Run the daemon with the `--block-producer-key` flag pointing to your wallet key:
 
-**Processor**: Only x86-64 CPU architecture is supported.
-
-**Hardware**: Sending and receiving MINA does not require any special hardware.
-
-Running a block producer on the Mina network requires at least:
-
-- 8-core processor
-- 32 GB of RAM
-- 64 GB of free storage
-
-**Network**: At least 1 Mbps connection
-
-**VM Instances**:
-
-o1Labs has tested running nodes on several cloud providers. We recommend the following instances for basic node operator needs. Custom requirements and different cost constraints might require a different instance type.
-
-- AWS [c5.2xlarge](https://www.ec2instances.info/?filter=c5.2xl&region=us-west-2&cost_duration=daily&selected=c5.2xlarge)
-- GCP [c2-standard-8](https://cloud.google.com/compute/docs/machine-types)
-- Azure [Standard_F8s_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-1)
-- Digital Ocean [c-8-16gib](https://cloud.digitalocean.com/droplets/new?size=c-8-16gib)
-
-## Installation
-
-To install the latest [Mainnet **Stable** Release 3.0.3](https://github.com/MinaProtocol/mina/releases/tag/3.0.3), use the installation steps for your environment. Supported environments include macOS, Linux (Debian 10, 11 and Ubuntu 20.04 LTS), and any host machine with Docker.
-
-The binary download is around 1 GB, so the installation might take a few minutes.
-
-To discover and install pre-release (Beta) builds, see the [Mina Releases](https://github.com/MinaProtocol/mina/releases) page on GitHub.
-
-### Ubuntu and Debian
-
-Set up the new Debian `stable` repository and install the latest binary version.
-
-Set up and update the rampup Debian Repository for your platform.
-
-```
-sudo rm /etc/apt/sources.list.d/mina*.list
-echo "deb [trusted=yes] http://packages.o1test.net $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/mina.list
-sudo apt-get update
+```sh
+mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
+            --block-producer-key ~/keys/my-wallet
 ```
 
-Now install the node package.
+To send block rewards to a different account (e.g. a cold wallet), add the `--coinbase-receiver` flag:
 
-```
-sudo apt-get install -y curl unzip mina-mainnet=3.3.0-8c0c2e6
-```
-
-
-To verify the mina daemon installation, run:
-
-- `mina version`
-
-The expected output is `Commit ae112d3a96fe71b4ccccf3c54e7b7494db4898a4`.
-
-### If you are using Ufw, allow these permissions
-
-``` text
-sudo ufw enable
-sudo ufw allow 22
-sudo ufw allow 8302
-sudo ufw allow 3089
+```sh
+mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
+            --block-producer-key ~/keys/my-wallet \
+            --coinbase-receiver $RECEIVER_PUBLICKEY
 ```
 
-### Windows
-Windows is not natively supported. Instead, use the [Docker instructions](getting-started#docker).
+## Verify block production
 
-If you are interested in receiving a grant to develop Mina for Windows, email grants@o1labs.org or reach out in the [Mina Protocol Discord server](https://discord.gg/minaprotocol).
+Run `mina client status` and check the `Block producers running` field:
 
-### macOS
-
-macOS is used by developers and is not officially supporting any pre-built packages.
-
-Instead, use the Docker instructions or build from source.
-
-### Docker
-
-Docker is a cross-platform tool. You can download and install Docker on multiple platforms.
-
-Use the Docker installation instructions for your platform on [Get Docker](https://docs.docker.com/get-docker/). After Docker is installed, follow the [Connect to the Mina Network](/node-operators/validator-node/connecting-to-the-network#start-a-mina-node-with-auto-restart-flows) instructions.
-
-### Build from source
-
-On Linux or macOS operating systems, you can experiment with [Building Mina](https://github.com/MinaProtocol/mina/blob/master/README-dev.md#building-mina) from source code.
-
-Other operating systems haven't been tested thoroughly and might have issues. You can share logs and get troubleshooting help in the [Mina Protocol Discord server](https://discord.gg/minaprotocol).
-
-## Set up port forwarding and firewalls
-
-If you are running a firewall, you must allow traffic on TCP port 8302.
-
-Unless the `-external-ip YOUR_IP` flag is provided, the daemon uses HTTPS (443) and HTTP (80) to determine its own IP address.
-
-Enable port forwarding on your router to allow inbound traffic to the following ports through your **external** IP address:
-
-- TCP port `8302`
-- To use the GraphQL service, expose TCP port `3085`
+```text
+Block producers running:                       1 (B62q...)
+Coinbase receiver:                             Block producer
+Next block will be produced in:                in 7.077h for slot: ...
+```
 
 ---
 url: /node-operators/block-producer-node/hot-cold-block-production
@@ -7497,74 +7432,68 @@ url: /node-operators/block-producer-node/hot-cold-block-production
 
 # Hot and Cold Block Production
 
-Block production is a complex process and requires a node to connect to the internet. 
+Block production requires a node connected to the internet, which means the block producer's private key is exposed on an online machine. To mitigate this risk, Mina supports a hot/cold wallet pattern:
 
-- A wallet is "hot" if the private key is available on a machine that is connected to the internet. To mitigate risk in the case of hackers breaking into their systems, careful block producers avoid having hot wallets with substantial stake on them.
-- A wallet is "cold" if the private key is not, and never has been, available on the internet. Cold storage is preferred for wallets associated with meaningful stake as it is harder to hack into cold wallet systems if they never have been on the internet. This could be as easy as generating a key pair on a laptop with the internet turned off or using a hardware wallet, like a [Ledger](https://shop.ledger.com/) device.
+- A **[hot wallet](/glossary#hot-wallet)** has its private key on an internet-connected machine. It is used to run the block producer node but should hold minimal funds.
+- A **[cold wallet](/glossary#cold-wallet)** has its private key stored offline (e.g. generated on an air-gapped laptop or a hardware wallet like [Ledger](https://shop.ledger.com/)). It holds the majority of your stake.
 
-Mina protocol requires block producers to stake using a hot wallet. However, mechanisms are in place so that block producers can keep the vast majority of their stake in a cold wallet. Produced blocks, and all the earnings associated with the produced blocks, occur by using delegation from this cold wallet to a hot one.
+By delegating from your cold wallet to your hot wallet, you can produce blocks — and earn all associated rewards — while keeping the bulk of your funds in cold storage.
 
-You can produce blocks effectively with the majority of your stake starting on and remaining on a cold wallet.
+## Setup
 
-## Prerequisites
+You need at least two accounts: one cold wallet and one hot wallet. See [Generating a Key Pair](/node-operators/validator-node/generating-a-keypair) for key generation instructions.
 
-Before running your block producer, you'll need at least two accounts: one cold wallet and one hot wallet. See [Generating a Key Pair](/node-operators/validator-node/generating-a-keypair). 
+### 1. Create a hot wallet
 
-### Create a hot wallet account
-
-To create a hot wallet key pair, you cannot use the Ledger or any other hardware security module (HSM) hardware unit for this key pair.
+Generate a key pair on your block producer machine. Do **not** use a Ledger or other hardware security module (HSM) for this key — the private key must be accessible to the mina daemon.
 
 Take note of your hot wallet public key.
 
-### Fill your hot wallet with some dust
+### 2. Fund the hot wallet
 
-Your hot wallet must be present in the consensus ledger before it can be used for staking. 
+Your hot wallet must be present in the consensus ledger before it can be used for staking.
 
-- If your hot wallet address is present in the genesis ledger, then no further action is needed. 
-- If not, you must acquire at least enough MINA tokens to cover the account creation fee and send those tokens to your hot wallet address.
+- If your hot wallet address is present in the genesis ledger, no further action is needed.
+- Otherwise, send at least enough MINA to cover the account creation fee to your hot wallet address.
 
-### Create a cold wallet account
+### 3. Create a cold wallet
 
-To generate a cold wallet key pair, use the most secure mechanism for generating keys, preferably on a machine that is disconnected from the internet.
+Generate a key pair using the most secure method available — preferably on a machine disconnected from the internet, or on a hardware wallet.
 
-### Configure your cold wallet
+### 4. Fund the cold wallet
 
-Your cold wallet must be present in the consensus ledger before its stake can be counted when delegated to your hot wallet. 
+Your cold wallet must be present in the consensus ledger before its stake can be counted when delegated to your hot wallet.
 
-- If your cold wallet address is present in the genesis ledger, then no further action is needed. 
-- If not, you must acquire enough MINA tokens to meaningfully participate in consensus and send those tokens to this cold wallet address.
+- If your cold wallet address is present in the genesis ledger, no further action is needed.
+- Otherwise, send enough MINA to meaningfully participate in consensus to your cold wallet address.
 
-### Delegate your cold wallet to your hot wallet
+### 5. Delegate from cold to hot
 
-Next, ensure that you have delegated your cold wallet account to your hot wallet account. 
+Delegate your cold wallet's stake to your hot wallet:
 
-- If you've set up your account to delegate to the correct spot in the genesis ledger, then no further action is needed. 
-- If not, you can delegate by using the `mina client delegate-stake` command if your key was generated on a computer. Otherwise, follow the delegate instructions on the [Mina ledger README](https://github.com/jspada/ledger-app-mina/tree/v1.0.0-beta.2).
+```sh
+mina client delegate-stake \
+  --sender $COLD_PUBLIC_KEY \
+  --receiver $HOT_PUBLIC_KEY
+```
 
-## Block Production
+If your cold wallet is on a Ledger, follow the delegate instructions in the [Mina Ledger app README](https://github.com/jspada/ledger-app-mina/tree/v1.0.0-beta.2).
 
-Follow the start up a node instructions in [Connecting to the Network](/node-operators/validator-node/connecting-to-the-network) using your hot wallet key.
+### 6. Start producing blocks
 
-## Protocol Details
+Follow the [Getting Started](/node-operators/block-producer-node/getting-started) guide using your hot wallet key as the `--block-producer-key`.
 
-You may be thinking: Why can't I create blocks directly from a secure enclave or other hardware security module (HSM) device in Mina's protocol?
+## Why can't I use an HSM directly?
 
-Two components of block production require using a private key in interesting ways: 
+You may wonder why Mina can't let you produce blocks directly from a secure enclave or HSM. Two components of block production require the private key in ways that make this impractical:
 
-- Finding eligible slots to produce blocks in
-- Creating the blockchain SNARK
+### Finding eligible slots
 
-Creating the SNARK within the secure hardware is extremely difficult and likely impossible to do quickly enough for the protocol with today's technology.
-
-### Finding eligible slots to produce blocks in (out of the SNARK)
-
-A block producer can determine if they've won a slot by evaluating a VRF (verifiable random function) using their private key. The VRF needs to be evaluated for your account and every account that delegates to you for all slots within an epoch. 
+A block producer determines slot eligibility by evaluating a VRF (verifiable random function) with their private key. The VRF must be evaluated for your account and every account that delegates to you, for all slots within an epoch.
 
 ### Creating the blockchain SNARK
 
-When a block producer wins a slot, in addition to just creating and broadcasting a block, a block producer must create a new SNARK proof that proves that the new block is a valid extension of the existing chain. 
-
-The SNARK proof uses the private key when it embeds the VRF information into the proof. This proof is in place of a simple signature that other protocols ask their validators to perform. Creating this SNARK proof is computationally expensive and relies on a lot of advanced cryptography.
+When a block producer wins a slot, they must create a SNARK proof that the new block is a valid extension of the existing chain. This proof embeds VRF information using the private key — replacing the simple signature that other protocols use. Creating this proof is computationally expensive and relies on advanced cryptography that is extremely difficult, and likely impossible, to perform quickly enough inside today's secure hardware.
 
 ---
 url: /node-operators/block-producer-node
@@ -8013,6 +7942,12 @@ The **Uptime Performance Score** is an important factor for selecting the public
 You may run more than one node with the same block producer key if you want to increase your chances of remaining online.
 :::
 
+:::tip
+
+To participate in the delegation program, your block producer node must stay online and connected to the network at all times. If you cannot maintain uptime, consider [delegating your stake](/node-operators/validator-node/staking-and-snarking) instead.
+
+:::
+
 **Uptime Performance** is the percentage over a time period in which a block producer node is online and operational.
 
 The time period of Mina Foundation's delegation programs is 90 days.
@@ -8217,39 +8152,23 @@ FILE_LOG_LEVEL=Debug
 url: /node-operators/faq
 ---
 
-# Node Operators FAQ
+# FAQ
 
-#### What are node operators?
+## General
 
-Node operators are people who run mina nodes. Mina node operators participate in consensus to create new blocks and help compress data by generating zk-SNARKs.
-
-See [Node Operators](/node-operators).
-
-#### Where can I try out the Mainnet?
-
-See [Connect to Mainnet](/node-operators/validator-node/connecting-to-the-network) to learn more and get started. 
-
-#### Where can I try out Devnet?
-
-See [Connect to Mainnet or Devnet](/node-operators/validator-node/connecting-to-the-network) to learn more and get started. 
-
-#### What is Mina Signer?
+### What is Mina Signer?
 
 The [Mina Signer](https://github.com/o1-labs/o1js/blob/main/src/mina-signer/README.md) NodeJS SDK allows you to sign strings, payments, and delegations using Mina's key pairs for various specified networks.
 
 The Mina Signer supersedes the deprecated Client SDK.
 
-## Troubleshooting
-
-For troubleshooting common issues with syncing, networking, block production, SNARK workers, and logging, see the dedicated [Troubleshooting](/node-operators/troubleshooting) guide.
-
 ## SNARKs and SNARK Workers
 
-#### If I run a SNARK worker, how do I get paid for SNARKs that I generate?
+### If I run a SNARK worker, how do I get paid for SNARKs that I generate?
 
 Block producers (the validators who add new blocks to the blockchain) are required to buy SNARKs from the network (called the snarketplace) and pay out some of their block reward as fees to the SNARK workers who generated SNARKs. This workflow creates a secondary incentive mechanism in the network to reward nodes that help compress transactions.
 
-#### Is generating SNARKs similar to Proof-of-Work (PoW) mining?
+### Is generating SNARKs similar to Proof-of-Work (PoW) mining?
 
 No, they are different in several ways:
 
@@ -8258,19 +8177,19 @@ No, they are different in several ways:
 - SNARK work is not directly involved in consensus. SNARK workers play no role in determining the next state of the blockchain. Their role is to simply generate SNARKs of transactions observed in the network
 - As a SNARK worker, there is no requirement for uptime. PoW miners need to run their rigs non-stop to ensure they don't miss out on a potential block. SNARK workers can come online and offline as they please — it is more like Uber, where there is always be work to be done, and nobody needs to say ahead of time when they want to work.
 
-#### Why have my SNARKs not been included? (A.K.A. How should I price my SNARKs?)
+### Why have my SNARKs not been included? (A.K.A. How should I price my SNARKs?)
 
 Even though your SNARK worker might be producing SNARKs at a breakneck pace, if someone else produces a cheaper proof for a particular job you have already completed, their SNARK is preferred due to its lower fee.
 
 Pricing your SNARKs is a delicate balance between the cost of compute, the market environment (demand for SNARKs), your SNARK throughput, and the speed at which each of your SNARK worker processes can produce SNARKs. Sometimes, it might even be economically prudent to turn off your SNARK worker altogether until the market improves.
 
-#### Will SNARK workers require more storage and computing power over time? What about compared to Mina full nodes?
+### Will SNARK workers require more storage and computing power over time? What about compared to Mina full nodes?
 
 SNARK workers will not need more storage or computing power over time. SNARK workers simply query the mempool for pending transactions requiring SNARK proofs, and then generate said proof -- this does not require syncing historical data. In addition, the underlying proving cost of SNARK work doesn't get more expensive with time.
 
 If we are comparing SNARK worker nodes with full nodes on Mina, then yes SNARK workers benefit from specialized hardware as generating SNARK proofs can be compute intensive. Again, however, with the explosion of SNARK research, this is likely to change and become more accessible to consumer hardware.
 
-#### What is the difference between a SNARK, a SNARK proof, and SNARK work?
+### What is the difference between a SNARK, a SNARK proof, and SNARK work?
 
 SNARKs are a very overloaded term. When you read **SNARK**, it could be referring to the concept of succinct non-interactive proof systems (for example, SNARKs vs Bulletproofs), the specific technical implementation of the proof system (for example, the construction, the circuit, or the prover), or the individual instance of the proof itself (for example, the blockchain SNARK).
 
@@ -8281,15 +8200,15 @@ The general terminology is:
 - SNARK proof: an individual proof that is generated by a SNARK prover
 - SNARK work: a Mina protocol data structure that is a wrapper around one or two SNARK proofs and a price to be paid to the SNARK worker that generated the proof or proofs 
 
-#### Is there any concern about a single large SNARK worker [dumping](<https://en.wikipedia.org/wiki/Dumping_(pricing_policy)>) work in the snarketplace, and then raising prices after monopolizing the market?
+### Is there any concern about a single large SNARK worker dumping work in the snarketplace, and then raising prices after monopolizing the market?
 
-In economics, there is a pricing strategy called predatory pricing (or dumping) where one supplier of a product seeks to exhaust competing suppliers in the market by undercutting the market price. The supplier prices their goods much cheaper than the market rate in order to drive out competitors, even if it means incurring short-term losses. After the market has been cleared, the dominant supplier then increases prices [above competitive market rates](https://en.wikipedia.org/wiki/Supracompetitive_pricing), as competition has been extinguished.
+In economics, there is a pricing strategy called [predatory pricing (or dumping)](<https://en.wikipedia.org/wiki/Dumping_(pricing_policy)>) where one supplier of a product seeks to exhaust competing suppliers in the market by undercutting the market price. The supplier prices their goods much cheaper than the market rate in order to drive out competitors, even if it means incurring short-term losses. After the market has been cleared, the dominant supplier then increases prices [above competitive market rates](https://en.wikipedia.org/wiki/Supracompetitive_pricing), as competition has been extinguished.
 
 However, this strategy is effective only in markets where there are high barriers to entry. Meaning, competitors who were crowded out in the predation stage are unable to rejoin the market.
 
 This is not the case for SNARK work because the barriers to entry are low. Anyone who has spare compute can join the snarketplace and produce as little as one SNARK work and profit on that unit of work. The only barrier to entry is the initial capital expense on hardware, but hardware requirements are low so that users with spare equipment can come online and participate. If any SNARK worker succeeds in driving out the market and increases prices, newcomers are anticipated to reappear and drive prices back down.
 
-#### Does speed of producing SNARKs matter? If my computer is slower, will I be at a disadvantage?
+### Does speed of producing SNARKs matter? If my computer is slower, will I be at a disadvantage?
 
 No, provided that the SNARK work produced is still required by block producers, it doesn't matter who produced it first — only the price matters to block producers. The caveat here is that earlier inclusion into the SNARK mempool is obviously beneficial, as block producers are likely to "see" the work earlier.
 
@@ -8297,11 +8216,11 @@ However, you can envision a scenario where a set of SNARK workers are favored be
 
 There is also a threshold at which time becomes a factor, but this scenario applies only to very underpowered devices. 
 
-#### Will a full node need to store all intermediate SNARK proofs? Will the storage requirements grow linearly with blocks?
+### Will a full node need to store all intermediate SNARK proofs? Will the storage requirements grow linearly with blocks?
 
 No, when a new block is generated, Mina computes the proof recursively over the prior proof and the new block. This is the advantage of recursive composition -- at any given time, nodes need to store only the most recent proof. Intermediate proofs are not needed. For historical clarity on how this architecture emerged, see the [Using zkSNARKs to create a blockless blockchain](https://www.youtube.com/watch?v=eWVGATxEB6M) talk.
 
-#### How do you control or limit the number of threads that SNARK workers use?
+### How do you control or limit the number of threads that SNARK workers use?
 
 When you start the mina daemon, use the `-snark-worker-parallelism` flag. This flag is equivalent to setting `OMP_NUM_THREADS`, but doesn't affect block production.
 
@@ -8313,7 +8232,7 @@ url: /node-operators
 
 The [Mina Protocol](/mina-protocol) is a layer 1 blockchain that is secured by [proof of stake consensus](/mina-protocol/proof-of-stake).
 
-
+Node operators are people who run Mina nodes. Mina node operators participate in consensus to create new blocks and help compress data by generating zk-SNARKs.
 
 ## Mina Node Roles
 
@@ -8357,6 +8276,8 @@ This section describes how to run each node role and where to find the operation
 ### Reference
 - [Mina CLI Reference](/node-operators/reference/mina-cli-reference) - Guide to CLI interactions with Mina networks
 - [Mina Signer](/node-operators/reference/mina-signer) - NodeJS SDK for signing
+
+### Support
 - [Troubleshooting](/node-operators/troubleshooting) - Solutions to common problems
 - [FAQ](/node-operators/faq) - Frequently asked questions
 
@@ -10784,17 +10705,19 @@ This section describes how to run a seed peer on the Mina protocol.
 url: /node-operators/snark-workers/docker-compose
 ---
 
-# Docker Compose Snark Workers
+# Docker Compose SNARK Workers
 
-This example demonstrates how to run a Mina Snark Coordinator and a Snark Worker using Docker Compose for the Devnet network. The Docker Compose setup includes a Mina Snark Coordinator node, a Snark Worker node, a script to generate a libp2p key, and another script to generate a wallet key.
+This example runs a SNARK coordinator and a SNARK worker together using Docker Compose. It includes a one-time init container that generates a wallet key.
 
-Copy and paste the provided configuration into a `docker-compose.yml` file. Then run `docker compose up -d` to start the services, and use `docker compose logs -f` to monitor the logs.
+Save the following as `docker-compose.yml`, then start with `docker compose up -d`. Monitor logs with `docker compose logs -f`.
+
+<Tabs groupId="network">
+<TabItem value="mainnet" label="Mainnet">
 
 ```yaml
 services:
   generate_wallet_key:
     image: 'minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet'
-    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet' # Use this image for Devnet
     environment:
       MINA_PRIVKEY_PASS: PssW0rD
     entrypoint: []
@@ -10808,7 +10731,6 @@ services:
       - './node/mina-config:/root/.mina-config'
   mina_snark_coordinator:
     image: 'minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet'
-    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet' # Use this image for Devnet
     restart: always
     environment:
       MINA_PRIVKEY_PASS: PssW0rD
@@ -10827,7 +10749,6 @@ services:
              --run-snark-coordinator $(cat /root/.mina-config/keys/wallet-key.pub) \
              --work-selection rand
       '
-    # use  --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt for Devnet
     volumes:
       - './node/mina-config:/root/.mina-config'
     ports:
@@ -10837,7 +10758,6 @@ services:
         condition: service_completed_successfully
   mina_snark_worker:
     image: 'minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet'
-    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet' # Use this image for Devnet
     restart: always
     entrypoint: []
     command: >
@@ -10855,103 +10775,176 @@ services:
         condition: service_healthy
 ```
 
+</TabItem>
+<TabItem value="devnet" label="Devnet">
+
+```yaml
+services:
+  generate_wallet_key:
+    image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet'
+    environment:
+      MINA_PRIVKEY_PASS: PssW0rD
+    entrypoint: []
+    command: >
+      bash -c '
+        mina advanced generate-keypair --privkey-path /root/.mina-config/keys/wallet-key
+        chmod -R 0700 /root/.mina-config/keys
+        chmod -R 0600 /root/.mina-config/keys/wallet-key
+      '
+    volumes:
+      - './node/mina-config:/root/.mina-config'
+  mina_snark_coordinator:
+    image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet'
+    restart: always
+    environment:
+      MINA_PRIVKEY_PASS: PssW0rD
+      MINA_CLIENT_TRUSTLIST: "0.0.0.0/0"
+    healthcheck:
+      test: ["CMD-SHELL", "mina client status"]
+      interval: 60s
+      timeout: 10s
+      retries: 100
+    entrypoint: []
+    command: >
+      bash -c '
+        mina daemon \
+             --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt \
+             --snark-worker-fee 0.001 \
+             --run-snark-coordinator $(cat /root/.mina-config/keys/wallet-key.pub) \
+             --work-selection rand
+      '
+    volumes:
+      - './node/mina-config:/root/.mina-config'
+    ports:
+      - '8302:8302'
+    depends_on:
+      generate_wallet_key:
+        condition: service_completed_successfully
+  mina_snark_worker:
+    image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet'
+    restart: always
+    entrypoint: []
+    command: >
+      bash -c '
+        mina internal \
+             snark-worker \
+             --daemon-address \
+             mina_snark_coordinator:8301 \
+             --proof-level full
+      '
+    volumes:
+      - './node/mina-config:/root/.mina-config'
+    depends_on:
+      mina_snark_coordinator:
+        condition: service_healthy
+```
+
+</TabItem>
+</Tabs>
+
+To scale additional workers, duplicate the `mina_snark_worker` service with a different name (e.g. `mina_snark_worker_2`).
+
 ---
 url: /node-operators/snark-workers/getting-started
 ---
 
-# SNARK Workers Getting Started 
+# SNARK Workers Getting Started
 
-The Mina protocol is unique because nodes are not required to maintain the full history of the blockchain like other cryptocurrency protocols. By recursively using cryptographic proofs, the Mina protocol effectively compresses the blockchain to constant size. This compression reduces terabytes of data to a few kilobytes.
+:::note
 
-However, this isn't data encoding or compression in the traditional sense. Mina nodes _compress_ data in the network by generating cryptographic proofs. Node operators play a crucial role in this process by designating themselves as [SNARK workers](/glossary#snark-worker) that generate [zk-SNARKs](/glossary#zk-snark) for transactions that have been added to blocks. 
+Before following this guide, complete the Validator Node setup — from [Requirements](/node-operators/validator-node/requirements) through [Connect to Mainnet or Devnet](/node-operators/validator-node/connecting-to-the-network). You should have a synced node and a [key pair](/node-operators/validator-node/generating-a-keypair) before proceeding.
 
-You can connect a SNARK worker to the network or use a SNARK coordinator. [SNARK coordinators](/glossary#snark-coordinator) can be used to coordinate and distribute work to any [SNARK workers](/glossary#snark-worker) that you are running. If you are running a SNARK coordinator, connect the SNARK coordinator to the network, then connect SNARK workers to the SNARK coordinator.
+:::
 
+There are two modes for running SNARK work:
 
-## SNARK Coordinator Requirements
+- **Embedded worker** — the daemon runs a single SNARK worker internally. Simpler to set up, no external processes needed.
+- **Coordinator with external workers** — the daemon runs a SNARK coordinator that distributes work to one or more external SNARK worker processes. Use this to scale across multiple machines or cores.
 
-**Software**: Supported environments include macOS, Linux (Debian 10, 11, 12 and Ubuntu 20.04 LTS), and any host machine with Docker. 
+In both modes, the daemon also participates in the network as a normal validator.
 
-**Processor**: Only x86-64 CPU architecture is supported.
+## Embedded SNARK worker
 
-**Hardware**: Sending and receiving MINA does not require any special hardware. 
-
-Running a SNARK coordinator on the Mina network requires at least:
-
-- 8-core processor
-- 32 GB of RAM
-- 64 GB of free storage
-
-**Network**: At least 1 Mbps connection
-
-## SNARK Worker Requirements
-
-**Software**: Supported environments include macOS, Linux (Debian 10, 11, 12 and Ubuntu 20.04 LTS), and any host machine with Docker. 
-
-**Processor**: Only x86-64 CPU architecture is supported.
-
-**Hardware**: Sending and receiving MINA does not require any special hardware. 
-
-Running a SNARK worker on the Mina network requires at least:
-
-- 16-core processor with 32 threads
-- 32 GB of RAM
-- 64 GB of free storage
-
-**Network**: At least 1 Mbps connection
-
-## Running a SNARK coordinator
-
-To start a SNARK coordinator, run a mina daemon with these additional flags:
+Run the daemon with `--run-snark-worker` to produce SNARK proofs directly within the daemon process:
 
 ```sh
---run-snark-coordinator <PUBLICKEY>\ --snark-worker-fee <FEE> --work-selection seq
+mina daemon \
+    --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
+    --run-snark-worker $SNARK_WORKER_PUBLICKEY \
+    --snark-worker-fee 0.001 \
+    --work-selection seq
 ```
 
-## Running a SNARK worker connected to a SNARK coordinator
+| Flag | Description |
+|--|--|
+| `--run-snark-worker` | Public key to receive SNARK work fees |
+| `--snark-worker-fee` | Fee (in MINA) to charge per SNARK proof |
+| `--work-selection` | Work selection method: `seq`, `rand`, or `roffset` |
+| `--snark-worker-parallelism` | Number of threads for SNARK work (does not affect block production) |
 
-To start a SNARK-worker connected to a SNARK-coordinator, run `mina` with these flags:
+## Coordinator with external workers
+
+### Start the coordinator
+
+Run the daemon with `--run-snark-coordinator`. The coordinator distributes work to external SNARK worker processes, propagates the generated proofs to the network, and sets the public key that receives SNARK work fees from those workers:
 
 ```sh
-internal snark-worker --proof-level full --shutdown-on-disconnect false --daemon-address <snark coordinator IP and port - IP:port>
+mina daemon \
+    --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
+    --run-snark-coordinator $SNARK_WORKER_PUBLICKEY \
+    --snark-worker-fee 0.001 \
+    --work-selection seq
 ```
 
-## Running a SNARK-worker
+| Flag | Description |
+|--|--|
+| `--run-snark-coordinator` | Public key to receive SNARK work fees from external workers |
+| `--snark-worker-fee` | Fee (in MINA) to charge per SNARK proof |
+| `--work-selection` | Work selection method: `seq`, `rand`, or `roffset` |
 
-To start a SNARK-worker, run `mina daemon` with these flags:
+### Connect workers to the coordinator
+
+:::caution
+
+The protocol between the coordinator and workers is not secure. Only run workers on the same intranet as the coordinator — do not expose the coordinator port to the public internet.
+
+:::
+
+On each worker machine, run:
 
 ```sh
---run-snark-worker <PUBLICKEY>\ --snark-worker-fee <FEE> --work-selection <seq|rand|roffset>
+mina internal snark-worker \
+    --proof-level full \
+    --shutdown-on-disconnect false \
+    --daemon-address <COORDINATOR_IP:PORT>
 ```
 
-Use the `--snark-worker-parallelism` flag to set the number of threads used in snark working, this does not affect block production.
+The default coordinator port is `8301`. Use `--snark-worker-parallelism` on the worker to set the number of threads used for SNARK work.
+
+For a Docker Compose example that sets up a coordinator and worker together, see [Docker Compose Example](/node-operators/snark-workers/docker-compose).
 
 ## Related
 
-- [Staking and Snarking](/node-operators/validator-node/staking-and-snarking) -- Overview of staking, delegation, and how SNARK workers fit into the Mina ecosystem
-- [Mina CLI Reference](/node-operators/reference/mina-cli-reference) -- Full `mina daemon` command reference, including `daemon.json` configuration options
-- [FAQ: SNARKs and SNARK Workers](/node-operators/faq#snarks-and-snark-workers) -- Common questions about SNARK pricing, fees, and performance
+- [Mina CLI Reference](/node-operators/reference/mina-cli-reference) — Full `mina daemon` command reference
+- [FAQ: SNARKs and SNARK Workers](/node-operators/faq#snarks-and-snark-workers) — Common questions about SNARK pricing, fees, and performance
 
 ---
 url: /node-operators/snark-workers
 ---
 
-# About SNARK Workers
+# SNARK Workers
 
-While most protocols have just one primary group of node operators (often called miners, validators, or block producers), Mina has a second group — the **SNARK worker**.
+While most protocols have one primary group of node operators (miners, validators, or block producers), Mina has a second group — **SNARK workers**. These nodes produce [zk-SNARK](/glossary#zk-snark) proofs of transactions, which keep the Mina blockchain at a constant size instead of growing over time.
 
-SNARK workers are integral to the Mina network's health because these nodes are responsible for snarking, or producing SNARK proofs, of transactions in the network. By producing these proofs, snark workers help maintain the succinctness of the Mina blockchain. A SNARK coordinator can also be used to coordinate work across a pool of SNARK workers.  
+A **SNARK coordinator** can distribute work across a pool of SNARK workers.
 
-Read on to learn why SNARK workers are needed, how the economic incentives align, and operational details of performing SNARK work. Feel free to click through to any of the sections that are most relevant to your needs.
+Deep knowledge of zk-SNARKs is not required to run a SNARK worker, but for background see the [What are zk-SNARKs?](https://minaprotocol.com/blog/what-are-zk-snarks) primer.
 
-Note: The theory of zk-SNARKs is not covered. Deep knowledge of SNARKs is not required to read this section, but it is helpful to understand in general how SNARKs work and what they are useful for. To learn more, check out this
- [What are zk-SNARKs?](https://minaprotocol.com/blog/what-are-zk-snarks) primer first.
+## Next steps
 
- ## SNARK Workers
-
-This section describes how to run SNARK coordinators and SNARK workers on the Mina Protocol.
-
-- [Getting Started](snark-workers/getting-started) - How to install and get started running a SNARK worker.
+- [Getting Started](/node-operators/snark-workers/getting-started) — Run a SNARK worker or coordinator
+- [Docker Compose Example](/node-operators/snark-workers/docker-compose) — Run a coordinator and worker with Docker Compose
+- [FAQ: SNARKs and SNARK Workers](/node-operators/faq#snarks-and-snark-workers) — Common questions about SNARK pricing, fees, and performance
 
 ---
 url: /node-operators/troubleshooting
@@ -11340,20 +11333,13 @@ url: /node-operators/validator-node/connecting-to-the-network
 
 # Connect to Mainnet or Devnet
 
-Use this guide to install Mina, connect a node to either network, and verify connectivity.
+Use this guide to connect a node to either network and verify connectivity.
 
-## High-Level Overview
+If you're using Ubuntu or Debian, first follow the [installation guide](/node-operators/validator-node/installing-on-ubuntu-and-debian), then return to this page for node startup.
 
-1. Install or update your Mina daemon for the target network.
-2. Start a standalone Mina node.
-3. Configure auto-restart workflows.
-4. Check connectivity and monitor sync status.
+## Standalone node
 
-## Install mina node
-
-If you're using ubuntu, follow [installation guide](/node-operators/validator-node/installing-on-ubuntu-and-debian), then return to this page for node startup.
-
-## Start a standalone mina node
+### Start
 
 **Note:** A known issue exists with the Hetzner hosting provider. If you are using Hetzner, follow the [Networking troubleshooting](/node-operators/troubleshooting#my-hosting-provider-is-warning-me-abuse-message-netscan-detected) guidance before starting a node.
 
@@ -11362,13 +11348,6 @@ If you're using ubuntu, follow [installation guide](/node-operators/validator-no
 
 ```sh
 mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt
-```
-
-If you have stake and want to produce blocks:
-
-```sh
-mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
-            --block-producer-key ~/keys/my-wallet
 ```
 
 </TabItem>
@@ -11380,30 +11359,24 @@ Devnet is for testing and experimentation. MINA on Devnet has no real value.
 mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt
 ```
 
-If you want block production on Devnet, use a producer key:
-
-```sh
-mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt \
-            --block-producer-key ~/keys/my-wallet
-```
-
 </TabItem>
 </Tabs>
 
-For help solving first-run issues, see [Troubleshooting](/node-operators/troubleshooting).
+### Stop
 
-## Stop the standalone node
+In a new terminal, run:
 
-Press `Ctrl+C` in the terminal running `mina daemon`.
+```sh
+mina client stop-daemon
+```
 
-## Start a mina node with auto-restart flows
+## Running mina node as a service
 
-After validating the standalone run, configure your node to keep running after logout and restart on reboot.
+Configure your node to keep running after logout and restart on reboot.
 
-<Tabs groupId="network">
-<TabItem value="mainnet" label="Mainnet">
+### Start the service
 
-<Tabs groupId="install-method-mainnet">
+<Tabs groupId="install-method">
 <TabItem value="systemd" label="Systemd">
 
 Create `~/.mina-env` and set options as needed:
@@ -11412,7 +11385,6 @@ Create `~/.mina-env` and set options as needed:
 MINA_PRIVKEY_PASS="My_V3ry_S3cure_Password"
 LOG_LEVEL=Info
 FILE_LOG_LEVEL=Debug
-EXTRA_FLAGS=" --block-producer-key <BLOCK_PRODUCER_KEY_PATH>"
 ```
 
 Start and enable the service:
@@ -11427,35 +11399,65 @@ sudo loginctl enable-linger
 </TabItem>
 <TabItem value="docker" label="Docker">
 
-Prepare directories and key permissions:
+Prepare directories:
 
 ```sh
 cd ~
-chmod 700 ~/keys
-chmod 600 ~/keys/my-wallet
-mkdir ~/.mina-config
+mkdir -p ~/.mina-config
 ```
 
 Create `~/.mina-env`:
+
+<Tabs groupId="network">
+<TabItem value="mainnet" label="Mainnet">
 
 ```sh
 export MINA_PRIVKEY_PASS="My_V3ry_S3cure_Password"
 LOG_LEVEL=Info
 FILE_LOG_LEVEL=Debug
-EXTRA_FLAGS=" --block-producer-key <BLOCK_PRODUCER_KEY_PATH>"
 PEER_LIST_URL=https://bootnodes.minaprotocol.com/networks/mainnet.txt
 ```
 
-Run the container:
+</TabItem>
+<TabItem value="devnet" label="Devnet">
 
 ```sh
-docker run --name mina -d \
+export MINA_PRIVKEY_PASS="My_V3ry_S3cure_Password"
+LOG_LEVEL=Info
+FILE_LOG_LEVEL=Debug
+PEER_LIST_URL=https://bootnodes.minaprotocol.com/networks/devnet.txt
+```
+
+</TabItem>
+</Tabs>
+
+Run the container:
+
+<Tabs groupId="network">
+<TabItem value="mainnet" label="Mainnet">
+
+```sh
+docker run --name mina-node -d \
 -p 8302:8302 \
 --restart=always \
---mount "type=bind,source=$(pwd)/.mina-env,dst=/entrypoint.d/mina-env,readonly" \
---mount "type=bind,source=$(pwd)/keys,dst=/keys,readonly" \
---mount "type=bind,source=$(pwd)/.mina-config,dst=/root/.mina-config" \
+-v $(pwd)/.mina-env:/entrypoint.d/mina-env:ro \
+-v $(pwd)/keys:/keys:ro \
+-v $(pwd)/.mina-config:/root/.mina-config \
 minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet \
+daemon
+```
+
+</TabItem>
+<TabItem value="devnet" label="Devnet">
+
+```sh
+docker run --name mina-node -d \
+-p 8302:8302 \
+--restart=always \
+-v $(pwd)/.mina-env:/entrypoint.d/mina-env:ro \
+-v $(pwd)/keys:/keys:ro \
+-v $(pwd)/.mina-config:/root/.mina-config \
+gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet \
 daemon
 ```
 
@@ -11463,99 +11465,22 @@ daemon
 </Tabs>
 
 </TabItem>
-<TabItem value="devnet" label="Devnet">
+</Tabs>
 
-<Tabs groupId="install-method-devnet">
-<TabItem value="native" label="Native">
+### Stop the service
 
-Generate a libp2p keypair:
-
-```sh
-mkdir -p .mina-config/keys
-export MINA_LIBP2P_PASS="My_V3ry_S3cure_Password"
-mina libp2p generate-keypair -privkey-path .mina-config/keys/libp2p-key
-```
-
-(Optional) generate a wallet keypair for block production:
+<Tabs groupId="install-method">
+<TabItem value="systemd" label="Systemd">
 
 ```sh
-export MINA_PRIVKEY_PASS="My_V3ry_S3cure_Password"
-mina-generate-keypair --privkey-path .mina-config/keys/my-wallet
-```
-
-Start the node:
-
-```sh
-mina daemon --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt \
-            --libp2p-keypair .mina-config/keys/libp2p-key
+systemctl --user stop mina
 ```
 
 </TabItem>
 <TabItem value="docker" label="Docker">
 
-Set key permissions:
-
 ```sh
-chmod 700 .mina-config/keys
-chmod 600 .mina-config/keys/libp2p-key
-chmod 600 .mina-config/keys/my-wallet
-```
-
-Create `.mina-env`:
-
-```sh
-export MINA_PRIVKEY_PASS="My_V3ry_S3cure_Password"
-export MINA_LIBP2P_PASS="My_V3ry_S3cure_Password"
-LOG_LEVEL=Info
-FILE_LOG_LEVEL=Debug
-EXTRA_FLAGS=" --block-producer-key /root/.mina-config/keys/my-wallet --libp2p-keypair /root/.mina-config/keys/libp2p-key"
-PEER_LIST_URL=https://bootnodes.minaprotocol.com/networks/devnet.txt
-```
-
-Run the container:
-
-```sh
-docker run --name mina -d \
-       -p 8302:8302 \
-       --restart=always \
-       -v $(pwd)/.mina-config:/root/.mina-config \
-       -v $(pwd)/.mina-env:/entrypoint.d/mina-env \
-       gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet \
-       daemon
-```
-
-</TabItem>
-</Tabs>
-
-</TabItem>
-</Tabs>
-
-## Check your connectivity
-
-<Tabs groupId="install-runtime">
-<TabItem value="docker" label="Docker">
-
-```sh
-docker logs -f mina
-```
-
-```sh
-docker exec -it mina mina client status
-```
-
-</TabItem>
-<TabItem value="system" label="Systemd/Native">
-
-```sh
-systemctl --user status mina
-```
-
-```sh
-journalctl --user -u mina -n 1000 -f
-```
-
-```sh
-mina client status
+docker stop mina-node
 ```
 
 </TabItem>
@@ -11563,19 +11488,32 @@ mina client status
 
 ## Monitor the mina client status
 
-Run in a separate terminal:
+<Tabs groupId="install-runtime">
+<TabItem value="native" label="Native/Systemd">
 
 ```sh
 mina client status
 ```
 
-When first starting a node, it can take up to a minute before `mina client status` connects to the daemon.
+</TabItem>
+<TabItem value="docker" label="Docker">
 
-Expected progression:
+```sh
+docker exec -it mina-node mina client status
+```
 
-- `Sync Status: Bootstrap`
-- `Sync Status: Catchup`
-- `Sync Status: Synced`
+</TabItem>
+</Tabs>
+
+On first bootstrap, expect the following timeline:
+
+| Time after start | Expected status |
+|--|--|
+| 0 – ~5 min | `mina client status` may fail to connect while the daemon initializes |
+| ~5 – ~25 min | `Sync Status: Bootstrap` then `Sync Status: Catchup` |
+| ~30 min | `Sync Status: Synced` |
+
+Subsequent restarts sync faster when the on-disk cache in `~/.mina-config` is preserved. For Docker, ensure `/root/.mina-config` is mounted to a persistent host volume.
 
 ## Step up your game
 
@@ -11724,23 +11662,15 @@ Once your validator is running, explore advanced node configurations:
 url: /node-operators/validator-node/installing-on-ubuntu-and-debian
 ---
 
-# Installing on Ubuntu and Debian
+# Installation
 
-Use this guide to install Mina packages on Ubuntu or Debian before generating keys or starting a validator node.
+Supported environments include Linux (Debian 10, 11, 12 and Ubuntu 20.04, 22.04 and 24.04), any host with Docker, and macOS (build from source). The binary download is around 1 GB.
 
-:::caution
+For pre-release builds, see the [Mina Releases](https://github.com/MinaProtocol/mina/releases) page on GitHub.
 
-If you already installed the standalone `mina-generate-keypair` package, remove it first:
+## Install by platform
 
-```sh
-sudo apt remove mina-generate-keypair
-```
-
-The keypair utility is included in `mina-mainnet` and `mina-devnet` packages.
-
-:::
-
-## Install Mina packages
+### Ubuntu and Debian
 
 <Tabs groupId="network">
 <TabItem value="mainnet" label="Mainnet">
@@ -11757,7 +11687,7 @@ sudo apt-get install --yes curl unzip mina-mainnet=3.3.0-8c0c2e6
 
 ```sh
 sudo rm /etc/apt/sources.list.d/mina*.list
-echo "deb [trusted=yes] http://packages.o1test.net $(lsb_release -cs) devnet" | sudo tee /etc/apt/sources.list.d/mina-devnet.list
+echo "deb [trusted=yes] http://packages.o1test.net $(lsb_release -cs) alpha" | sudo tee /etc/apt/sources.list.d/mina-devnet.list
 sudo apt-get install --yes apt-transport-https
 sudo apt-get update
 sudo apt-get install --yes curl unzip mina-devnet=3.3.0-alpha1
@@ -11765,6 +11695,22 @@ sudo apt-get install --yes curl unzip mina-devnet=3.3.0-alpha1
 
 </TabItem>
 </Tabs>
+
+### Docker
+
+Docker is cross-platform (Linux, macOS, Windows). Install Docker from [Get Docker](https://docs.docker.com/get-docker/), then follow the [Connect to the Mina Network](/node-operators/validator-node/connecting-to-the-network) instructions to run the daemon as a container.
+
+### Windows
+
+Windows is not natively supported. Use the [Docker](#docker) instructions instead.
+
+### macOS
+
+No pre-built packages are available for macOS. Use [Docker](#docker) or [build from source](#build-from-source).
+
+### Build from source
+
+On Linux or macOS, you can build from source by following the [Building Mina](https://github.com/MinaProtocol/mina/blob/master/README-dev.md#building-mina) instructions.
 
 ## Verify your installation
 
@@ -11776,7 +11722,7 @@ The output should include a `Commit` line.
 
 ## Next steps
 
-- [Generating a Key Pair](/node-operators/validator-node/generating-a-keypair)
+- [Generating a Wallet Key Pair](/node-operators/validator-node/generating-a-keypair)
 - [Connect to Mainnet or Devnet](/node-operators/validator-node/connecting-to-the-network)
 
 ---
@@ -11785,56 +11731,51 @@ url: /node-operators/validator-node/logging
 
 # Logging
 
-Mina logs are located in the configuration directory located at `~/.mina-config`. This directory contains the following log files:
+## Log files
 
-* `mina.log` - this file contains the latest logs of the daemon. Each log file is limited to 10 Mebibyte (MiB) in size and rotates over 50 log files. Rotated log files are named `mina.log.x` from `mina.log.0` to `mina.log.50`.
-* `mina-best-tip.log` - this file contains the best tip logs of the daemon. This file makes it easier to collect the required logs from nodes to determine the best state for any hard fork. This file is limited to 5 Mebibyte (MiB) in size and rotates over a single log file `mina-best-tip.log.0`.
-* `mina-prover.log` - this file contains logs for the prover's memory usage and batch sizes. It is limited to 128 Mebibyte (MiB) and rotates over a single log file.
-* `mina-verifier.log` - this file contains logs for the verifier's memory usage and batch sizes. It is limited to 128 Mebibyte (MiB) and rotates over a single log file.
+Mina logs are stored in `~/.mina-config/`:
 
-To follow the logs, use one of the following commands, depending on how you started the daemon:
+| File | Description | Size limit | Rotation |
+|--|--|--|--|
+| `mina.log` | Main daemon logs | 10 MiB | 50 files (`mina.log.0` .. `mina.log.50`) |
+| `mina-best-tip.log` | Best tip logs (useful for hard fork analysis) | 5 MiB | 1 file |
+| `mina-prover.log` | Prover memory usage and batch sizes | 128 MiB | 1 file |
+| `mina-verifier.log` | Verifier memory usage and batch sizes | 128 MiB | 1 file |
 
-* Docker: `docker logs --follow mina`
-* Running as a service: `journalctl --user -u mina -n 1000 -f`
-* Other: `tail -f ~/.mina-config/mina.log`
+## Following logs
 
-### Log levels
+Depending on how you started the daemon:
 
-The Mina daemon logs at the following levels, in this order of precedence:
+```sh
+# Docker
+docker logs --follow mina-node
 
-* Spam
-* Trace
-* Debug
-* Info
-* Warn
-* Error
-* Fatal
+# Systemd
+journalctl --user -u mina -n 1000 -f
 
-:::info
-
-Specifying a `log-level` of `Info` display only messages from that log level and higher and significantly reduce the logs' verbosity.
-
-:::
-
-### Log format:
-
-The format of the logs is defined by the following structure:
-
+# Direct
+tail -f ~/.mina-config/mina.log
 ```
-{
-  "timestamp": timestamp,
-  "level": level,
-  "source": {
-    "module": string,
-    "location": string
-  },
-  "message": format_string,
-  "metadata": {{...}}
-}
-```
-Here's an example error message:
 
-```
+## Log levels
+
+The Mina daemon supports the following log levels, from most to least verbose:
+
+1. Spam
+2. Trace
+3. Debug
+4. **Info** (default for stdout)
+5. Warn
+6. Error
+7. Fatal
+
+Setting a level filters out all messages below it. For example, `Info` shows only Info, Warn, Error, and Fatal messages.
+
+## Log format
+
+By default, logs are output as plain text. When `-log-json` is enabled, logs use the following JSON structure:
+
+```json
 {
   "timestamp": "2020-12-23 21:25:04.616526Z",
   "level": "Error",
@@ -11852,91 +11793,95 @@ Here's an example error message:
 }
 ```
 
-### Exporting logs
+## Daemon logging options
 
-The Mina daemon provides a CLI helper to compress and package up the available log files from a node.
+Set these flags when starting the daemon:
 
-For a running daemon, run `mina client export-logs` where you can pass an optional flag `-tarfile` to specify the tar archive's filename, which defaults to the current date-time. This command compresses the available logs and exports them to the `exported_logs` directory in the `~/.mina-config` directory.
+| Flag | Default | Description |
+|--|--|--|
+| `-log-level` | Info | Log level for stdout |
+| `-file-log-level` | Trace | Log level for log files |
+| `-log-json` | off | Output logs as JSON instead of plain text |
+| `-log-block-creation` | true | Log steps for including transactions and SNARK work in a block |
+| `-log-received-blocks` | false | Log blocks received from peers |
+| `-log-snark-work-gossip` | false | Log snark-pool diffs received from peers |
+| `-log-txn-pool-gossip` | false | Log transaction-pool diffs received from peers |
+| `-log-precomputed-blocks` | false | Include precomputed blocks in logs |
 
-:::info
+## Exporting logs
 
-The logs may be exported from a running node via GraphQL using the `exportLogs` [mutation](/node-developers/graphql-api#mutations).
+### From a running node
 
-:::
+```sh
+mina client export-logs -tarfile <FILENAME>
+```
 
-To export logs from a node that is not running, run the `mina client export-local-logs` command to compress the available local log files. Pass the `tarfile` option to specify the tar archive filename. The logs are compressed and exported to the `exported_logs` directory in the `~/.mina-config` directory.
+Compresses available logs into a `.tar.gz` archive in `~/.mina-config/exported_logs/`. The `-tarfile` flag is optional and defaults to the current date-time.
 
-:::info
+Logs can also be exported via GraphQL using the `exportLogs` [mutation](/node-developers/graphql-api#mutations).
 
-When creating or updating an issue on GitHub, you can upload the exported `tar.gz` file directly to the [issue](https://github.com/MinaProtocol/mina/issues).
+### From a stopped node
 
-:::
+```sh
+mina client export-local-logs -tarfile <FILENAME>
+```
 
-### Logging options
+Same behavior, but works without a running daemon.
 
-To customize the logging behavior, set the following options when you start the daemon:
+## Crash reports
 
-* `-file-log-level` - log level for the log file (default: Trace)
-* `-log-level` - log level for output to the terminal via stdout (default: Info)
-* `-log-json` - print log output as JSON (default: plain text)
-* `-log-block-creation` - log the steps involved in including transactions and SNARK work in a block (default: true)
-* `-log-received-blocks` - log blocks received from peers (default: false)
-* `-log-snark-work-gossip` - log snark-pool diffs received from peers (default: false)
-* `-log-txn-pool-gossip` - log transaction-pool diffs received from peers (default: false)
-* `-log-precomputed-blocks` - include precomputed blocks in the logs (default: false)
+If the daemon crashes, it generates a crash report in `~/.mina-config/`. Only the latest report is retained, named with the crash date-time.
 
-### Crash Reports
+A crash report may contain:
 
-If the daemon crashes and is able, it generates a crash report. Only the latest crash report is retained with the filename that indicates the date-time of the crash and the compressed file being exported to the `~/.mina-config` directory. To aid in debugging, you can upload this crash report to a [GitHub issue](https://github.com/MinaProtocol/mina/issues).
+| File | Description |
+|--|--|
+| `crash_summary.json` | System info, version, and final log output |
+| `mina_status.json` | Output of `mina client status` at time of crash |
+| `mina_short.log` | Last 4 MB of `mina.log` |
+| `registered_mask.dot` | Latest ledger visualization |
+| `frontier.dot` | Latest frontier visualization |
+| `daemon.json` | Daemon configuration file |
 
-The crash report contains some, or all, of the following log files:
-
-* `crash_summary.json` - a summary of the crash, including the system info, the version information, and the final log output
-* `mina_status.json` - an output of the `mina client status` command for a summary of the daemon's final state
-* `mina_short.log` - the last 4 MB of the `mina.log` file
-* `registered_mask.dot` - the latest ledger visualization
-* `frontier.dot` - the latest frontier visualization
-* `daemon.json` - a copy of the daemon configuration file
+You can upload crash reports and exported logs directly to a [GitHub issue](https://github.com/MinaProtocol/mina/issues) to help with debugging.
 
 ---
 url: /node-operators/validator-node/querying-data
 ---
 
-# Querying Data
+# Interacting with the Node via GraphQL API
 
+The Mina daemon exposes a [GraphQL API](/node-developers/graphql-api) that you can use to query recent blockchain data and submit signed transactions.
 
+## Setup
 
-<Subhead>
-Data querying for node operators.
-</Subhead>
+Once your node is [connected to the network](./connecting-to-the-network), the GraphQL server is available at `localhost:3085` by default.
 
-Some node operators don't wish to participate in block production or SNARK work creation, but just want to sit on the network and passively aggregate information for querying or submit signed transactions. These nodes don't require an account key pair themselves to run successfully.
+To use a different port:
 
-## Preparation
+```sh
+mina daemon ... -rest-server-port <PORT>
+```
 
-In addition to [installing the Mina daemon on your machine](/node-operators/block-producer-node/getting-started), you may also want to have some system set up to archive historical information on your machine. To do so you can setup an [archive node](/node-operators/archive-node/getting-started), archive by using [other redundant means](/node-operators/archive-node/archive-redundancy), or both.
+To make the server accessible from outside `localhost`:
 
-## Running a node
+```sh
+mina daemon ... -insecure-rest-server
+```
 
-The best way to learn how to run a node is to follow the [Connect to the Mina Network](./connecting-to-the-network) instructions.
+:::caution
+If you expose the GraphQL server externally, ensure your firewall is configured properly. See [GraphQL API](/node-developers/graphql-api) for details.
+:::
 
-To prevent this node from starting as a block producer, remove the `MINA_PRIVKEY_PASS` and `-block-producer-key ...` flags.
+If you want to archive historical data beyond what the node keeps in memory, see [Archive Node](/node-operators/archive-node/getting-started).
 
-To expose recent information of the blockchain, expose the GraphQL REST server.
+## Querying data
 
-You can provide `-rest-server-port XXXX` if the default port of 0xc0d or 3085 does not work for you. 
-
-To make the REST server accessible from outside of `localhost`, provide `-insecure-rest-server`. Make sure you set your firewall up properly. See [GraphQL API](/node-developers/graphql-api) for more information.
-
-## Querying information
-
-Presented here are examples about querying for _recent_ information on the chain -- around 290 blocks, in practice around 10 hours of recent activity. 
-
-The best way to explore all the specific details available for each of the GraphQL objects is to visit your favorite web browser pointing to the REST server running from within a Mina daemon that hosts a GraphQL sandbox. Visit the [GraphQL API page](/node-developers/graphql-api) to learn more. Documentation is also present on most of the individual fields, you can learn more about each field by hovering over the entries in the sandbox or by visiting the hosted schema (coming soon).
+The examples below query _recent_ chain data -- approximately the last 290 blocks (~10 hours of activity). To explore all available fields, open the GraphQL sandbox at `http://localhost:3085/graphql` in your browser.
 
 ### Block data
 
-```javascript
+```graphql
 query BlockData {
   bestChain(maxLength: 10) {
     stateHash
@@ -11949,11 +11894,11 @@ query BlockData {
 }
 ```
 
-### Current Balance
+### Account balance
 
-The following is a query for accessing the current balance of a public key. Note that you can also ask for the blockHeight and stateHash of the block that this balance is inspected within.
+Query the current balance of a public key. The response also includes the `blockHeight` and `stateHash` of the block the balance was read from.
 
-```javascript
+```graphql
 query CurrentBalance {
   account(publicKey: "B62qmyjqEtUEZrsBpUaiz18DCkwh1ovCrJboiHbDhpvH8JEoaag5fUP") {
     balance {
@@ -11965,11 +11910,11 @@ query CurrentBalance {
 }
 ```
 
-### Staking Information
+### Staking information
 
-In Mina, accounts are either staked or delegated completely. There is no alternative state. The following is a way to query this information that is present in the current ledger.
+In Mina, an account is either staking directly or delegating its entire stake. Query the current delegation status:
 
-```javascript
+```graphql
 query StakingInfo {
   account(publicKey: "B62qmyjqEtUEZrsBpUaiz18DCkwh1ovCrJboiHbDhpvH8JEoaag5fUP") {
     balance {
@@ -11984,15 +11929,17 @@ query StakingInfo {
 }
 ```
 
-If the delegateAccount.publicKey is null, then this account is "staking directly" and this private key should be used for block production directly.
+If `delegateAccount.publicKey` is `null`, the account is staking directly.
 
-Note that the actual staking and delegating in the current "epoch" is drawn from the "staking ledger". We are currently implementing a mechanism for accessing this staking ledger directly, but for now you'll need to periodically query for this information and store it internally and then refer to it when it becomes active. On epoch transitions, a new staking ledger is selected by promoting the SNARKed ledger of the last block two epochs prior. In practice, this is between 2-4 weeks.
+:::note
+The active staking ledger for the current epoch is drawn from the SNARKed ledger of the last block two epochs prior. In practice, staking ledger transitions happen every 2-4 weeks.
+:::
 
-### Get Transaction Details
+### Transaction details
 
-Via GraphQL, you can lookup transactions within blocks on the bestChain as follows:
+Look up transactions within recent blocks on the best chain:
 
-```javascript
+```graphql
 query TransactionDetails {
   bestChain(maxLength: 10) {
     stateHash
@@ -12026,11 +11973,11 @@ query TransactionDetails {
 }
 ```
 
-## Submit a Signed Transaction
+## Submitting a signed transaction
 
-You can send a signed transaction using the following GraphQL mutation. You can get information about the payment returned back to you as a sanity check.
+Send a pre-signed payment using the `sendPayment` mutation:
 
-```javascript
+```graphql
 mutation SubmitSignedTransaction {
   __typename
   sendPayment(input: {
@@ -12075,187 +12022,90 @@ Please note the following are the hardware requirements for each node type after
 
 | Node Type | Memory | CPU | Storage | Network |
 |--|--|--|--|--|
-| Mina Daemon Node | 32 GB RAM | 8 core processor with BMI2 and AVX CPU instruction set are required | 64 GB | 1 Mbps Internet Connection |
+| Block Producer | 32 GB RAM | 8 core processor with BMI2 and AVX CPU instruction set are required | 64 GB | 1 Mbps Internet Connection |
 | SNARK Coordinator | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
 | SNARK Worker | 32 GB RAM | 4 core/8 threads per worker with BMI2 and AVX CPU instruction set are required | 64 GB | 1 Mbps Internet Connection |
 | Archive Node | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
 | Rosetta API standalone Docker image | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
 | Mina Seed Node | 64 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
 
-## Mina Daemon Requirements
+## Software
 
-### IP and Port configuration
+Supported environments include macOS, Linux (Debian 10, 11 and Ubuntu 20.04 LTS), and any host machine with Docker. Only x86-64 CPU architecture is supported.
 
-**IP:**
+## Clock Synchronization
 
-By default, the Mina Daemon will attempt to retrieve its public IP address from the system. If you are running the node behind a NAT or firewall, you can set the `--external-ip` flag to specify the public IP address.
+Your server must run a clock synchronization protocol such as [NTP](https://en.wikipedia.org/wiki/Network_Time_Protocol) to participate in consensus. Most Linux distributions include NTP by default.
 
-**Port:**
+## Recommended VM Instances
 
-Nodes must expose a port publicly to communicate with other peers.
-Mina uses by default the port `8302` which is the default libp2p port.
+o1Labs has tested running nodes on several cloud providers. We recommend the following instances for basic node operator needs. Custom requirements and different cost constraints might require a different instance type.
 
-You can use a different port by setting the `--external-port` flag.
+- AWS [c5.2xlarge](https://www.ec2instances.info/?filter=c5.2xl&region=us-west-2&cost_duration=daily&selected=c5.2xlarge)
+- GCP [c2-standard-8](https://cloud.google.com/compute/docs/machine-types)
+- Azure [Standard_F8s_v2](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/sizes-compute#fsv2-series-1)
+- Digital Ocean [c-8-16gib](https://cloud.digitalocean.com/droplets/new?size=c-8-16gib)
+
+## Networking
+
+**IP:** By default, the Mina daemon determines its public IP address automatically via HTTPS (443) and HTTP (80). If you are behind a NAT or firewall, set the `--external-ip` flag to specify your public IP address.
+
+**Port:** Nodes must expose a port to communicate with peers. The default is TCP port `8302`. You can change it with the `--external-port` flag.
+
+**Firewall and port forwarding:** Allow inbound traffic on the following ports through your external IP address:
+
+- TCP port `8302` (required for peer communication)
+- TCP port `3085` (optional, for the GraphQL API)
+
+If you are using UFW:
+
+```sh
+sudo ufw enable
+sudo ufw allow 22
+sudo ufw allow 8302
+sudo ufw allow 3085
+```
 
 ---
 url: /node-operators/validator-node/staking-and-snarking
 ---
 
-# Staking and Snarking
+# Delegating MINA
 
-You can interact with the Mina network by participating in consensus to produce a cryptographic proof for the data by generating [zk-SNARKs](https://docs.minaprotocol.com/glossary#zk-snark). By operating a node that helps secure the network, you can receive MINA for your efforts. See [Staking Rewards on Mina](https://minaprotocol.com/blog/staking-rewards-on-mina).
+Delegating assigns your stake to a block producer who shares earned rewards minus a fee. You don't need to run a node yourself. See [Staking Rewards on Mina](https://minaprotocol.com/blog/staking-rewards-on-mina) for reward details.
 
-## Participating in Consensus
+If you want to produce blocks directly, see the [Block Producers](/node-operators/block-producer-node) section.
 
-The Mina network is secured by [proof of stake (PoS)](/glossary#proof-of-stake-pos) consensus. With this model of consensus, you don't need to have complex equipment like in Bitcoin mining. By simply having MINA in your wallet, you can choose to stake your MINA and run a node or delegate it to another node. When you delegate your tokens, you are staking your MINA tokens with block producers who operate nodes, sometimes known as a staking pools. The staking pool will share the earned block rewards, minus a small fee, with those who have delegated their MINA.
+- Your delegation takes effect after a latency period of 2-4 weeks.
+- You can re-delegate or un-delegate at any time with no penalty. Changes take effect after 1-2 epochs.
+- Your **full balance** is always delegated -- there is no partial delegation.
 
-Mina is a public and decentralized blockchain that is open for anyone in the world to participate in actively or passively. You can help increase the security of the network by becoming nodes or block producers, or you can help lower the cost of transactions by becoming SNARK producers, or you can be both.
+## Delegate your stake
 
-## Staking MINA
-
-You can earn block rewards by participating in block production through staking. 
-
-- Your new stake delegation comes into effect after a latency period of a 2-4 weeks.
-- You can undelegate at any time with no penalty. Submit a delegation transaction with the new staking service or back to yourself if you want to be a block producer. Updates are made after a delay of 1-2 epochs.
-
-### Requirements
-
-To properly remain synced to the network and participate in consensus, your server must run a [clock synchronization protocol](https://en.wikipedia.org/wiki/Clock_synchronization).
-
-Network Time Protocol [(NTP)](https://en.wikipedia.org/wiki/Network_Time_Protocol) is the most common method for synchronizing computer clocks over a network. 
-
-To synchronize your server software clock with internet time servers, be sure to set up NTP. Many popular Linux distributions include NTP as a default service.
-
-## Set or change the block producer key
-
-Use the `mina client delegate-stake` subcommand to set or change the delegation of the block producer key. See
- [Delegating MINA](#delegating-mina).
-
-Alternatively, to stake with your own node, start the daemon with the `-block-producer-pubkey` flag:
-
-```
-args={["-block-producer-pubkey $MINA_PUBLIC_KEY"]} />
-```
-
-To check which accounts you are staking with:
+First, unlock your account:
 
 ```sh
-mina client status
+mina account unlock --public-key $DELEGATOR_PUBLICKEY
 ```
 
-The expected output is like:
-
-```text
-Mina daemon status
------------------------------------
-
-Global number of accounts:                     327371
-Block height:                                  32494
-Max observed block height:                     32494
-Max observed unvalidated block height:         32494
-Local uptime:                                  2d5h11m5s
-Ledger Merkle root:                            ...
-Protocol state hash:                           ...
-Chain id:                                      ...
-Git SHA-1:                                     ...
-Configuration directory:                       /root/.mina-config
-Peers:                                         77
-User_commands sent:                            0
-SNARK worker:                                  None
-SNARK work fee:                                1
-Sync status:                                   Synced
-Catchup status:                                
-	To build breadcrumb:           0
-	To initial validate:           0
-	Finished:                      388
-	To download:                   0
-	Waiting for parent to finish:  0
-	To verify:                     0
-
-Block producers running:                       1 (...)
-Coinbase receiver:                             Block producer
-Best tip consensus time:                       epoch=6, slot=4505
-Best tip global slot (across all hard-forks):  47345
-Next block will be produced in:                in 7.077h for slot: 47487 slot-since-genesis: 47487 (Generated from consensus at slot: 46403 slot-since-genesis: 46403)
-Consensus time now:                            epoch=6, slot=4505
-Consensus mechanism:                           proof_of_stake
-Consensus configuration:                       
-	Delta:                     0
-	k:                         290
-	Slots per epoch:           7140
-	Slot duration:             3m
-	Epoch duration:            14d21h
-	Chain start timestamp:     2023-10-17 16:01:01.000000Z
-	Acceptable network delay:  3m
-
-Addresses and ports:                           
-	External IP:    ...
-	Bind IP:        ...
-	Libp2p PeerID:  ...
-	Libp2p port:    10801
-	Client port:    8301
-
-Metrics:                                       
-	block_production_delay:             7 (0 0 0 0 0 0 1)
-	transaction_pool_diff_received:     0
-	transaction_pool_diff_broadcasted:  0
-	transactions_added_to_pool:         1075
-	transaction_pool_size:              0
-	snark_pool_diff_received:           2
-	snark_pool_diff_broadcasted:        0
-	pending_snark_work:                 0
-	snark_pool_size:                    1967
-```
-
-where:
-
-- The `Block producers running` field returns the number of accounts currently staking, with the associated key.
-
-When you are staking independently with funds in an account, you must run a node and remain connected to the network at all times to successfully produce blocks. If you need to go offline frequently, it might be better to delegate your stake to another node operator.
-
-If you want to send your coinbase to an account other than the one that is staking, use the `-coinbase-receiver` flag when you start your daemon. You can even point the coinbase at a cold wallet.
-
-### Delegating MINA
-
-Delegating MINA has the benefit of not having to maintain a node that is always connected to the network. See [Mina Foundation Delegation Program](/node-operators/delegation-program/foundation-delegation-program).
-
-First, make sure you've unlocked your account:
+Then delegate:
 
 ```sh
-mina account unlock --public-key $MINA_PUBLIC_KEY
-```
-
-To delegate your stake:
-
-```
 mina client delegate-stake \
-    --receiver <DELEGATE-PUBLIC-KEY> \
-    --sender $MINA_PUBLIC_KEY \
+    --receiver $DELEGATEE_PUBLICKEY \
+    --sender $DELEGATOR_PUBLICKEY \
     --fee 0.1
 ```
 
-where:
+| Flag | Description |
+|--|--|
+| `--receiver` | Public key of the delegatee (block producer) |
+| `--sender` | Public key of the account you are delegating from |
+| `--fee` | Transaction fee paid to the network |
 
-- `receiver` is the public key of the receiver of your stake delegation
-- `sender` is the public key of the account you want to delegate from
-- `fee` is the cost to send your transaction, the fee is paid to the network’s block producers
+A stake delegation is a transaction on-chain, which is why it requires a fee.
 
-There is no _amount_ parameter. Your full MINA balance is delegated automatically.
-
-This command looks like a [payment](/mina-protocol/sending-a-payment) transaction, because a stake delegation is also a transaction, which is why you have to pay a small transaction fee.
-
-Delegating your stake might be useful if you're interested in:
-
-- Running your own staking node that uses funds from a cold wallet
-- Delegating to a staking pool that periodically provides token payouts
-
-You might decide to stake your MINA if you don't have enough MINA tokens to make managing a block producer full-time worthwhile.
-
-## SNARK Workers
-
-In addition to block production, you can earn rewards by running a SNARK worker that generates [zk-SNARKs](/glossary#zk-snark) to compress transaction data on the network.
-
-For details on running SNARK workers, including hardware requirements, setup commands, and coordinator configuration, see the [SNARK Workers Getting Started](/node-operators/snark-workers/getting-started) guide. For common questions about SNARK pricing and fees, see the [FAQ](/node-operators/faq#snarks-and-snark-workers).
+See also: [Mina Foundation Delegation Program](/node-operators/delegation-program/foundation-delegation-program).
 
 ---
 url: /participate/bugs-and-feature-requests
