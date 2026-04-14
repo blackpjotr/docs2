@@ -1,24 +1,24 @@
 ---
 title: Docker Compose Snark Workers
-sidebar_label: Docker Compose example
-description: Example of how to run a Mina Snark Coordinator and a Snark Worker using Docker Compose.
+sidebar_label: Docker Compose Example
+description: Run a Mina SNARK Coordinator and SNARK Worker using Docker Compose.
 keywords:
   - mina snark coordinator node
   - mina snark worker node
   - docker compose
 ---
 
-# Docker Compose Snark Workers
+# Docker Compose SNARK Workers
 
-This example demonstrates how to run a Mina Snark Coordinator and a Snark Worker using Docker Compose for the Devnet network. The Docker Compose setup includes a Mina Snark Coordinator node, a Snark Worker node, a script to generate a libp2p key, and another script to generate a wallet key.
+This example runs a SNARK coordinator and a SNARK worker together using Docker Compose. It includes a one-time init container that generates a wallet key.
 
-Copy and paste the provided configuration into a `docker-compose.yml` file. Then run `docker compose up -d` to start the services, and use `docker compose logs -f` to monitor the logs.
+Save the following as `docker-compose.yml`, then start with `docker compose up -d`. Monitor logs with `docker compose logs -f`.
 
 ```yaml
 services:
   generate_wallet_key:
     image: 'minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet'
-    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet' # Use this image for Devnet
+    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet'
     environment:
       MINA_PRIVKEY_PASS: PssW0rD
     entrypoint: []
@@ -32,7 +32,7 @@ services:
       - './node/mina-config:/root/.mina-config'
   mina_snark_coordinator:
     image: 'minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet'
-    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet' # Use this image for Devnet
+    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet'
     restart: always
     environment:
       MINA_PRIVKEY_PASS: PssW0rD
@@ -51,7 +51,7 @@ services:
              --run-snark-coordinator $(cat /root/.mina-config/keys/wallet-key.pub) \
              --work-selection rand
       '
-    # use  --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt for Devnet
+    # For Devnet: --peer-list-url https://bootnodes.minaprotocol.com/networks/devnet.txt
     volumes:
       - './node/mina-config:/root/.mina-config'
     ports:
@@ -61,7 +61,7 @@ services:
         condition: service_completed_successfully
   mina_snark_worker:
     image: 'minaprotocol/mina-daemon:3.3.0-8c0c2e6-bullseye-mainnet'
-    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet' # Use this image for Devnet
+    # image: 'gcr.io/o1labs-192920/mina-daemon:3.3.0-alpha1-6929a7e-bullseye-devnet'
     restart: always
     entrypoint: []
     command: >
@@ -78,3 +78,5 @@ services:
       mina_snark_coordinator:
         condition: service_healthy
 ```
+
+To scale additional workers, duplicate the `mina_snark_worker` service with a different name (e.g. `mina_snark_worker_2`).
