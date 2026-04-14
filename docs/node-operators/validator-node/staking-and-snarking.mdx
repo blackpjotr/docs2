@@ -1,172 +1,48 @@
 ---
-title: Staking and Snarking
+title: Delegating MINA
 hide_title: true
-description: Mina Protocol provides block reward incentives to participate in block production through staking or delegation.
+description: Earn block rewards by delegating your MINA stake to a block producer.
 keywords:
-  - proof of stake (PoS)
-  - mina protocol
-  - consensus mechanism
-  - mina consensus
-  - block production
-  - incentives
   - staking
   - delegation
   - delegate
   - block rewards
+  - mina protocol
 ---
 
-# Staking and Snarking
+# Delegating MINA
 
-You can interact with the Mina network by participating in consensus to produce a cryptographic proof for the data by generating [zk-SNARKs](https://docs.minaprotocol.com/glossary#zk-snark). By operating a node that helps secure the network, you can receive MINA for your efforts. See [Staking Rewards on Mina](https://minaprotocol.com/blog/staking-rewards-on-mina).
+Delegating assigns your stake to a block producer who shares earned rewards minus a fee. You don't need to run a node yourself. See [Staking Rewards on Mina](https://minaprotocol.com/blog/staking-rewards-on-mina) for reward details.
 
-## Participating in Consensus
+If you want to produce blocks directly, see the [Block Producers](/node-operators/block-producer-node) section.
 
-The Mina network is secured by [proof of stake (PoS)](/glossary#proof-of-stake-pos) consensus. With this model of consensus, you don't need to have complex equipment like in Bitcoin mining. By simply having MINA in your wallet, you can choose to stake your MINA and run a node or delegate it to another node. When you delegate your tokens, you are staking your MINA tokens with block producers who operate nodes, sometimes known as a staking pools. The staking pool will share the earned block rewards, minus a small fee, with those who have delegated their MINA.
+- Your delegation takes effect after a latency period of 2-4 weeks.
+- You can re-delegate or un-delegate at any time with no penalty. Changes take effect after 1-2 epochs.
+- Your **full balance** is always delegated -- there is no partial delegation.
 
-Mina is a public and decentralized blockchain that is open for anyone in the world to participate in actively or passively. You can help increase the security of the network by becoming nodes or block producers, or you can help lower the cost of transactions by becoming SNARK producers, or you can be both.
+## Delegate your stake
 
-## Staking MINA
-
-You can earn block rewards by participating in block production through staking. 
-
-- Your new stake delegation comes into effect after a latency period of a 2-4 weeks.
-- You can undelegate at any time with no penalty. Submit a delegation transaction with the new staking service or back to yourself if you want to be a block producer. Updates are made after a delay of 1-2 epochs.
-
-### Requirements
-
-To properly remain synced to the network and participate in consensus, your server must run a [clock synchronization protocol](https://en.wikipedia.org/wiki/Clock_synchronization).
-
-Network Time Protocol [(NTP)](https://en.wikipedia.org/wiki/Network_Time_Protocol) is the most common method for synchronizing computer clocks over a network. 
-
-To synchronize your server software clock with internet time servers, be sure to set up NTP. Many popular Linux distributions include NTP as a default service.
-
-## Set or change the block producer key
-
-Use the `mina client delegate-stake` subcommand to set or change the delegation of the block producer key. See
- [Delegating MINA](#delegating-mina).
-
-Alternatively, to stake with your own node, start the daemon with the `-block-producer-pubkey` flag:
-
-```
-args={["-block-producer-pubkey $MINA_PUBLIC_KEY"]} />
-```
-
-To check which accounts you are staking with:
+First, unlock your account:
 
 ```sh
-mina client status
+mina account unlock --public-key $DELEGATOR_PUBLICKEY
 ```
 
-The expected output is like:
-
-```text
-Mina daemon status
------------------------------------
-
-Global number of accounts:                     327371
-Block height:                                  32494
-Max observed block height:                     32494
-Max observed unvalidated block height:         32494
-Local uptime:                                  2d5h11m5s
-Ledger Merkle root:                            ...
-Protocol state hash:                           ...
-Chain id:                                      ...
-Git SHA-1:                                     ...
-Configuration directory:                       /root/.mina-config
-Peers:                                         77
-User_commands sent:                            0
-SNARK worker:                                  None
-SNARK work fee:                                1
-Sync status:                                   Synced
-Catchup status:                                
-	To build breadcrumb:           0
-	To initial validate:           0
-	Finished:                      388
-	To download:                   0
-	Waiting for parent to finish:  0
-	To verify:                     0
-
-Block producers running:                       1 (...)
-Coinbase receiver:                             Block producer
-Best tip consensus time:                       epoch=6, slot=4505
-Best tip global slot (across all hard-forks):  47345
-Next block will be produced in:                in 7.077h for slot: 47487 slot-since-genesis: 47487 (Generated from consensus at slot: 46403 slot-since-genesis: 46403)
-Consensus time now:                            epoch=6, slot=4505
-Consensus mechanism:                           proof_of_stake
-Consensus configuration:                       
-	Delta:                     0
-	k:                         290
-	Slots per epoch:           7140
-	Slot duration:             3m
-	Epoch duration:            14d21h
-	Chain start timestamp:     2023-10-17 16:01:01.000000Z
-	Acceptable network delay:  3m
-
-Addresses and ports:                           
-	External IP:    ...
-	Bind IP:        ...
-	Libp2p PeerID:  ...
-	Libp2p port:    10801
-	Client port:    8301
-
-Metrics:                                       
-	block_production_delay:             7 (0 0 0 0 0 0 1)
-	transaction_pool_diff_received:     0
-	transaction_pool_diff_broadcasted:  0
-	transactions_added_to_pool:         1075
-	transaction_pool_size:              0
-	snark_pool_diff_received:           2
-	snark_pool_diff_broadcasted:        0
-	pending_snark_work:                 0
-	snark_pool_size:                    1967
-```
-
-where:
-
-- The `Block producers running` field returns the number of accounts currently staking, with the associated key.
-
-When you are staking independently with funds in an account, you must run a node and remain connected to the network at all times to successfully produce blocks. If you need to go offline frequently, it might be better to delegate your stake to another node operator.
-
-If you want to send your coinbase to an account other than the one that is staking, use the `-coinbase-receiver` flag when you start your daemon. You can even point the coinbase at a cold wallet.
-
-### Delegating MINA
-
-Delegating MINA has the benefit of not having to maintain a node that is always connected to the network. See [Mina Foundation Delegation Program](/node-operators/delegation-program/foundation-delegation-program).
-
-First, make sure you've unlocked your account:
+Then delegate:
 
 ```sh
-mina account unlock --public-key $MINA_PUBLIC_KEY
-```
-
-To delegate your stake:
-
-```
 mina client delegate-stake \
-    --receiver <DELEGATE-PUBLIC-KEY> \
-    --sender $MINA_PUBLIC_KEY \
+    --receiver $DELEGATEE_PUBLICKEY \
+    --sender $DELEGATOR_PUBLICKEY \
     --fee 0.1
 ```
 
-where:
+| Flag | Description |
+|--|--|
+| `--receiver` | Public key of the delegatee (block producer) |
+| `--sender` | Public key of the account you are delegating from |
+| `--fee` | Transaction fee paid to the network |
 
-- `receiver` is the public key of the receiver of your stake delegation
-- `sender` is the public key of the account you want to delegate from
-- `fee` is the cost to send your transaction, the fee is paid to the network’s block producers
+A stake delegation is a transaction on-chain, which is why it requires a fee.
 
-There is no _amount_ parameter. Your full MINA balance is delegated automatically.
-
-This command looks like a [payment](/mina-protocol/sending-a-payment) transaction, because a stake delegation is also a transaction, which is why you have to pay a small transaction fee.
-
-Delegating your stake might be useful if you're interested in:
-
-- Running your own staking node that uses funds from a cold wallet
-- Delegating to a staking pool that periodically provides token payouts
-
-You might decide to stake your MINA if you don't have enough MINA tokens to make managing a block producer full-time worthwhile.
-
-## SNARK Workers
-
-In addition to block production, you can earn rewards by running a SNARK worker that generates [zk-SNARKs](/glossary#zk-snark) to compress transaction data on the network.
-
-For details on running SNARK workers, including hardware requirements, setup commands, and coordinator configuration, see the [SNARK Workers Getting Started](/node-operators/snark-workers/getting-started) guide. For common questions about SNARK pricing and fees, see the [FAQ](/node-operators/faq#snarks-and-snark-workers).
+See also: [Mina Foundation Delegation Program](/node-operators/delegation-program/foundation-delegation-program).

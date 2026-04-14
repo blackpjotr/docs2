@@ -1,7 +1,7 @@
 ---
-title: Interacting with the Node
+title: Interacting with the Node via GraphQL API
 hide_title: true
-description: How to interact with a Mina node via GraphQL to query data and submit transactions.
+description: How to interact with a Mina node via GraphQL to query blockchain data and submit transactions.
 keywords:
   - node
   - query
@@ -11,43 +11,42 @@ keywords:
   - staking information
   - get transaction details
   - submit a transaction
-  - data queries
   - node operators
 ---
 
-# Interacting with the Node
+# Interacting with the Node via GraphQL API
 
-import Subhead from "@site/src/components/common/Subhead";
+The Mina daemon exposes a [GraphQL API](/node-developers/graphql-api) that you can use to query recent blockchain data and submit signed transactions.
 
-<Subhead>
-Data querying for node operators.
-</Subhead>
+## Setup
 
-Some node operators don't wish to participate in block production or SNARK work creation, but just want to sit on the network and passively aggregate information for querying or submit signed transactions. These nodes don't require an account key pair themselves to run successfully.
+Once your node is [connected to the network](./connecting-to-the-network), the GraphQL server is available at `localhost:3085` by default.
 
-## Preparation
+To use a different port:
 
-In addition to [installing the Mina daemon on your machine](/node-operators/block-producer-node/getting-started), you may also want to have some system set up to archive historical information on your machine. To do so you can setup an [archive node](/node-operators/archive-node/getting-started), archive by using [other redundant means](/node-operators/archive-node/archive-redundancy), or both.
+```sh
+mina daemon ... -rest-server-port <PORT>
+```
 
-## Running a node
+To make the server accessible from outside `localhost`:
 
-The best way to learn how to run a node is to follow the [Connect to the Mina Network](./connecting-to-the-network) instructions.
+```sh
+mina daemon ... -insecure-rest-server
+```
 
-To expose recent information of the blockchain, expose the GraphQL REST server.
+:::caution
+If you expose the GraphQL server externally, ensure your firewall is configured properly. See [GraphQL API](/node-developers/graphql-api) for details.
+:::
 
-You can provide `-rest-server-port XXXX` if the default port of 0xc0d or 3085 does not work for you. 
+If you want to archive historical data beyond what the node keeps in memory, see [Archive Node](/node-operators/archive-node/getting-started).
 
-To make the REST server accessible from outside of `localhost`, provide `-insecure-rest-server`. Make sure you set your firewall up properly. See [GraphQL API](/node-developers/graphql-api) for more information.
+## Querying data
 
-## Querying information
-
-Presented here are examples about querying for _recent_ information on the chain -- around 290 blocks, in practice around 10 hours of recent activity. 
-
-The best way to explore all the specific details available for each of the GraphQL objects is to visit your favorite web browser pointing to the REST server running from within a Mina daemon that hosts a GraphQL sandbox. Visit the [GraphQL API page](/node-developers/graphql-api) to learn more. Documentation is also present on most of the individual fields, you can learn more about each field by hovering over the entries in the sandbox or by visiting the hosted schema (coming soon).
+The examples below query _recent_ chain data -- approximately the last 290 blocks (~10 hours of activity). To explore all available fields, open the GraphQL sandbox at `http://localhost:3085/graphql` in your browser.
 
 ### Block data
 
-```javascript
+```graphql
 query BlockData {
   bestChain(maxLength: 10) {
     stateHash
@@ -60,11 +59,11 @@ query BlockData {
 }
 ```
 
-### Current Balance
+### Account balance
 
-The following is a query for accessing the current balance of a public key. Note that you can also ask for the blockHeight and stateHash of the block that this balance is inspected within.
+Query the current balance of a public key. The response also includes the `blockHeight` and `stateHash` of the block the balance was read from.
 
-```javascript
+```graphql
 query CurrentBalance {
   account(publicKey: "B62qmyjqEtUEZrsBpUaiz18DCkwh1ovCrJboiHbDhpvH8JEoaag5fUP") {
     balance {
@@ -76,11 +75,11 @@ query CurrentBalance {
 }
 ```
 
-### Staking Information
+### Staking information
 
-In Mina, accounts are either staked or delegated completely. There is no alternative state. The following is a way to query this information that is present in the current ledger.
+In Mina, an account is either staking directly or delegating its entire stake. Query the current delegation status:
 
-```javascript
+```graphql
 query StakingInfo {
   account(publicKey: "B62qmyjqEtUEZrsBpUaiz18DCkwh1ovCrJboiHbDhpvH8JEoaag5fUP") {
     balance {
@@ -95,15 +94,17 @@ query StakingInfo {
 }
 ```
 
-If the delegateAccount.publicKey is null, then this account is "staking directly" and this private key should be used for block production directly.
+If `delegateAccount.publicKey` is `null`, the account is staking directly.
 
-Note that the actual staking and delegating in the current "epoch" is drawn from the "staking ledger". We are currently implementing a mechanism for accessing this staking ledger directly, but for now you'll need to periodically query for this information and store it internally and then refer to it when it becomes active. On epoch transitions, a new staking ledger is selected by promoting the SNARKed ledger of the last block two epochs prior. In practice, this is between 2-4 weeks.
+:::note
+The active staking ledger for the current epoch is drawn from the SNARKed ledger of the last block two epochs prior. In practice, staking ledger transitions happen every 2-4 weeks.
+:::
 
-### Get Transaction Details
+### Transaction details
 
-Via GraphQL, you can lookup transactions within blocks on the bestChain as follows:
+Look up transactions within recent blocks on the best chain:
 
-```javascript
+```graphql
 query TransactionDetails {
   bestChain(maxLength: 10) {
     stateHash
@@ -137,11 +138,11 @@ query TransactionDetails {
 }
 ```
 
-## Submit a Signed Transaction
+## Submitting a signed transaction
 
-You can send a signed transaction using the following GraphQL mutation. You can get information about the payment returned back to you as a sanity check.
+Send a pre-signed payment using the `sendPayment` mutation:
 
-```javascript
+```graphql
 mutation SubmitSignedTransaction {
   __typename
   sendPayment(input: {
