@@ -1,7 +1,7 @@
 ---
-title: Querying Data
+title: Interacting with the Node
 hide_title: true
-description: Data querying for node operators. How to query a node for recent (290 blocks) information.
+description: How to interact with a Mina node via GraphQL to query data and submit transactions.
 keywords:
   - node
   - query
@@ -15,7 +15,7 @@ keywords:
   - node operators
 ---
 
-# Querying Data
+# Interacting with the Node
 
 import Subhead from "@site/src/components/common/Subhead";
 
@@ -31,9 +31,7 @@ In addition to [installing the Mina daemon on your machine](/node-operators/bloc
 
 ## Running a node
 
-The best way to learn how to run a node is to follow the [Connect to the Mina Network](../block-producer-node/connecting-to-the-network) instructions.
-
-To prevent this node from starting as a block producer, remove the `MINA_PRIVKEY_PASS` and `-block-producer-key ...` flags.
+The best way to learn how to run a node is to follow the [Connect to the Mina Network](./connecting-to-the-network) instructions.
 
 To expose recent information of the blockchain, expose the GraphQL REST server.
 
