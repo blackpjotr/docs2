@@ -40,7 +40,7 @@ sudo apt-get install --yes curl unzip mina-mainnet=3.3.0-8c0c2e6
 
 ```sh
 sudo rm /etc/apt/sources.list.d/mina*.list
-echo "deb [trusted=yes] http://packages.o1test.net $(lsb_release -cs) devnet" | sudo tee /etc/apt/sources.list.d/mina-devnet.list
+echo "deb [trusted=yes] http://packages.o1test.net $(lsb_release -cs) alpha" | sudo tee /etc/apt/sources.list.d/mina-devnet.list
 sudo apt-get install --yes apt-transport-https
 sudo apt-get update
 sudo apt-get install --yes curl unzip mina-devnet=3.3.0-alpha1
