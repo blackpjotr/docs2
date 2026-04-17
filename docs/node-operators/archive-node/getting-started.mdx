@@ -73,10 +73,9 @@ These steps might be different for your operating system, if you're connecting t
 
 :::caution
 
-Please be careful when using `--config` argument at archive node bootstrap.
+Using the `--config` parameter ensures genesis accounts are inserted into the database, which is important to avoid gaps in account balances since the archive node stores only incremental changes.
 
-It should be provided only when archive node is connected to
-short lived network created mainly for testing, local development or experimental networks.
+However, inserting genesis accounts can take significant time and resources. You can skip `--config` if you're connecting to devnet or mainnet and starting from an existing archive database dump rather than an empty archive.
 
 *Never* use it on long lived network such as mainnet or devnet
 
