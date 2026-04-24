@@ -15,6 +15,16 @@ keywords:
 
 The Mesa preflight network is a testing environment for validating the Mesa upgrade before deployment to devnet and mainnet. This network allows node operators and developers to test their infrastructure and applications with the new Mesa release.
 
+:::warning Network Hard Fork — 2026-04-27 14:00 UTC
+
+The Mesa preflight network will hard-fork on **2026-04-27 at 14:00 UTC**. A new stop-slot release, **`4.0.0-preflight1-aaaa`**, is now available and is **mandatory** for every operator running a Mesa node.
+
+Nodes still on the original preflight build (`4.0.0-preflight1-b649c79`) will fall off the network at the stop transaction slot (2026-04-27 10:00 UTC). Upgrade to `4.0.0-preflight1-aaaa` now — the same binary carries your node across the fork automatically.
+
+See [Upgrade Steps](./upgrade-steps) for the full timeline and operator checklist.
+
+:::
+
 :::caution Preflight Network Notice
 
 The preflight network is intended for testing purposes only. This network may experience instability, breaking changes, and unexpected behavior. Data on this network should not be considered persistent or reliable.
@@ -25,15 +35,17 @@ The preflight network is intended for testing purposes only. This network may ex
 
 The Mesa preflight network uses the following build versions:
 
-**Version:** `4.0.0-preflight1-b649c79`
+**Current version (install this):** `4.0.0-preflight1-aaaa` — stop-slot / hard-fork release.
+
+**Previous version (historical):** `4.0.0-preflight1-b649c79` — original preflight build. Kept here for reference only; do not install on new nodes.
 
 ### Docker Images
 
 Docker images are available for both `amd64` and `arm64` architectures:
 
-- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight1-b649c79-bookworm-mesa`
-- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight1-b649c79-bookworm-mesa`
-- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight1-b649c79-bookworm-mesa`
+- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight1-aaaa-bookworm-mesa`
+- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight1-aaaa-bookworm-mesa`
+- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight1-aaaa-bookworm-mesa`
 
 Images are available for both **bookworm** and **noble** distributions.
 
@@ -45,9 +57,9 @@ Debian packages are available from the unstable repository:
 **Channel:** `preflight`
 
 Available packages:
-- `mina-mesa` (version `4.0.0-preflight1-b649c79`)
-- `mina-archive-mesa` (version `4.0.0-preflight1-b649c79`)
-- `mina-rosetta-mesa` (version `4.0.0-preflight1-b649c79`)
+- `mina-mesa` (version `4.0.0-preflight1-aaaa`)
+- `mina-archive-mesa` (version `4.0.0-preflight1-aaaa`)
+- `mina-rosetta-mesa` (version `4.0.0-preflight1-aaaa`)
 
 Packages are available for **bookworm** and **noble** distributions.
 
@@ -73,7 +85,7 @@ To start a Mina daemon node using Docker:
 docker run --name mina-mesa-preflight -d \
   -p 8302:8302 \
   --restart=always \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight1-b649c79-bookworm-mesa \
+  gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight1-aaaa-bookworm-mesa \
   daemon \
   --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-network/mina-mesa-network-seeds.txt
 ```
@@ -85,7 +97,7 @@ docker run --name mina-mesa-preflight -d \
   -p 8302:8302 \
   --restart=always \
   -v $(pwd)/.mina-config:/root/.mina-config \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight1-b649c79-bookworm-mesa \
+  gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight1-aaaa-bookworm-mesa \
   daemon \
   --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-network/mina-mesa-network-seeds.txt \
   --libp2p-keypair /root/.mina-config/keys/libp2p-key
@@ -109,7 +121,7 @@ echo "deb https://unstable.apt.packages.minaprotocol.com $(lsb_release -cs) pref
 
 # Step 4: Update and install
 sudo apt-get update
-sudo apt-get install -y mina-mesa=4.0.0-preflight1-b649c79
+sudo apt-get install -y mina-mesa=4.0.0-preflight1-aaaa
 ```
 
 Then start the daemon:
@@ -153,7 +165,7 @@ echo "deb https://unstable.apt.packages.minaprotocol.com $(lsb_release -cs) pref
 
 # Step 4: Install mina-archive-mesa
 sudo apt-get update
-sudo apt-get install -y mina-archive-mesa=4.0.0-preflight1-b649c79
+sudo apt-get install -y mina-archive-mesa=4.0.0-preflight1-aaaa
 
 # Step 5: Create PostgreSQL database
 sudo -u postgres createdb archive
@@ -174,7 +186,7 @@ mina-archive run \
 docker run --name mina-archive-mesa -d \
   -p 3086:3086 \
   --restart=always \
-  gcr.io/o1labs-192920/mina-archive:4.0.0-preflight1-b649c79-bookworm-mesa \
+  gcr.io/o1labs-192920/mina-archive:4.0.0-preflight1-aaaa-bookworm-mesa \
   mina-archive run \
   --postgres-uri postgresql://archive_user:your-secure-password@postgres-host:5432/archive \
   --server-port 3086
@@ -210,7 +222,7 @@ echo "deb https://unstable.apt.packages.minaprotocol.com $(lsb_release -cs) pref
 
 # Step 4: Install mina-rosetta-mesa
 sudo apt-get update
-sudo apt-get install -y mina-rosetta-mesa=4.0.0-preflight1-b649c79
+sudo apt-get install -y mina-rosetta-mesa=4.0.0-preflight1-aaaa
 
 # Step 5: Start Rosetta
 # Rosetta connects to both the mina daemon and archive node
@@ -226,7 +238,7 @@ mina-rosetta \
 docker run --name mina-rosetta-mesa -d \
   -p 3087:3087 \
   --restart=always \
-  gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight1-b649c79-bookworm-mesa \
+  gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight1-aaaa-bookworm-mesa \
   --port 3087 \
   --archive-uri http://archive-host:3086/graphql \
   --graphql-uri http://mina-daemon-host:3085/graphql

@@ -14,7 +14,13 @@ keywords:
 
 Mina protocol evolves through network upgrades (hard forks) that introduce new features and improvements. Each upgrade requires node operators to update their software to remain compatible with the network.
 
+:::warning Mesa preflight hard fork — 2026-04-27 14:00 UTC
+
+The Mesa preflight network will hard-fork on **2026-04-27 at 14:00 UTC**. Every operator running a Mesa node must upgrade to the stop-slot release **`4.0.0-preflight1-aaaa`** before the stop transaction slot at **2026-04-27 10:00 UTC**. See [Mesa Upgrade Steps](/network-upgrades/mesa/upgrade-steps) for the timeline and checklist.
+
+:::
+
 | Upgrade | Status | Date | Key Changes |
 |---------|--------|------|-------------|
 | [Berkeley](/network-upgrades/berkeley/requirements) | Completed | June 2024 | zkApp programmability, recursive proofs, new transaction model, archive database migration |
-| [Mesa](/network-upgrades/mesa/preflight-network) | Upcoming | TBD | Expanded zkApp state (8 → 31 fields), automode upgrades, simplified archive migration |
+| [Mesa](/network-upgrades/mesa/upgrade-steps) | In progress — preflight hard fork 2026-04-27 | 2026-04-27 14:00 UTC (preflight) | Expanded zkApp state (8 → 31 fields), automode upgrades, simplified archive migration |

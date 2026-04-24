@@ -49,6 +49,7 @@ module.exports = {
           type: 'category',
           label: 'Mesa Upgrade',
           items: [
+            'network-upgrades/mesa/upgrade-steps',
             'network-upgrades/mesa/preflight-network',
             'network-upgrades/mesa/archive-upgrade',
           ],
