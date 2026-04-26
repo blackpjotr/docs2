@@ -41,13 +41,17 @@ The Mesa preflight network uses the following build versions:
 
 ### Docker Images
 
-Docker images are available for both `amd64` and `arm64` architectures:
+Docker images are available for both `amd64` and `arm64` architectures, and for the `bookworm`, `noble`, `focal`, and `jammy` base distributions. Replace `<codename>` with the distribution that matches your host:
 
-- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight-stop-2967b39-bookworm-mesa`
-- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight-stop-2967b39-bookworm-mesa`
-- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight-stop-2967b39-bookworm-mesa`
+- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight-stop-2967b39-<codename>-mesa`
+- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight-stop-2967b39-<codename>-mesa`
+- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight-stop-2967b39-<codename>-mesa`
 
-Images are available for both **bookworm** and **noble** distributions.
+Example for `bookworm`:
+
+- `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight-stop-2967b39-bookworm-mesa`
+- `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight-stop-2967b39-bookworm-mesa`
+- `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight-stop-2967b39-bookworm-mesa`
 
 ### Debian Packages
 
@@ -55,13 +59,13 @@ Debian packages are available from the unstable repository:
 
 **Repository:** `unstable.apt.packages.minaprotocol.com`
 **Channel:** `preflight`
+**Codenames:** `bookworm`, `noble`, `focal`, `jammy`
 
-Available packages:
-- `mina-mesa` (version `4.0.0-preflight-stop-2967b39`)
-- `mina-archive-mesa` (version `4.0.0-preflight-stop-2967b39`)
-- `mina-rosetta-mesa` (version `4.0.0-preflight-stop-2967b39`)
+Available packages (each at version `4.0.0-preflight-stop-2967b39`):
 
-Packages are available for **bookworm** and **noble** distributions.
+- `mina-mesa`
+- `mina-archive-mesa`
+- `mina-rosetta-mesa`
 
 For detailed information about the Debian repository structure and configuration, please refer to the [Debian Repository documentation](https://unstable.apt.packages.minaprotocol.com/).
 
