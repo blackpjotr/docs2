@@ -41,17 +41,13 @@ The Mesa preflight network uses the following build versions:
 
 ### Docker Images
 
-Docker images are available for both `amd64` and `arm64` architectures, and for the `bookworm`, `noble`, `focal`, and `jammy` base distributions. Replace `<codename>` with the distribution that matches your host:
+Docker images are available for both `amd64` and `arm64` architectures, on the `bookworm` and `noble` base distributions:
 
-- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight-stop-2967b39-<codename>-mesa`
-- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight-stop-2967b39-<codename>-mesa`
-- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight-stop-2967b39-<codename>-mesa`
+- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight-stop-2967b39-bookworm-mesa`
+- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight-stop-2967b39-bookworm-mesa`
+- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight-stop-2967b39-bookworm-mesa`
 
-Example for `bookworm`:
-
-- `gcr.io/o1labs-192920/mina-daemon:4.0.0-preflight-stop-2967b39-bookworm-mesa`
-- `gcr.io/o1labs-192920/mina-archive:4.0.0-preflight-stop-2967b39-bookworm-mesa`
-- `gcr.io/o1labs-192920/mina-rosetta:4.0.0-preflight-stop-2967b39-bookworm-mesa`
+For `noble`, swap `bookworm` for `noble` in the tag (e.g. `mina-daemon:4.0.0-preflight-stop-2967b39-noble-mesa`).
 
 ### Debian Packages
 
@@ -59,7 +55,7 @@ Debian packages are available from the unstable repository:
 
 **Repository:** `unstable.apt.packages.minaprotocol.com`
 **Channel:** `preflight`
-**Codenames:** `bookworm`, `noble`, `focal`, `jammy`
+**Codenames:** `bookworm`, `noble`
 
 Available packages (each at version `4.0.0-preflight-stop-2967b39`):
 
