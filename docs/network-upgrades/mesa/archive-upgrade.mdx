@@ -2,7 +2,7 @@
 title: Archive Upgrade
 sidebar_label: Archive Upgrade
 hide_title: true
-description: A guide on how to upgrade your Mina archive node to the Mesa version.
+description: General guide for upgrading a Mina archive database to the Mesa schema — applies to preflight, devnet, and mainnet.
 keywords:
   - Mesa
   - upgrade
@@ -13,13 +13,20 @@ keywords:
 
 # Archive Upgrade
 
-:::warning Network Hard Fork — 2026-04-27 14:00 UTC
+This guide describes the general procedure for upgrading a Mina archive database from Berkeley to Mesa. The same steps apply to every Mesa deployment (preflight, devnet, mainnet) — only the archive package version differs.
 
-The Mesa preflight network will hard-fork on **2026-04-27 at 14:00 UTC**. Use the stop-slot release **`4.0.0-preflight1-aaaa`** for every command below — it is the required version for both the pre-fork stabilisation period and the post-fork chain. See [Upgrade Steps](./upgrade-steps) for the full operator checklist.
+:::info Choosing the Mesa archive version
+
+The commands below use `<MESA_VERSION>` as a placeholder for the archive build you want to install. Substitute the tag that matches your target network:
+
+- **Preflight network** — see [Preflight Network](./preflight-network) for the current pinned version (e.g. `4.0.0-preflight1-aaaa`).
+- **Devnet / mainnet** — use the Mesa release tag published for that network when it is announced.
+
+If you are following the preflight hard-fork timeline (**2026-04-27 14:00 UTC**), see [Upgrade Steps](./upgrade-steps) for the operator checklist.
 
 :::
 
-To successfully upgrade the archive database into the Mesa version of the Mina network, you must ensure that your environment meets the foundational requirements.
+To successfully upgrade the archive database to Mesa, you must ensure that your environment meets the foundational requirements.
 
 ## Migration host
 
@@ -54,14 +61,15 @@ curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/
 We also ship the script in the Mina archive Docker image and Debian package.
 
 ```bash
-docker run --rm gcr.io/o1labs-192920/mina-archive:4.0.0-preflight1-aaaa-bookworm-mesa cat /etc/mina/archive/upgrade-to-mesa.sql > upgrade-to-mesa.sql
+docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mesa cat /etc/mina/archive/upgrade-to-mesa.sql > upgrade-to-mesa.sql
 ```
 
 ```bash
-# Setup the Mina repository and install the archive package
-# See preflight-network.mdx for detailed repository setup instructions
+# Setup the Mina repository and install the archive package.
+# Repository setup (apt sources, GPG key, channel) is network-specific —
+# see Preflight Network for the preflight pin, or your network's release notes.
 
-apt-get install mina-archive-mesa=4.0.0-preflight1-aaaa
+apt-get install mina-archive-mesa=<MESA_VERSION>
 
 # View the upgrade and downgrade scripts
 cat /etc/mina/archive/upgrade-to-mesa.sql
