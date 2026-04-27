@@ -15,11 +15,13 @@ keywords:
 
 The Mesa preflight network is a testing environment for validating the Mesa upgrade before deployment to devnet and mainnet. This network allows node operators and developers to test their infrastructure and applications with the new Mesa release.
 
-:::warning Hard fork completed — 2026-04-27 14:00 UTC
+:::warning Hard fork completed — 2026-04-27 13:00 UTC
 
-The Mesa preflight network hard-forked at **2026-04-27 14:00 UTC**. The post-fork chain is now running the Mesa release **`4.0.0-preflight-3f038cb`**, which bumps the **transaction protocol version to 5.0.0**.
+The Mesa preflight network hard-forked at **2026-04-27 13:00 UTC**. The post-fork chain is now running the Mesa release **`4.0.0-preflight-3f038cb`**, which bumps the **transaction protocol version to 5.0.0**.
 
 The transaction protocol bump is a breaking wire-format change: any node still running a pre-fork build (including the stop-slot release `4.0.0-preflight-stop-2967b39` and the original preflight build `4.0.0-preflight1-b649c79`) will reject the new transaction format and is no longer compatible with the network. Upgrade to **`4.0.0-preflight-3f038cb`** to resume participation.
+
+zkApp developers must rebuild and redeploy against **`o1js@3.0.0-mesa.698ca`** — the first o1js release that targets transaction protocol v5.0.0. Transactions produced by earlier o1js versions will be rejected by post-fork nodes.
 
 A dedicated **Upgrade Steps** page covering the post-fork operator checklist will be linked from the Mesa Upgrade sidebar once it ships.
 
@@ -36,6 +38,8 @@ The preflight network is intended for testing purposes only. This network may ex
 The Mesa preflight network uses the following build versions:
 
 **Current version (install this):** `4.0.0-preflight-3f038cb` — post-hard-fork release. Implements transaction protocol version **5.0.0** and is the only build compatible with the post-fork chain.
+
+**Compatible o1js release:** `o1js@3.0.0-mesa.698ca` — the matching SDK for transaction protocol v5.0.0. Install with `npm install o1js@3.0.0-mesa.698ca` (or the equivalent for your package manager) when developing or redeploying zkApps against the post-fork preflight network.
 
 **Previous versions (historical, do not install on new nodes):**
 

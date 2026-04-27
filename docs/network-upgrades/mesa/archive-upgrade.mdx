@@ -15,9 +15,9 @@ keywords:
 
 This guide describes the general procedure for upgrading a Mina archive database from Berkeley to Mesa. The same steps apply to every Mesa deployment (preflight, devnet, mainnet) — only the archive package version differs.
 
-:::warning Hard fork completed — 2026-04-27 14:00 UTC
+:::warning Hard fork completed — 2026-04-27 13:00 UTC
 
-The Mesa preflight network hard-forked at **2026-04-27 14:00 UTC**. The post-fork chain runs **`4.0.0-preflight-3f038cb`**, which raises the **transaction protocol version to 5.0.0**. Pre-fork builds — including the stop-slot release `4.0.0-preflight-stop-2967b39` — are no longer compatible.
+The Mesa preflight network hard-forked at **2026-04-27 13:00 UTC**. The post-fork chain runs **`4.0.0-preflight-3f038cb`**, which raises the **transaction protocol version to 5.0.0**. Pre-fork builds — including the stop-slot release `4.0.0-preflight-stop-2967b39` — are no longer compatible.
 
 When upgrading a preflight archive database, install the matching `mina-archive-mesa=4.0.0-preflight-3f038cb` package so the archive node speaks the new transaction protocol.
 
