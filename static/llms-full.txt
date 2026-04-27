@@ -5397,9 +5397,9 @@ url: /network-upgrades
 
 Mina protocol evolves through network upgrades (hard forks) that introduce new features and improvements. Each upgrade requires node operators to update their software to remain compatible with the network.
 
-:::warning Mesa preflight hard fork completed — 2026-04-27 13:00 UTC
+:::tip Mesa preflight hard fork completed
 
-The Mesa preflight network has hard-forked. The post-fork chain is now running the Mesa release **`4.0.0-preflight-3f038cb`**, which raises the **transaction protocol version to 5.0.0**.
+The Mesa preflight network hard-forked at **2026-04-27 13:00 UTC**. The post-fork chain is now running the Mesa release **`4.0.0-preflight-3f038cb`**, which raises the **transaction protocol version to 5.0.0**.
 
 Operators must run **`4.0.0-preflight-3f038cb`** to remain on the preflight network. Earlier builds — including the stop-slot release `4.0.0-preflight-stop-2967b39` — are no longer compatible with the post-fork chain.
 
@@ -5422,7 +5422,7 @@ url: /network-upgrades/mesa/archive-upgrade
 
 This guide describes the general procedure for upgrading a Mina archive database from Berkeley to Mesa. The same steps apply to every Mesa deployment (preflight, devnet, mainnet) — only the archive package version differs.
 
-:::warning Hard fork completed — 2026-04-27 13:00 UTC
+:::tip Mesa preflight hard fork completed
 
 The Mesa preflight network hard-forked at **2026-04-27 13:00 UTC**. The post-fork chain runs **`4.0.0-preflight-3f038cb`**, which raises the **transaction protocol version to 5.0.0**. Pre-fork builds — including the stop-slot release `4.0.0-preflight-stop-2967b39` — are no longer compatible.
 
@@ -5592,7 +5592,7 @@ url: /network-upgrades/mesa/preflight-network
 
 The Mesa preflight network is a testing environment for validating the Mesa upgrade before deployment to devnet and mainnet. This network allows node operators and developers to test their infrastructure and applications with the new Mesa release.
 
-:::warning Hard fork completed — 2026-04-27 13:00 UTC
+:::tip Mesa preflight hard fork completed
 
 The Mesa preflight network hard-forked at **2026-04-27 13:00 UTC**. The post-fork chain is now running the Mesa release **`4.0.0-preflight-3f038cb`**, which bumps the **transaction protocol version to 5.0.0**.
 
