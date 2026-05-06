@@ -1592,6 +1592,7 @@ module.exports = {
         },
         'node-operators/mina-signer',
         'node-operators/reference/mina-cli-reference',
+        'node-operators/downgrading-to-older-versions',
         'node-operators/troubleshooting',
         'node-operators/faq',
       ],
