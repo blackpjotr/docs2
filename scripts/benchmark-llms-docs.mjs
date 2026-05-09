@@ -38,7 +38,8 @@ const BENCHMARKS = {
     questions: [
       {
         id: "f1",
-        question: "What is the minimum recommended fee for a Mina transaction?",
+        question:
+          "According to the Mina docs, what is the current average transaction fee in the mempool?",
         expected: "0.001 MINA",
         grading: "exact_match",
         keywords: ["0.001"],
@@ -400,6 +401,23 @@ const BENCHMARKS = {
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
+/**
+ * Wrap a system prompt as a single content block with prompt caching enabled.
+ * The whole docs corpus is identical across all benchmark questions, so the
+ * second + subsequent calls within a 5-minute window read the cache at ~10%
+ * cost instead of paying full input tokens 30+ times.
+ */
+function cacheableSystem(text) {
+  if (!text) return undefined;
+  return [
+    {
+      type: "text",
+      text,
+      cache_control: { type: "ephemeral" },
+    },
+  ];
+}
+
 async function callAnthropic(messages, { system, model, maxTokens = 1024 }) {
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -422,7 +440,10 @@ async function callAnthropic(messages, { system, model, maxTokens = 1024 }) {
   }
 
   const data = await resp.json();
-  return data.content[0].text;
+  return {
+    text: data.content[0].text,
+    usage: data.usage,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -534,10 +555,10 @@ Respond with ONLY a JSON object: {"score": 0.0 to 1.0, "present": [...], "missin
   );
 
   try {
-    const jsonMatch = judgeResponse.match(/\{[\s\S]*\}/);
+    const jsonMatch = judgeResponse.text.match(/\{[\s\S]*\}/);
     if (jsonMatch) return JSON.parse(jsonMatch[0]);
   } catch {
-    console.warn("  Failed to parse judge response:", judgeResponse);
+    console.warn("  Failed to parse judge response:", judgeResponse.text);
   }
   return { score: 0, reason: "Failed to parse judge response" };
 }
@@ -547,11 +568,12 @@ Respond with ONLY a JSON object: {"score": 0.0 to 1.0, "present": [...], "missin
 // ---------------------------------------------------------------------------
 
 async function runBenchmark(options) {
-  const { source, category, model } = options;
+  const { source, category, model, judgeModel } = options;
 
   console.log(`\n${"=".repeat(60)}`);
   console.log(`Mina Docs AI Benchmark`);
-  console.log(`Model: ${model}`);
+  console.log(`Answer model: ${model}`);
+  console.log(`Judge model:  ${judgeModel}`);
   console.log(`Source: ${source}`);
   console.log(`Category: ${category || "all"}`);
   console.log(`${"=".repeat(60)}\n`);
@@ -563,11 +585,20 @@ async function runBenchmark(options) {
 
   // Truncate system prompt if it's too large (for llms-full.txt)
   const maxSystemChars = 180_000;
-  const truncatedSystem =
-    systemPrompt.length > maxSystemChars
-      ? systemPrompt.slice(0, maxSystemChars) +
-        "\n\n[Documentation truncated due to length]"
-      : systemPrompt;
+  const truncated = systemPrompt.length > maxSystemChars;
+  const truncatedSystem = truncated
+    ? systemPrompt.slice(0, maxSystemChars) +
+      "\n\n[Documentation truncated due to length]"
+    : systemPrompt;
+
+  if (truncated) {
+    console.warn(
+      `WARNING: docs context (${systemPrompt.length} chars) exceeds budget (${maxSystemChars}). ` +
+        `Using truncated context — \"full\" mode results are not representative of the full corpus.`,
+    );
+  }
+
+  const cachedSystem = cacheableSystem(truncatedSystem);
 
   const categories = category
     ? { [category]: BENCHMARKS[category] }
@@ -583,6 +614,8 @@ async function runBenchmark(options) {
   const results = {};
   let totalScore = 0;
   let totalQuestions = 0;
+  let errorCount = 0;
+  const usage = { inputTokens: 0, cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 0 };
 
   for (const [catName, cat] of Object.entries(categories)) {
     console.log(`\n--- ${catName}: ${cat.description} ---\n`);
@@ -594,21 +627,22 @@ async function runBenchmark(options) {
       try {
         const answer = await callAnthropic(
           [{ role: "user", content: q.question }],
-          { system: truncatedSystem, model, maxTokens: 1500 }
+          { system: cachedSystem, model, maxTokens: 1500 }
         );
+        accumulateUsage(usage, answer.usage);
 
         let score, details;
 
         if (q.grading === "exact_match") {
-          const passed = gradeExactMatch(answer, q);
+          const passed = gradeExactMatch(answer.text, q);
           score = passed ? 1 : 0;
-          details = { passed, answer_snippet: answer.slice(0, 200) };
+          details = { passed, answer_snippet: answer.text.slice(0, 200) };
         } else {
-          const judgeResult = await gradeLlmJudge(answer, q, model);
+          const judgeResult = await gradeLlmJudge(answer.text, q, judgeModel);
           score = judgeResult.score;
           details = {
             ...judgeResult,
-            answer_snippet: answer.slice(0, 200),
+            answer_snippet: answer.text.slice(0, 200),
           };
         }
 
@@ -624,6 +658,7 @@ async function runBenchmark(options) {
         console.log(`${icon} (${score.toFixed(2)})`);
       } catch (err) {
         console.log(`ERROR: ${err.message}`);
+        errorCount++;
         results[catName].questions.push({
           id: q.id,
           question: q.question,
@@ -644,8 +679,10 @@ async function runBenchmark(options) {
 
   // Summary
   const overallPct = ((totalScore / totalQuestions) * 100).toFixed(1);
+  const errorRate = errorCount / totalQuestions;
   console.log(`\n${"=".repeat(60)}`);
   console.log(`OVERALL: ${totalScore.toFixed(2)}/${totalQuestions} (${overallPct}%)`);
+  console.log(`Errors:  ${errorCount}/${totalQuestions} (${(errorRate * 100).toFixed(1)}%)`);
   console.log(`${"=".repeat(60)}`);
 
   console.log("\nCategory breakdown:");
@@ -655,18 +692,29 @@ async function runBenchmark(options) {
     console.log(`  ${catName.padEnd(18)} [${bar}] ${pct}%`);
   }
 
+  console.log(
+    `\nToken usage (answer model): input=${usage.inputTokens} ` +
+      `cache_write=${usage.cacheWriteTokens} cache_read=${usage.cacheReadTokens} ` +
+      `output=${usage.outputTokens}`,
+  );
+
   // Save detailed results
   const output = {
     metadata: {
       timestamp: new Date().toISOString(),
       model,
+      judge_model: judgeModel,
       source,
       category: category || "all",
+      truncated_context: truncated,
     },
     summary: {
       overall_score: totalScore,
       total_questions: totalQuestions,
       overall_percentage: parseFloat(overallPct),
+      error_count: errorCount,
+      error_rate: parseFloat((errorRate * 100).toFixed(1)),
+      usage,
       categories: Object.fromEntries(
         Object.entries(results).map(([k, v]) => [
           k,
@@ -686,18 +734,42 @@ async function runBenchmark(options) {
   writeFileSync(filename, JSON.stringify(output, null, 2));
   console.log(`\nDetailed results saved to: ${filename}`);
 
+  // Treat the run as a failure if the API was effectively unreachable.
+  // Without this, an exhausted API key produces clean 0% reports and CI
+  // reports success, hiding the breakage for weeks.
+  const errorThreshold = 0.5;
+  if (errorRate > errorThreshold) {
+    console.error(
+      `\nFAILED: ${(errorRate * 100).toFixed(1)}% of questions errored ` +
+        `(threshold ${errorThreshold * 100}%). Check the API key, billing, or model availability.`,
+    );
+    process.exit(2);
+  }
+
   return output;
+}
+
+function accumulateUsage(acc, u) {
+  if (!u) return;
+  acc.inputTokens += u.input_tokens ?? 0;
+  acc.outputTokens += u.output_tokens ?? 0;
+  acc.cacheReadTokens += u.cache_read_input_tokens ?? 0;
+  acc.cacheWriteTokens += u.cache_creation_input_tokens ?? 0;
 }
 
 // ---------------------------------------------------------------------------
 // CLI
 // ---------------------------------------------------------------------------
 
+const DEFAULT_MODEL = "claude-sonnet-4-6-20250514";
+const DEFAULT_JUDGE_MODEL = "claude-opus-4-7";
+
 const { values: args } = parseArgs({
   options: {
     source: { type: "string", default: "llms" },
     category: { type: "string", default: "" },
-    model: { type: "string", default: "claude-sonnet-4-6-20250514" },
+    model: { type: "string", default: DEFAULT_MODEL },
+    "judge-model": { type: "string", default: DEFAULT_JUDGE_MODEL },
     help: { type: "boolean", default: false },
   },
 });
@@ -710,11 +782,19 @@ Usage:
   ANTHROPIC_API_KEY=sk-... node scripts/benchmark-llms-docs.mjs [options]
 
 Options:
-  --source   llms | full | none     Which docs source to use (default: llms)
-  --category factual | procedural | conceptual | code_generation | hallucination
-                                     Run a single category (default: all)
-  --model    MODEL_ID               Anthropic model to use (default: claude-sonnet-4-6-20250514)
-  --help                            Show this help
+  --source        llms | full | none     Which docs source to use (default: llms)
+  --category      factual | procedural | conceptual | code_generation | hallucination
+                                          Run a single category (default: all)
+  --model         MODEL_ID                Model that answers benchmark questions
+                                          (default: ${DEFAULT_MODEL})
+  --judge-model   MODEL_ID                Stronger model used to grade open-ended answers
+                                          (default: ${DEFAULT_JUDGE_MODEL})
+  --help                                  Show this help
+
+Exit codes:
+  0   Run completed and at most 50% of questions errored
+  1   Usage error or unexpected exception
+  2   Too many API errors — most questions failed (e.g. exhausted credits)
 
 Examples:
   # Compare llms.txt vs llms-full.txt vs no docs
@@ -740,6 +820,7 @@ runBenchmark({
   source: args.source,
   category: args.category || null,
   model: args.model,
+  judgeModel: args["judge-model"],
 }).catch((err) => {
   console.error("Benchmark failed:", err);
   process.exit(1);
