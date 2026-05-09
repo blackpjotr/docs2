@@ -419,31 +419,43 @@ function cacheableSystem(text) {
 }
 
 async function callAnthropic(messages, { system, model, maxTokens = 1024 }) {
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": API_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      max_tokens: maxTokens,
-      system: system || undefined,
-      messages,
-    }),
-  });
+  const maxAttempts = 4;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: maxTokens,
+        system: system || undefined,
+        messages,
+      }),
+    });
 
-  if (!resp.ok) {
+    if (resp.ok) {
+      const data = await resp.json();
+      return { text: data.content[0].text, usage: data.usage };
+    }
+
     const body = await resp.text();
+
+    // Retry on transient rate-limit / overload errors. Honor Retry-After if
+    // the server supplies it, otherwise back off exponentially.
+    if ((resp.status === 429 || resp.status === 529) && attempt < maxAttempts) {
+      const retryAfter = parseInt(resp.headers.get("retry-after") ?? "", 10);
+      const delaySec = Number.isFinite(retryAfter) ? retryAfter : 2 ** attempt * 5;
+      console.log(`  (rate limited, sleeping ${delaySec}s before retry ${attempt + 1}/${maxAttempts})`);
+      await new Promise((r) => setTimeout(r, delaySec * 1000));
+      continue;
+    }
+
     throw new Error(`Anthropic API error ${resp.status}: ${body}`);
   }
-
-  const data = await resp.json();
-  return {
-    text: data.content[0].text,
-    usage: data.usage,
-  };
+  throw new Error("Unreachable: retry loop exited without returning");
 }
 
 // ---------------------------------------------------------------------------
@@ -583,10 +595,12 @@ async function runBenchmark(options) {
     ? `You are a helpful assistant that answers questions about Mina Protocol based on the following documentation:\n\n${docsContext}`
     : "You are a helpful assistant. Answer questions about Mina Protocol to the best of your knowledge.";
 
-  // Truncate system prompt if it's too large (for llms-full.txt). Sized to
-  // fit comfortably inside Sonnet 4.6's 200k-token context window after
-  // accounting for the question and the response (~4 chars/token average).
-  const maxSystemChars = 750_000;
+  // Truncate system prompt to keep the first cache-write call under the
+  // org's per-minute input-token rate limit (Tier 1: 30k/min for Sonnet).
+  // ~100k chars ≈ 25k tokens, leaving headroom for the question, response,
+  // and a tiny bit of jitter. If you have a higher rate-limit tier, bump
+  // this — Sonnet 4.6's actual context window is 200k tokens.
+  const maxSystemChars = 100_000;
   const truncated = systemPrompt.length > maxSystemChars;
   const truncatedSystem = truncated
     ? systemPrompt.slice(0, maxSystemChars) +
