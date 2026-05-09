@@ -20,7 +20,7 @@
  *   ANTHROPIC_API_KEY=sk-... node scripts/benchmark-llms-docs.mjs --source none
  *
  *   # Use a different model
- *   ANTHROPIC_API_KEY=sk-... node scripts/benchmark-llms-docs.mjs --model claude-sonnet-4-6-20250514
+ *   ANTHROPIC_API_KEY=sk-... node scripts/benchmark-llms-docs.mjs --model claude-sonnet-4-6
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from "fs";
@@ -583,8 +583,10 @@ async function runBenchmark(options) {
     ? `You are a helpful assistant that answers questions about Mina Protocol based on the following documentation:\n\n${docsContext}`
     : "You are a helpful assistant. Answer questions about Mina Protocol to the best of your knowledge.";
 
-  // Truncate system prompt if it's too large (for llms-full.txt)
-  const maxSystemChars = 180_000;
+  // Truncate system prompt if it's too large (for llms-full.txt). Sized to
+  // fit comfortably inside Sonnet 4.6's 200k-token context window after
+  // accounting for the question and the response (~4 chars/token average).
+  const maxSystemChars = 750_000;
   const truncated = systemPrompt.length > maxSystemChars;
   const truncatedSystem = truncated
     ? systemPrompt.slice(0, maxSystemChars) +
@@ -761,7 +763,7 @@ function accumulateUsage(acc, u) {
 // CLI
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MODEL = "claude-sonnet-4-6-20250514";
+const DEFAULT_MODEL = "claude-sonnet-4-6";
 const DEFAULT_JUDGE_MODEL = "claude-opus-4-7";
 
 const { values: args } = parseArgs({
