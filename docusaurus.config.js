@@ -181,6 +181,10 @@ module.exports = {
             to: '/node-operators/validator-node/connecting-to-the-network',
           },
           {
+            from: '/node-operators/block-producer-node/connecting-to-the-network',
+            to: '/node-operators/validator-node/connecting-to-the-network',
+          },
+          {
             from: '/node-operators/block-producer-node/connecting-to-devnet',
             to: '/node-operators/validator-node/connecting-to-the-network',
           },
@@ -290,6 +294,10 @@ module.exports = {
           },
           {
             from: '/berkeley-upgrade/flags-configs',
+            to: '/network-upgrades/berkeley/flags-configs',
+          },
+          {
+            from: '/node-operators/flags-configs',
             to: '/network-upgrades/berkeley/flags-configs',
           },
           {
