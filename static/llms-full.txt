@@ -5924,7 +5924,7 @@ url: /network-upgrades/mesa
 
 The Mesa upgrade is a major network upgrade (hard fork) for the Mina Protocol mainnet. It is not backward compatible and requires all nodes to upgrade.
 
-Please refer to the Mesa node release notes [here](https://github.com/MinaProtocol/mina/releases).
+Please refer to the Mesa node release notes [here](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa mainnet release tag URL once published. Until then this filter surfaces all `*mesa*` tags (preflight builds today). */}
 
 :::info New to the Mesa upgrade?
 This documentation uses terms like _automode_, _stop-slot_, _trustless upgrade_, _dispatcher_, and more. If you encounter an unfamiliar term, check the **[Glossary](/network-upgrades/mesa/glossary)** for definitions.
@@ -6354,8 +6354,10 @@ She checks her explorer UI to confirm new Mesa blocks are appearing and the hist
 **Weeks before the fork** — Frank updates his o1js dependency to the Mesa-compatible version and tests his zkApp on the [preflight network](/network-upgrades/mesa/preflight-network):
 
 ```bash
-npm install o1js@latest
+npm install o1js@3.0.0-mesa.698ca
 ```
+
+This is the first o1js release that targets the Mesa transaction protocol. `o1js@latest` currently resolves to a pre-Mesa version and will produce transactions the post-fork preflight network rejects. See [Preflight Network](/network-upgrades/mesa/preflight-network) for the matching daemon/archive/rosetta release.
 
 He verifies that:
 - His contract recompiles cleanly against Mesa-compatible o1js and deploys on the preflight Mesa network
@@ -6434,19 +6436,23 @@ mina client status   # verify Mesa chain ID
 
 ## Network Details
 
+The values below describe the **current Mainnet (pre-fork)** chain. They will change after the Mesa fork activates — the post-fork Chain ID, Git SHA-1, and node build link will be published in the Mesa release announcement.
+
 ```
-Chain ID
+Chain ID (Mainnet, pre-fork)
 a7351abc7ddf2ea92d1b38cc8e636c271c1dfd2c081c637f62ebc2af34eb7cc1
 
-Git SHA-1
+Git SHA-1 (Mainnet, pre-fork)
 ae112d3a96fe71b4ccccf3c54e7b7494db4898a4
 
 Seed List
 https://bootnodes.minaprotocol.com/networks/mainnet.txt
 
 Node build
-https://github.com/MinaProtocol/mina/releases
+https://github.com/MinaProtocol/mina/releases?q=mesa
 ```
+
+{/* TODO(PR #1133): When the Mesa mainnet release is cut, add the post-fork Chain ID, Git SHA-1, and the specific release tag URL alongside the pre-fork values above. For the current preflight values, see [Preflight Network](/network-upgrades/mesa/preflight-network). */}
 
 ---
 url: /network-upgrades/mesa/preflight-network
