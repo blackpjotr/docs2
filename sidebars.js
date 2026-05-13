@@ -19,9 +19,10 @@ module.exports = {
           label: 'Berkeley Upgrade',
           link: {
             type: 'doc',
-            id: 'network-upgrades/berkeley/requirements',
+            id: 'network-upgrades/berkeley/index',
           },
           items: [
+            'network-upgrades/berkeley/requirements',
             {
               type: 'category',
               label: 'Archive Migration',
