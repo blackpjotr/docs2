@@ -36,9 +36,13 @@ The Mina release (version 3.x.x) that node operators install **before** the fork
 
 A predefined global slot number baked into the [stop-slot release](#stop-slot-release). When the network reaches this slot, nodes stop accepting new user transactions. Block production continues with empty blocks (no user commands, no coinbase, no fee transfers) for approximately 100 more slots until the [stop-network-slot](#stop-network-slot). This is the point where exchanges must disable deposits and withdrawals.
 
+Referred to as `slot_tx_end` in the Mina codebase and daemon configuration.
+
 ### Stop-Network-Slot {#stop-network-slot}
 
 A predefined global slot number that comes after the [stop-transaction-slot](#stop-transaction-slot). When the network reaches this slot, block production halts entirely. The network is now frozen, and the final state is used to build the Mesa release. In [automode](#automode), this is when the daemon automatically transitions to the [post-fork binary](#post-fork-binary).
+
+Referred to as `slot_chain_end` in the Mina codebase and daemon configuration.
 
 ### State Finalization
 
@@ -114,7 +118,7 @@ The official ledger checkpoint published with the [Mesa release](#mesa-release).
 
 ---
 
-## Protocol Terms
+## Mesa-Specific Changes and Conventions
 
 ### Expanded zkApp State
 
