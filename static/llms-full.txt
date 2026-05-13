@@ -5950,7 +5950,7 @@ The Mesa upgrade follows four phases. The timeline below shows what happens at e
 
 ### Overview
 
-<img src="/img/network-upgrades/mesa/simplified-schedule.png" alt="Mesa upgrade timeline overview" />
+{/* TODO(PR #1133): Replace with updated timeline diagram from design (Rebecca). Reference: the diagram used in the Berkeley upgrade-steps page and the Mesa upgrade slide deck. The previous AI-generated `simplified-schedule.png` has been removed pending the official version. */}
 
 The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization**, **Upgrade**, and **Post-Upgrade** — anchored by three key moments:
 
@@ -6037,10 +6037,10 @@ At approximately **1 hour** after the Mesa release is published, at the predefin
 
 Select your role to see a simplified view of what you need to do and when.
 
+{/* TODO(PR #1133): The per-role timeline diagrams below (`simplified-schedule*.png`) were AI-generated and have been removed. Replace with updated diagrams from design (Rebecca) once available — see Berkeley upgrade-steps page and the Mesa upgrade slide deck for the new visual style. */}
+
 <details>
 <summary><b>Block Producers & SNARK Workers (automode)</b></summary>
-
-<img src="/img/network-upgrades/mesa/simplified-schedule.png" alt="Automode upgrade timeline" />
 
 **Your upgrade is hands-free.** Install the stop-slot release weeks before the fork, keep your node running through state finalization, and the automode dispatcher handles the transition automatically. After the fork, verify your node is on the Mesa chain.
 
@@ -6049,16 +6049,12 @@ Select your role to see a simplified view of what you need to do and when.
 <details>
 <summary><b>Block Producers & SNARK Workers (manual mode)</b></summary>
 
-<img src="/img/network-upgrades/mesa/simplified-schedule-manual.png" alt="Manual upgrade timeline" />
-
 You must take action on fork day: stop your node after the network halts, install the Mesa release when published, and restart. You have until 290 blocks into the Mesa chain to complete the upgrade without missing your slots.
 
 </details>
 
 <details>
 <summary><b>Archive Node Operators</b></summary>
-
-<img src="/img/network-upgrades/mesa/simplified-schedule-archive.png" alt="Archive node upgrade timeline" />
 
 Choose your upgrade method early:
 - **Trustless:** Run the archive upgrade script before the fork (it's backward-compatible). After the fork, point the Mesa archive node at your upgraded DB.
@@ -6070,8 +6066,6 @@ After the fork, verify data integrity and monitor the archive daemon.
 
 <details>
 <summary><b>Exchanges & Service Providers</b></summary>
-
-<img src="/img/network-upgrades/mesa/simplified-schedule-echanges.png" alt="Exchange upgrade timeline" />
 
 The critical action is timing your **deposit/withdrawal freeze**. Disable MINA activity before the stop-transaction-slot. Install the Mesa release on fork day. Re-enable deposits and withdrawals only after block production is confirmed and your integration is verified.
 
