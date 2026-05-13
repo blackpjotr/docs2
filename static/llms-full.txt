@@ -7043,7 +7043,7 @@ You can use a different port by setting the `--external-port` flag.
 
 ### Node Auto-restart
 
-Ensure your nodes are set to restart automatically after a crash. For guidance, refer to the [auto-restart instructions](/node-operators/validator-node/connecting-to-the-network#start-a-mina-node-with-auto-restart-flows-using-systemd)
+Ensure your nodes are set to restart automatically after a crash. For guidance, refer to the [Running mina node as a service](/node-operators/validator-node/connecting-to-the-network#running-mina-node-as-a-service) section, which covers both `systemctl enable` for systemd and `--restart=always` for Docker.
 
 ## Seed Peer Requirements
 
@@ -7932,7 +7932,7 @@ If you encounter any problems after the upgrade:
 
 The flags below are **unchanged from Berkeley** — if your node was running correctly before the fork, the same flags will work on Mesa. This section is provided as a reference for operators setting up fresh nodes or verifying their configuration.
 
-For full details, see the [Mesa release notes](https://github.com/MinaProtocol/mina/releases).
+For full details, see the [Mesa release notes](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa release tag URL once published (e.g. `/releases/tag/4.0.0`). */}
 
 :::info What changed in Mesa
 - The `--hardfork-handling` flag is **removed** (not supported on the Mesa chain). If you were using it, remove it from your startup configuration.
@@ -8322,7 +8322,7 @@ url: /network-upgrades/mesa/upgrade-steps/upgrade
 
 Starting at the _stop-network-slot_ the network will not produce nor accept new blocks, resulting in halting the network. During the upgrade period, o1Labs will use automated tooling to export the network state based on the block at the slot just before the _stop-transaction-slot_. The exported state will then be baked into the new Mesa build, which will be used to initiate the upgraded network. It is during the upgrade window that the Mesa network infrastructure will be bootstrapped, and seed nodes will become available. o1Labs will also finalize the archive node upgrade and publish the PostgreSQL database dumps for import by the archive node operators who wish to bootstrap their archives in a trustful manner.
 
-There is a tool available to validate that the Mesa node was built from the pre-upgrade network state. To validate, follow the instructions provided in this [location](https://github.com/MinaProtocol/mina/blob/mesa/docs/upgrading-to-mesa.md).
+There is a tool available to validate that the Mesa node was built from the pre-upgrade network state. See [In-Depth Validation](/network-upgrades/mesa/upgrade-steps/post-upgrade#in-depth-validation) for the `mina-archive-hardfork-toolbox` commands (`validate-fork`, `fork-candidate no-commands-after`) used to verify fork-block integrity. {/* TODO(PR #1133): If/when an authoritative `upgrading-to-mesa.md` lands in MinaProtocol/mina, link to it here. The previous link to `mina/blob/mesa/docs/upgrading-to-mesa.md` returned 404 — the `mesa` branch does not exist on the main repo. */}
 
 ## Block Producers and SNARK Workers
 
