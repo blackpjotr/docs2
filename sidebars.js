@@ -56,7 +56,6 @@ module.exports = {
           items: [
             'network-upgrades/mesa/requirements',
             'network-upgrades/mesa/upgrade-modes',
-            'network-upgrades/mesa/upgrade-modes-details',
             'network-upgrades/mesa/docker-compose-quickstart',
             {
               type: 'category',
@@ -76,7 +75,15 @@ module.exports = {
             'network-upgrades/mesa/archive-upgrade',
             'network-upgrades/mesa/replayer',
             'network-upgrades/mesa/preflight-network',
-            'network-upgrades/mesa/appendix',
+            'network-upgrades/mesa/troubleshooting',
+            {
+              type: 'category',
+              label: 'Appendix',
+              items: [
+                'network-upgrades/mesa/appendix',
+                'network-upgrades/mesa/upgrade-modes-details',
+              ],
+            },
             'network-upgrades/mesa/glossary',
           ],
         },

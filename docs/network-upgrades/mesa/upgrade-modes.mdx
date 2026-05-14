@@ -51,6 +51,31 @@ Automode is **not** available for the following — operators of these node type
 Automode applies only to the consensus-participating Mina daemon. Archive nodes, Rosetta API instances, and standalone SNARK workers all require separate manual upgrade steps — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) and [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade).
 :::
 
+:::danger Automode requires a persistent config directory and an automatic restart policy
+At the fork, the daemon **exits cleanly** (exit code 0) after writing the Mesa configuration and an `activated` marker to the config directory. It does **not** restart itself. Your process manager must restart it, and the config directory must survive that restart for the dispatcher to find the `activated` marker.
+
+- **Persistent config directory**: `~/.mina-config` (host) or a named Docker volume / Kubernetes `PersistentVolumeClaim` mounted at `/root/.mina-config` (container). An ephemeral `emptyDir` will lose the `activated` file and break the transition.
+- **Automatic restart policy**: `Restart=always` on systemd (default in the Mina unit), `--restart=always` on Docker, `restartPolicy: Always` on Kubernetes.
+
+Failing to meet either requirement means your node will not join the Mesa network at genesis. See [Upgrade Modes — Details](/network-upgrades/mesa/upgrade-modes-details#restart-and-filesystem-requirements) for the underlying mechanism.
+:::
+
+### Installing automode
+
+On Debian, install **both** the prefork and postfork packages — they ship together so the dispatcher can route to the correct binary before and after the fork:
+
+```bash
+sudo apt-get install mina-{network}-prefork-mesa mina-{network}-postfork-mesa
+```
+
+On Docker, use the `mina-daemon-auto-hardfork` image (the regular `mina-daemon` image is manual-mode only):
+
+```
+minaprotocol/mina-daemon-auto-hardfork:{version}-{codename}-{network}
+```
+
+The image bundles both binaries and the dispatcher, and sets `MINA_APP=/usr/local/bin/mina-dispatch` so the entrypoint uses the dispatcher automatically. Start it with your normal flags — see the Docker automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
+
 ## Manual Mode
 
 Manual mode gives operators full control over each step of the upgrade process.

@@ -6738,6 +6738,72 @@ mina libp2p generate-keypair --privkey-path <path-to-the-key-file>
 Further information on [generating key pairs](/node-operators/validator-node/generating-a-keypair) on Mina Protocol.
 
 ---
+url: /network-upgrades/mesa/troubleshooting
+---
+
+# Troubleshooting
+
+This page collects common operator questions and debugging tips for the Mesa upgrade. For low-level architecture and dispatcher internals, see [Upgrade Modes — Details](/network-upgrades/mesa/upgrade-modes-details).
+
+## How do I know which binary my node is using?
+
+Check whether the activation state file exists. The file is located at:
+
+`{config-directory}/auto-fork-mesa-{network_id}/activated`
+
+Where:
+- `{config-directory}` is the path passed via `--config-directory` (defaults to `~/.mina-config` on the host, or `/root/.mina-config` in Docker)
+- `{network_id}` is the network name (e.g., `mainnet` or `devnet`)
+
+For example, on a typical mainnet setup:
+
+```bash
+ls ~/.mina-config/auto-fork-mesa-mainnet/activated
+```
+
+- **File does not exist**: your node is using the pre-fork (Berkeley) binary
+- **File exists**: your node has transitioned to the Mesa binary
+
+## Can I run non-daemon commands or use a specific binary version?
+
+As described in [Dispatcher Limitations](/network-upgrades/mesa/upgrade-modes-details#dispatcher-limitations), the dispatcher supports `daemon`, `client`, and `--version`. For any other command — including `accounts list`, `ledger export`, and other CLI operations — **you must use the version-specific binary directly**:
+
+| Binary | Description | Full path |
+|---|---|---|
+| `mina-berkeley` | Pre-fork binary (current chain) | `/usr/lib/mina/berkeley/mina` |
+| `mina-mesa` | Post-fork binary (Mesa chain) | `/usr/lib/mina/mesa/mina` |
+
+```bash
+# Use mina-mesa for all non-daemon commands after the fork
+mina-mesa client status
+mina-mesa accounts list
+mina-mesa ledger export
+
+# Use mina-berkeley for pre-fork queries
+mina-berkeley client status
+```
+
+These symlinks (`mina-berkeley`, `mina-mesa`) are installed globally by the automode packages and are always available. They bypass the dispatcher entirely and run the binary directly, so they work regardless of the activation state.
+
+:::caution Do not manipulate the activation state file
+While it is technically possible to force the dispatcher to use a specific runtime by creating or removing the `activated` file, **this is strongly discouraged**. Manually manipulating the state file while the network is live can put your node on the wrong chain. If you need to run a specific version, use `mina-berkeley` or `mina-mesa` directly instead.
+:::
+
+## Debug mode
+
+Set `MINA_DISPATCHER_DEBUG=1` in your environment to see which binary and arguments the dispatcher is using:
+
+```bash
+MINA_DISPATCHER_DEBUG=1 mina daemon ...
+```
+
+For a dry run (print the command without executing):
+
+```bash
+MINA_DISPATCHER_DRYRUN=1 mina daemon ...
+```
+
+---
 url: /network-upgrades/mesa/upgrade-modes-details
 ---
 
@@ -6879,34 +6945,13 @@ The daemon does **not** restart itself. Your process manager must detect the exi
 If your Helm chart or pod spec uses `emptyDir` for the config directory, the `activated` file and generated Mesa config will be lost when the pod restarts. Use a `PersistentVolumeClaim` instead. Also verify that your restart logic does not re-initialize the config directory from scratch — the auto-generated Mesa config must be preserved.
 :::
 
-### Automode Docker Image
+### How automode is packaged
 
-If you run your node with Docker, use the **automode** image (`mina-daemon-auto-hardfork`):
+Operator install instructions (Debian packages, Docker image) live on [Upgrade Modes — Installing automode](/network-upgrades/mesa/upgrade-modes#installing-automode). The detail worth keeping here is what each artifact contributes to the mechanism described above:
 
-```
-minaprotocol/mina-daemon-auto-hardfork:{version}-{codename}-{network}
-```
-
-This image:
-- Installs both the pre-fork and post-fork Debian packages
-- Sets `MINA_APP=/usr/local/bin/mina-dispatch` so the entrypoint uses the dispatcher
-- Sets `MINA_HARDFORK_STATE_DIR=/root/.mina-config` for the activation state file
-
-You start it with the same flags you normally use. The dispatcher handles the rest.
-
-### Automode Debian Packages
-
-If you run your node directly on a server (not Docker), install **both** automode Debian packages:
-
-```bash
-sudo apt-get install mina-{network}-prefork-mesa mina-{network}-postfork-mesa
-```
-
-Both packages are required for automode to work:
-- `mina-{network}-prefork-mesa` — the pre-fork binary that runs the current chain up to the stop-network-slot
-- `mina-{network}-postfork-mesa` — the post-fork binary that runs the Mesa chain after the fork
-
-The `postfork-mesa` package also installs the dispatcher at `/usr/local/bin/mina-dispatch` and the required configuration in `/etc/default/mina-dispatch`.
+- The `mina-{network}-prefork-mesa` Debian package supplies the pre-fork binary (`/usr/lib/mina/berkeley/mina`).
+- The `mina-{network}-postfork-mesa` Debian package supplies the post-fork binary (`/usr/lib/mina/mesa/mina`), the dispatcher (`/usr/local/bin/mina-dispatch`), and the dispatcher configuration (`/etc/default/mina-dispatch`).
+- The `minaprotocol/mina-daemon-auto-hardfork` Docker image bundles both packages and sets `MINA_APP=/usr/local/bin/mina-dispatch` and `MINA_HARDFORK_STATE_DIR=/root/.mina-config` in the entrypoint.
 
 :::caution
 The dispatcher reads its configuration from `/etc/default/mina-dispatch`. This file must exist and be owned by root. Do not modify it unless you know what you are doing.
@@ -6950,98 +6995,13 @@ minaprotocol/mina-daemon-hardfork:{version}-{codename}-{network}
 
 This image includes both pre-fork and post-fork packages but uses a dedicated hardfork entrypoint that requires manual intervention to complete the transition.
 
-## Which Mode Should I Pick?
+## Which mode should I pick?
 
-### Choose Automode if:
+The "who should use" criteria for each mode and the side-by-side comparison live on [Upgrade Modes](/network-upgrades/mesa/upgrade-modes#comparison) — this page intentionally stays focused on the underlying mechanism so the two documents do not drift.
 
-- You want zero intervention during the fork window
-- You are comfortable with the dispatcher managing binary routing
-- You run a standard block producer or SNARK coordinator setup
-- You want to minimize the risk of missing the Mesa genesis timestamp
+## Operator troubleshooting
 
-### Choose Manual mode if:
-
-- You have custom deployment automation that controls which binary runs
-- You want to inspect the Mesa release before starting it
-- You run a non-standard setup where automatic argument rewriting could cause issues
-- You need to coordinate the upgrade with other infrastructure changes
-
-### Key Differences at a Glance
-
-| | Automode | Manual |
-|---|---|---|
-| Packages installed | Pre-fork + post-fork + dispatcher | Pre-fork only (Mesa installed later) |
-| Binary switching | Automatic via dispatcher | You stop old, install new, start new |
-| Flag changes at fork | Handled by dispatcher | You update flags yourself |
-| Downtime at fork | Seconds (automatic transition) | Minutes to hours (depends on you) |
-| Docker image | `mina-daemon-auto-hardfork` | `mina-daemon-hardfork` |
-| Risk of missing genesis | Very low | Depends on how fast you act |
-
-:::info For block producers worried about missed blocks
-With **automode**, your node transitions automatically at the stop-network-slot. As long as your node was running during State Finalization, it will be ready to produce blocks at the Mesa genesis timestamp without any action from you.
-
-With **manual mode**, the time between the stop-network-slot and when you restart your node on Mesa is downtime. If the Mesa genesis timestamp arrives before you finish the upgrade, you will miss blocks until your node catches up.
-:::
-
-## Troubleshooting Automode
-
-### How do I know which binary my node is using?
-
-Check whether the activation state file exists. The file is located at:
-
-`{config-directory}/auto-fork-mesa-{network_id}/activated`
-
-Where:
-- `{config-directory}` is the path passed via `--config-directory` (defaults to `~/.mina-config` on the host, or `/root/.mina-config` in Docker)
-- `{network_id}` is the network name (e.g., `mainnet` or `devnet`)
-
-For example, on a typical mainnet setup:
-
-```bash
-ls ~/.mina-config/auto-fork-mesa-mainnet/activated
-```
-
-- **File does not exist**: your node is using the pre-fork (Berkeley) binary
-- **File exists**: your node has transitioned to the Mesa binary
-
-### Can I run non-daemon commands or use a specific binary version?
-
-As described in the [Dispatcher Limitations](#dispatcher-limitations) section, the dispatcher supports `daemon`, `client`, and `--version`. For any other command — including `accounts list`, `ledger export`, and other CLI operations — **you must use the version-specific binary directly**:
-
-| Binary | Description | Full path |
-|---|---|---|
-| `mina-berkeley` | Pre-fork binary (current chain) | `/usr/lib/mina/berkeley/mina` |
-| `mina-mesa` | Post-fork binary (Mesa chain) | `/usr/lib/mina/mesa/mina` |
-
-```bash
-# Use mina-mesa for all non-daemon commands after the fork
-mina-mesa client status
-mina-mesa accounts list
-mina-mesa ledger export
-
-# Use mina-berkeley for pre-fork queries
-mina-berkeley client status
-```
-
-These symlinks (`mina-berkeley`, `mina-mesa`) are installed globally by the automode packages and are always available. They bypass the dispatcher entirely and run the binary directly, so they work regardless of the activation state.
-
-:::caution Do not manipulate the activation state file
-While it is technically possible to force the dispatcher to use a specific runtime by creating or removing the `activated` file, **this is strongly discouraged**. Manually manipulating the state file while the network is live can put your node on the wrong chain. If you need to run a specific version, use `mina-berkeley` or `mina-mesa` directly instead.
-:::
-
-### Debug mode
-
-Set `MINA_DISPATCHER_DEBUG=1` in your environment to see which binary and arguments the dispatcher is using:
-
-```bash
-MINA_DISPATCHER_DEBUG=1 mina daemon ...
-```
-
-For a dry run (print the command without executing):
-
-```bash
-MINA_DISPATCHER_DRYRUN=1 mina daemon ...
-```
+Operator-facing troubleshooting (how to tell which binary is active, dispatcher debug mode, when to use `mina-berkeley` vs `mina-mesa` directly) has moved to its own page: [Troubleshooting](/network-upgrades/mesa/troubleshooting).
 
 ---
 url: /network-upgrades/mesa/upgrade-modes
@@ -7086,6 +7046,31 @@ Automode is **not** available for the following — operators of these node type
 :::info
 Automode applies only to the consensus-participating Mina daemon. Archive nodes, Rosetta API instances, and standalone SNARK workers all require separate manual upgrade steps — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) and [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade).
 :::
+
+:::danger Automode requires a persistent config directory and an automatic restart policy
+At the fork, the daemon **exits cleanly** (exit code 0) after writing the Mesa configuration and an `activated` marker to the config directory. It does **not** restart itself. Your process manager must restart it, and the config directory must survive that restart for the dispatcher to find the `activated` marker.
+
+- **Persistent config directory**: `~/.mina-config` (host) or a named Docker volume / Kubernetes `PersistentVolumeClaim` mounted at `/root/.mina-config` (container). An ephemeral `emptyDir` will lose the `activated` file and break the transition.
+- **Automatic restart policy**: `Restart=always` on systemd (default in the Mina unit), `--restart=always` on Docker, `restartPolicy: Always` on Kubernetes.
+
+Failing to meet either requirement means your node will not join the Mesa network at genesis. See [Upgrade Modes — Details](/network-upgrades/mesa/upgrade-modes-details#restart-and-filesystem-requirements) for the underlying mechanism.
+:::
+
+### Installing automode
+
+On Debian, install **both** the prefork and postfork packages — they ship together so the dispatcher can route to the correct binary before and after the fork:
+
+```bash
+sudo apt-get install mina-{network}-prefork-mesa mina-{network}-postfork-mesa
+```
+
+On Docker, use the `mina-daemon-auto-hardfork` image (the regular `mina-daemon` image is manual-mode only):
+
+```
+minaprotocol/mina-daemon-auto-hardfork:{version}-{codename}-{network}
+```
+
+The image bundles both binaries and the dispatcher, and sets `MINA_APP=/usr/local/bin/mina-dispatch` so the entrypoint uses the dispatcher automatically. Start it with your normal flags — see the Docker automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
 
 ## Manual Mode
 
