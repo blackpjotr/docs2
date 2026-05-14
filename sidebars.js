@@ -70,6 +70,7 @@ module.exports = {
                 'network-upgrades/mesa/upgrade-steps/state-finalization',
                 'network-upgrades/mesa/upgrade-steps/upgrade',
                 'network-upgrades/mesa/upgrade-steps/post-upgrade',
+                'network-upgrades/mesa/upgrade-steps/examples',
               ],
             },
             'network-upgrades/mesa/archive-upgrade',
