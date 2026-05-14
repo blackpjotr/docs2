@@ -15,6 +15,10 @@ keywords:
 
 # Archive Replayer
 
+:::info Not Mesa-specific
+`mina-replayer` is a general-purpose archive verification tool shipped with every release of Mina (Berkeley today, Mesa after the fork). This page lives under the Mesa Upgrade section because the replayer plays a specific role at hard-fork time, but the commands, validation workflow, and troubleshooting on this page apply equally to a non-fork day. A future revision of the docs may relocate the general parts of this page to the Archive Node section.
+:::
+
 The `mina-replayer` is a tool that replays all transactions from a Mina archive database, applying them sequentially to reconstruct the ledger state. It is an **ongoing verification tool** — not limited to upgrade time. You can run it at any point to confirm your archive database faithfully represents the canonical chain.
 
 During the Mesa hard fork, the replayer serves a critical role: it verifies that the archive database is consistent and produces the ledger checkpoint needed to bootstrap the new chain. After the upgrade, it continues to be useful for detecting data corruption, missing blocks, or schema issues in your archive.

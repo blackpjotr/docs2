@@ -56,7 +56,6 @@ module.exports = {
           items: [
             'network-upgrades/mesa/requirements',
             'network-upgrades/mesa/upgrade-modes',
-            'network-upgrades/mesa/docker-compose-quickstart',
             {
               type: 'category',
               label: 'Upgrade Steps',
@@ -82,6 +81,7 @@ module.exports = {
               items: [
                 'network-upgrades/mesa/appendix',
                 'network-upgrades/mesa/upgrade-modes-details',
+                'network-upgrades/mesa/docker-compose-quickstart',
               ],
             },
             'network-upgrades/mesa/glossary',
