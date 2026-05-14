@@ -5605,7 +5605,7 @@ Make sure to replace `<username>` and `<database>` with your actual PostgreSQL u
 #### Rollback
 
 You can rollback the upgrade process by restoring the database from a backup taken before running the upgrade script.
-Another is to run rollback script which is part of the upgrade script. It will drop all tables and other database objects created by the upgrade script.
+Another alternative is to run the rollback script, which is part of the upgrade script. It will drop all tables and other database objects created by the upgrade script.
 It will also update the version table to reflect the rollback.
 
 ##### Running the rollback script
@@ -5922,7 +5922,7 @@ url: /network-upgrades/mesa
 
 # Mesa Upgrade
 
-The Mesa upgrade is a major network upgrade (hard fork) for the Mina Protocol mainnet. It is not backward compatible and requires all nodes to upgrade.
+The Mesa upgrade is a major network upgrade (hard fork) for the Mina Protocol mainnet. It is not backward compatible: every consensus-participating Mina daemon (block producers, SNARK coordinators, archive nodes, Rosetta API nodes, and seed nodes) must run a Mesa-compatible release to remain on the network. Wallets, off-chain services, and downstream tooling do not run a daemon and only need to update if they pin to a specific transaction format or version.
 
 Please refer to the Mesa node release notes [here](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa mainnet release tag URL once published. Until then this filter surfaces all `*mesa*` tags (preflight builds today). */}
 
@@ -5943,6 +5943,14 @@ For the first time in Mina's history, node operators can upgrade through a hard 
 ### Simplified Archive Upgrade
 
 Unlike the Berkeley upgrade (which required up to 48 hours for archive database conversion), the Mesa archive upgrade is a fast schema upgrade that completes in under a minute. See [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
+
+### Additional Protocol Improvements
+
+Mesa also ships a number of smaller MIPs (Mina Improvement Proposals) that affect protocol behavior, including:
+
+- **Account-update limit increase** — the maximum number of account updates a single zkApp transaction can include is raised, allowing more complex composed transactions in a single proof.
+
+For the complete list of MIPs landing in Mesa, see the [Mesa upgrade overview on the o1Labs blog](https://www.o1labs.org/blog/mesa-upgrade). {/* TODO(PR #1133): Inline the canonical MIP list here once it is published in the Mesa release notes / mina-improvements repo, instead of relying on the blog post. */}
 
 ## Upgrade Flow — End-to-End Timeline
 
@@ -5966,6 +5974,8 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 
 > **Goal:** Every participant is prepared and running the stop-slot release before the fork begins.
 
+The table below is a high-level summary. The concrete install commands (Debian, Docker, etc.) and per-role checklists live in [Upgrade Steps — Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade) and the relevant [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) page — start there once you know your role and deployment style.
+
 | Actor | What to do |
 |---|---|
 | **All operators** | Verify [hardware requirements](/network-upgrades/mesa/requirements) (32 GB RAM, 8-core CPU with AVX/BMI2). Back up keys. |
@@ -5974,7 +5984,7 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 | **Standalone SNARK Workers** | Workers spawned by a coordinator (`--run-snark-worker`) need no separate action — they inherit the coordinator's binary. Workers run as a separate `mina internal snark-worker` process or container must be redeployed with the Mesa release after the fork. |
 | **Archive Nodes** | Install stop-slot release. Choose upgrade method: _trustless_ (run upgrade script now) or _trustful_ (import o1Labs dump later). If trustless, run the [archive upgrade script](/network-upgrades/mesa/archive-upgrade) — it is backward compatible and can be applied early. |
 | **Exchanges** | Install stop-slot release. Update integrations (mina-signer, Rosetta API). Test on devnet. Plan deposit/withdrawal freeze window. |
-| **zkApp Developers** | Update to the Mesa-compatible o1js version, recompile your contract, and verify it on the [preflight network](/network-upgrades/mesa/preflight-network). Plan to redeploy on Mesa after the fork — every zkApp must be redeployed because the protocol version bump changes the verification key. |
+| **zkApp Developers** | Update to the Mesa-compatible o1js version (`o1js@3.0.0-mesa.698ca` for the preflight chain), recompile your contract, and verify it on the [preflight network](/network-upgrades/mesa/preflight-network). Plan to redeploy on Mesa after the fork — every zkApp must be redeployed because the protocol version bump changes the verification key. {/* TODO(PR #1133): Link to the official o1js Mesa upgrade guide once published (cjjdespres #3220525842). */} |
 
 :::tip Readiness checklist
 Use the detailed [Pre-Upgrade checklist](/network-upgrades/mesa/upgrade-steps/pre-upgrade) to verify every item before proceeding.
@@ -5986,7 +5996,9 @@ Use the detailed [Pre-Upgrade checklist](/network-upgrades/mesa/upgrade-steps/pr
 
 > **Goal:** The network reaches consensus on a final state. No new transactions are accepted.
 
-At the predefined **stop-transaction-slot**, nodes stop accepting new user transactions. Block production continues for ~100 more slots with empty blocks (no coinbase, no fees) until the **stop-network-slot** to ensure all nodes converge on the same state.
+At the predefined [**stop-transaction-slot**](/network-upgrades/mesa/glossary#stop-transaction-slot), nodes stop accepting new user transactions. Block production continues for ~100 more slots with empty blocks (no coinbase, no fees) until the [**stop-network-slot**](/network-upgrades/mesa/glossary#stop-network-slot) to ensure all nodes converge on the same state.
+
+{/* TODO(PR #1133, glyh #3198914880): Add a dedicated "Fork Schedule" page that lists the concrete values — Mesa genesis timestamp, stop-transaction-slot (`slot_tx_end`), stop-network-slot (`slot_chain_end`) — and link to it from every glossary anchor used here. Until it exists, links point at the glossary definitions. */}
 
 | Actor | What to do |
 |---|---|
@@ -6433,8 +6445,8 @@ mina client status   # verify Mesa chain ID
 | **Block Producers** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Modes](/network-upgrades/mesa/upgrade-modes), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade Flags](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
 | **SNARK Workers / Coordinators** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade Flags](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
 | **Archive Node Operators** | [Requirements](/network-upgrades/mesa/requirements), [Archive Upgrade](/network-upgrades/mesa/archive-upgrade), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
-| **Rosetta API Operators** | [Archive Upgrade](/network-upgrades/mesa/archive-upgrade), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade Flags](/network-upgrades/mesa/upgrade-steps/post-upgrade), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
-| **Exchanges** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Appendix](/network-upgrades/mesa/appendix) |
+| **Rosetta API Operators** | [Requirements](/network-upgrades/mesa/requirements), [Archive Upgrade](/network-upgrades/mesa/archive-upgrade), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
+| **Exchanges** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade), [Appendix](/network-upgrades/mesa/appendix) |
 
 ## Network Details
 
@@ -8340,7 +8352,7 @@ If you are doing the trustless upgrade, then:
 
 Exchanges shall disable MINA deposits and withdrawals during the state finalization period (the period between _stop-transaction-slot_ and _stop-network-slot_) since any transactions after the _stop-transaction-slot_ will not be part of the upgraded chain.
 
-Remember that although you might be able to submit transactions, the majority of the block producers will be running a node that discards any blocks with transactions.
+Note that this assumes the majority of block producers are running the [stop-slot release](/network-upgrades/mesa/glossary#stop-slot-release), which is what enforces the transaction cutoff. If your own node is still on a pre-stop-slot build, you might technically be able to submit transactions, but the block producers running the stop-slot release will discard any blocks containing them.
 
 ---
 url: /network-upgrades/mesa/upgrade-steps/upgrade
@@ -8362,7 +8374,7 @@ If you are using **Manual mode**:
 
 1. During the upgrade phase (between _stop-network-slot_ and the publishing of the Mesa release), block producers can shut down their nodes.
 2. After the publication of the Mesa node release, block producers and SNARK workers should upgrade their nodes and be prepared for block production at the genesis timestamp, which is the slot when the first Mesa block will be produced.
-3. It is possible to continue using the same libp2p key after the upgrade. Remember to adjust the new flag to pass the libp2p key to the node.
+3. It is possible to continue using the same libp2p key after the upgrade. Pass it to the Mesa daemon with the [`--libp2p-keypair`](/network-upgrades/mesa/upgrade-steps/post-upgrade#flag-and-configuration-reference) flag (see the Flag and Configuration Reference on the Post-Upgrade page).
 
 ## Archive Node Operators and Rosetta Operators
 

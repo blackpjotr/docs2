@@ -44,4 +44,4 @@ If you are doing the trustless upgrade, then:
 
 Exchanges shall disable MINA deposits and withdrawals during the state finalization period (the period between _stop-transaction-slot_ and _stop-network-slot_) since any transactions after the _stop-transaction-slot_ will not be part of the upgraded chain.
 
-Remember that although you might be able to submit transactions, the majority of the block producers will be running a node that discards any blocks with transactions.
+Note that this assumes the majority of block producers are running the [stop-slot release](/network-upgrades/mesa/glossary#stop-slot-release), which is what enforces the transaction cutoff. If your own node is still on a pre-stop-slot build, you might technically be able to submit transactions, but the block producers running the stop-slot release will discard any blocks containing them.

@@ -26,7 +26,7 @@ If you are using **Manual mode**:
 
 1. During the upgrade phase (between _stop-network-slot_ and the publishing of the Mesa release), block producers can shut down their nodes.
 2. After the publication of the Mesa node release, block producers and SNARK workers should upgrade their nodes and be prepared for block production at the genesis timestamp, which is the slot when the first Mesa block will be produced.
-3. It is possible to continue using the same libp2p key after the upgrade. Remember to adjust the new flag to pass the libp2p key to the node.
+3. It is possible to continue using the same libp2p key after the upgrade. Pass it to the Mesa daemon with the [`--libp2p-keypair`](/network-upgrades/mesa/upgrade-steps/post-upgrade#flag-and-configuration-reference) flag (see the Flag and Configuration Reference on the Post-Upgrade page).
 
 ## Archive Node Operators and Rosetta Operators
 
