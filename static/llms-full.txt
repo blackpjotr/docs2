@@ -6047,45 +6047,7 @@ Exactly **3 hours** after the Mesa release is published, at the predefined Mesa 
 
 ---
 
-### Timeline by Role
-
-Select your role to see a simplified view of what you need to do and when.
-
-{/* TODO(PR #1133): The per-role timeline diagrams below (`simplified-schedule*.png`) were AI-generated and have been removed. Replace with updated diagrams from design (Rebecca) once available — see Berkeley upgrade-steps page and the Mesa upgrade slide deck for the new visual style. */}
-
-<details>
-<summary><b>Block Producers & SNARK Workers (automode)</b></summary>
-
-**Your upgrade is hands-free.** Install the stop-slot release weeks before the fork, keep your node running through state finalization, and the automode dispatcher handles the transition automatically. After the fork, verify your node is on the Mesa chain.
-
-</details>
-
-<details>
-<summary><b>Block Producers & SNARK Workers (manual mode)</b></summary>
-
-You must take action on fork day: stop your node after the network halts, install the Mesa release when published, and restart. You have until 290 blocks into the Mesa chain to complete the upgrade without missing your slots.
-
-</details>
-
-<details>
-<summary><b>Archive Node Operators</b></summary>
-
-Choose your upgrade method early:
-- **Trustless:** Run the archive upgrade script before the fork (it's backward-compatible). After the fork, point the Mesa archive node at your upgraded DB.
-- **Trustful:** Wait for the o1Labs SQL dump after the fork and import it into a fresh database.
-
-After the fork, verify data integrity and monitor the archive daemon.
-
-</details>
-
-<details>
-<summary><b>Exchanges & Service Providers</b></summary>
-
-The critical action is timing your **deposit/withdrawal freeze**. Disable MINA activity before the stop-transaction-slot. Install the Mesa release on fork day. Re-enable deposits and withdrawals only after block production is confirmed and your integration is verified.
-
-</details>
-
-For step-by-step instructions, see [Upgrade Steps](/network-upgrades/mesa/upgrade-steps).
+For step-by-step instructions per phase, see [Upgrade Steps](/network-upgrades/mesa/upgrade-steps). For end-to-end walkthroughs by role (block producer, archive node, zkApp developer, exchange), see [Examples](/network-upgrades/mesa/upgrade-steps/examples).
 
 ## Upgrade Modes
 
@@ -6710,22 +6672,12 @@ Please note the following are the hardware requirements for each node type after
 
 ## Mina Daemon Requirements
 
-### IP and Port configuration
+The Mesa daemon inherits the same networking and process-management requirements as the Berkeley daemon. Rather than restate them here, refer to the canonical sections in the Validator Node docs:
 
-**IP:**
+- **IP and port configuration** — `--external-ip`, `--external-port`, default port `8302` (libp2p). See [Validator Node Requirements](/node-operators/validator-node/requirements).
+- **Auto-restart on crash** — systemd `Restart=always`, Docker `--restart=always`. See [Running mina node as a service](/node-operators/validator-node/connecting-to-the-network#running-mina-node-as-a-service).
 
-By default, the Mina Daemon will attempt to retrieve its public IP address from the system. If you are running the node behind a NAT or firewall, you can set the `--external-ip` flag to specify the public IP address.
-
-**Port:**
-
-Nodes must expose a port publicly to communicate with other peers.
-Mina uses by default the port `8302` which is the default libp2p port.
-
-You can use a different port by setting the `--external-port` flag.
-
-### Node Auto-restart
-
-Ensure your nodes are set to restart automatically after a crash. For guidance, refer to the [Running mina node as a service](/node-operators/validator-node/connecting-to-the-network#running-mina-node-as-a-service) section, which covers both `systemctl enable` for systemd and `--restart=always` for Docker.
+The hardware table above is Mesa-specific; everything else lives once in the Validator Node docs.
 
 ## Seed Peer Requirements
 
@@ -7447,6 +7399,8 @@ Exactly 3 hours after the publishing of the Mesa node release, at the predefined
 
 This page helps you **verify your node is healthy** and running on the Mesa chain.
 
+The checks are split into separate tabs for **Rosetta API** and **Exchange** because the two roles overlap but are not the same. _Rosetta API_ here means an operator running the `mina-rosetta` integration layer (typically alongside an archive node). _Exchange_ means an operator running the customer-facing platform that ingests Mina balances and submits payments. Most exchanges use Rosetta, so they will work through both tabs; a handful operate without Rosetta (custom GraphQL integrations) and can skip the Rosetta tab.
+
 ## Verify Your Node
 
 <Tabs groupId="operator-type">
@@ -7748,9 +7702,9 @@ The flags below are **unchanged from Berkeley** — if your node was running cor
 For full details, see the [Mesa release notes](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa release tag URL once published (e.g. `/releases/tag/4.0.0`). */}
 
 :::info What changed in Mesa
-- The `--hardfork-handling` flag is **removed** (not supported on the Mesa chain). If you were using it, remove it from your startup configuration.
-- If you used manual mode, update `--genesis-ledger-dir` and `-config-file` to point to the Mesa versions (included in the package).
-- All other flags remain the same.
+- **`--hardfork-handling` is no longer recognized.** This Berkeley-era flag selected how the daemon should behave around fork boundaries; in Mesa, fork handling lives in the automode dispatcher (for automode) or in the operator's explicit stop/install/restart procedure (for manual mode). The Mesa binary does not accept the flag at all — pass it and the daemon will exit with an unknown-argument error. Remove it from your startup config, systemd unit, Docker command, or Helm values before starting Mesa.
+- **If you used manual mode, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`). Automode users do not need to do this — the dispatcher rewrites both arguments automatically.
+- **All other flags carry over unchanged** — `--block-producer-key`, `--libp2p-keypair`, `--peer-list-url`, `--external-ip/port`, log flags, etc. behave the same on Mesa as on Berkeley.
 :::
 
 <details>
@@ -8071,29 +8025,53 @@ Any transactions submitted after the _stop-transaction-slot_ **will not exist on
 
 ## Detailed Steps
 
-### Block Producers and SNARK Workers
+Pick the same tab as in the Readiness Checklist above to see the narrative steps for your role.
 
-1. Provision servers that meet the minimum [hardware requirements](/network-upgrades/mesa/requirements), including 32 GB RAM and support for _AVX_ and _BMI2_ CPU instructions.
-2. Upgrade nodes to the stop-slot release version [3.x.x](https://github.com/MinaProtocol/mina/releases), which has built-in stop slots.
+<Tabs groupId="operator-type">
+<TabItem value="block-producer" label="Block Producer" default>
+
+1. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
+2. Upgrade nodes to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases), which has built-in stop slots.
 
 If you are using [Automode](/network-upgrades/mesa/upgrade-modes), no further action is needed until the [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) phase — your node will handle the transition automatically.
 
-### Archive Node Operators and Rosetta Operators
+</TabItem>
+<TabItem value="snark-coordinator" label="SNARK Coordinator">
+
+1. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
+2. Upgrade the coordinator to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases) before the _stop-transaction-slot_.
+
+Coordinators cannot use Automode for the SNARK-worker role they spawn — Automode applies to the daemon process the coordinator itself runs. Standalone workers (next tab) need their own upgrade.
+
+</TabItem>
+<TabItem value="snark-worker" label="SNARK Worker">
+
+- **Worker spawned by a coordinator**: no independent action — the worker inherits the coordinator's binary.
+- **Standalone worker** (`mina internal snark-worker …`): install the stop-slot release on the worker host so the worker speaks the same protocol as the coordinator. After the fork, redeploy the worker with the Mesa binary.
+
+See the [Requirements](/network-upgrades/mesa/requirements) page for per-worker hardware specs.
+
+</TabItem>
+<TabItem value="archive-node" label="Archive Node / Rosetta">
 
 Two upgrade processes are available: _trustless_ and _trustful_. If you want to perform the _trustless_ upgrade, follow the steps below; otherwise, proceed to the [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade) phase. The _trustful_ approach relies on o1Labs database exports and Docker images and doesn't require any actions at this stage.
 
 1. Trustless upgrade:
    - Perform the archive node schema upgrade. Since Mainnet is a long-lived network, the upgrade process is a very fast operation and boils down to running the upgrade script against your archive. It should not take more than 1 minute, depending on your server specification and infrastructure.
    - For more information on the archive node upgrade process, please refer to the [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) section.
-2. Provision servers that meet the minimum hardware requirements, primarily 32 GB RAM.
+2. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
 3. Upgrade all nodes to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases) before the pre-defined _stop-transaction-slot_.
 
-### Exchanges
+</TabItem>
+<TabItem value="exchange" label="Exchange">
 
 1. Make sure to test your system integration with Mesa's new features. Pay special attention to:
    - If you rely on the archive node SQL database tables, please review the schema changes in the [Appendix](/network-upgrades/mesa/appendix).
-2. Provision servers that meet the minimum hardware requirements, particularly 32 GB RAM.
+2. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
 3. Upgrade all nodes to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases) before the pre-defined _stop-transaction-slot_.
+
+</TabItem>
+</Tabs>
 
 ---
 url: /network-upgrades/mesa/upgrade-steps/state-finalization

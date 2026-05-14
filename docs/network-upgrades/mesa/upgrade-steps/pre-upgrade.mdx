@@ -215,26 +215,50 @@ Any transactions submitted after the _stop-transaction-slot_ **will not exist on
 
 ## Detailed Steps
 
-### Block Producers and SNARK Workers
+Pick the same tab as in the Readiness Checklist above to see the narrative steps for your role.
 
-1. Provision servers that meet the minimum [hardware requirements](/network-upgrades/mesa/requirements), including 32 GB RAM and support for _AVX_ and _BMI2_ CPU instructions.
-2. Upgrade nodes to the stop-slot release version [3.x.x](https://github.com/MinaProtocol/mina/releases), which has built-in stop slots.
+<Tabs groupId="operator-type">
+<TabItem value="block-producer" label="Block Producer" default>
+
+1. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
+2. Upgrade nodes to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases), which has built-in stop slots.
 
 If you are using [Automode](/network-upgrades/mesa/upgrade-modes), no further action is needed until the [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) phase — your node will handle the transition automatically.
 
-### Archive Node Operators and Rosetta Operators
+</TabItem>
+<TabItem value="snark-coordinator" label="SNARK Coordinator">
+
+1. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
+2. Upgrade the coordinator to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases) before the _stop-transaction-slot_.
+
+Coordinators cannot use Automode for the SNARK-worker role they spawn — Automode applies to the daemon process the coordinator itself runs. Standalone workers (next tab) need their own upgrade.
+
+</TabItem>
+<TabItem value="snark-worker" label="SNARK Worker">
+
+- **Worker spawned by a coordinator**: no independent action — the worker inherits the coordinator's binary.
+- **Standalone worker** (`mina internal snark-worker …`): install the stop-slot release on the worker host so the worker speaks the same protocol as the coordinator. After the fork, redeploy the worker with the Mesa binary.
+
+See the [Requirements](/network-upgrades/mesa/requirements) page for per-worker hardware specs.
+
+</TabItem>
+<TabItem value="archive-node" label="Archive Node / Rosetta">
 
 Two upgrade processes are available: _trustless_ and _trustful_. If you want to perform the _trustless_ upgrade, follow the steps below; otherwise, proceed to the [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade) phase. The _trustful_ approach relies on o1Labs database exports and Docker images and doesn't require any actions at this stage.
 
 1. Trustless upgrade:
    - Perform the archive node schema upgrade. Since Mainnet is a long-lived network, the upgrade process is a very fast operation and boils down to running the upgrade script against your archive. It should not take more than 1 minute, depending on your server specification and infrastructure.
    - For more information on the archive node upgrade process, please refer to the [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) section.
-2. Provision servers that meet the minimum hardware requirements, primarily 32 GB RAM.
+2. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
 3. Upgrade all nodes to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases) before the pre-defined _stop-transaction-slot_.
 
-### Exchanges
+</TabItem>
+<TabItem value="exchange" label="Exchange">
 
 1. Make sure to test your system integration with Mesa's new features. Pay special attention to:
    - If you rely on the archive node SQL database tables, please review the schema changes in the [Appendix](/network-upgrades/mesa/appendix).
-2. Provision servers that meet the minimum hardware requirements, particularly 32 GB RAM.
+2. Provision servers that meet the [hardware requirements](/network-upgrades/mesa/requirements).
 3. Upgrade all nodes to the stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases) before the pre-defined _stop-transaction-slot_.
+
+</TabItem>
+</Tabs>

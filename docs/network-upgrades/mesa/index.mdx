@@ -138,45 +138,7 @@ Exactly **3 hours** after the Mesa release is published, at the predefined Mesa 
 
 ---
 
-### Timeline by Role
-
-Select your role to see a simplified view of what you need to do and when.
-
-{/* TODO(PR #1133): The per-role timeline diagrams below (`simplified-schedule*.png`) were AI-generated and have been removed. Replace with updated diagrams from design (Rebecca) once available — see Berkeley upgrade-steps page and the Mesa upgrade slide deck for the new visual style. */}
-
-<details>
-<summary><b>Block Producers & SNARK Workers (automode)</b></summary>
-
-**Your upgrade is hands-free.** Install the stop-slot release weeks before the fork, keep your node running through state finalization, and the automode dispatcher handles the transition automatically. After the fork, verify your node is on the Mesa chain.
-
-</details>
-
-<details>
-<summary><b>Block Producers & SNARK Workers (manual mode)</b></summary>
-
-You must take action on fork day: stop your node after the network halts, install the Mesa release when published, and restart. You have until 290 blocks into the Mesa chain to complete the upgrade without missing your slots.
-
-</details>
-
-<details>
-<summary><b>Archive Node Operators</b></summary>
-
-Choose your upgrade method early:
-- **Trustless:** Run the archive upgrade script before the fork (it's backward-compatible). After the fork, point the Mesa archive node at your upgraded DB.
-- **Trustful:** Wait for the o1Labs SQL dump after the fork and import it into a fresh database.
-
-After the fork, verify data integrity and monitor the archive daemon.
-
-</details>
-
-<details>
-<summary><b>Exchanges & Service Providers</b></summary>
-
-The critical action is timing your **deposit/withdrawal freeze**. Disable MINA activity before the stop-transaction-slot. Install the Mesa release on fork day. Re-enable deposits and withdrawals only after block production is confirmed and your integration is verified.
-
-</details>
-
-For step-by-step instructions, see [Upgrade Steps](/network-upgrades/mesa/upgrade-steps).
+For step-by-step instructions per phase, see [Upgrade Steps](/network-upgrades/mesa/upgrade-steps). For end-to-end walkthroughs by role (block producer, archive node, zkApp developer, exchange), see [Examples](/network-upgrades/mesa/upgrade-steps/examples).
 
 ## Upgrade Modes
 

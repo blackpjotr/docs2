@@ -21,6 +21,8 @@ Exactly 3 hours after the publishing of the Mesa node release, at the predefined
 
 This page helps you **verify your node is healthy** and running on the Mesa chain.
 
+The checks are split into separate tabs for **Rosetta API** and **Exchange** because the two roles overlap but are not the same. _Rosetta API_ here means an operator running the `mina-rosetta` integration layer (typically alongside an archive node). _Exchange_ means an operator running the customer-facing platform that ingests Mina balances and submits payments. Most exchanges use Rosetta, so they will work through both tabs; a handful operate without Rosetta (custom GraphQL integrations) and can skip the Rosetta tab.
+
 ## Verify Your Node
 
 <Tabs groupId="operator-type">
@@ -322,9 +324,9 @@ The flags below are **unchanged from Berkeley** — if your node was running cor
 For full details, see the [Mesa release notes](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa release tag URL once published (e.g. `/releases/tag/4.0.0`). */}
 
 :::info What changed in Mesa
-- The `--hardfork-handling` flag is **removed** (not supported on the Mesa chain). If you were using it, remove it from your startup configuration.
-- If you used manual mode, update `--genesis-ledger-dir` and `-config-file` to point to the Mesa versions (included in the package).
-- All other flags remain the same.
+- **`--hardfork-handling` is no longer recognized.** This Berkeley-era flag selected how the daemon should behave around fork boundaries; in Mesa, fork handling lives in the automode dispatcher (for automode) or in the operator's explicit stop/install/restart procedure (for manual mode). The Mesa binary does not accept the flag at all — pass it and the daemon will exit with an unknown-argument error. Remove it from your startup config, systemd unit, Docker command, or Helm values before starting Mesa.
+- **If you used manual mode, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`). Automode users do not need to do this — the dispatcher rewrites both arguments automatically.
+- **All other flags carry over unchanged** — `--block-producer-key`, `--libp2p-keypair`, `--peer-list-url`, `--external-ip/port`, log flags, etc. behave the same on Mesa as on Berkeley.
 :::
 
 <details>

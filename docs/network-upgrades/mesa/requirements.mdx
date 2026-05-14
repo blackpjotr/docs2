@@ -27,22 +27,12 @@ Please note the following are the hardware requirements for each node type after
 
 ## Mina Daemon Requirements
 
-### IP and Port configuration
+The Mesa daemon inherits the same networking and process-management requirements as the Berkeley daemon. Rather than restate them here, refer to the canonical sections in the Validator Node docs:
 
-**IP:**
+- **IP and port configuration** — `--external-ip`, `--external-port`, default port `8302` (libp2p). See [Validator Node Requirements](/node-operators/validator-node/requirements).
+- **Auto-restart on crash** — systemd `Restart=always`, Docker `--restart=always`. See [Running mina node as a service](/node-operators/validator-node/connecting-to-the-network#running-mina-node-as-a-service).
 
-By default, the Mina Daemon will attempt to retrieve its public IP address from the system. If you are running the node behind a NAT or firewall, you can set the `--external-ip` flag to specify the public IP address.
-
-**Port:**
-
-Nodes must expose a port publicly to communicate with other peers.
-Mina uses by default the port `8302` which is the default libp2p port.
-
-You can use a different port by setting the `--external-port` flag.
-
-### Node Auto-restart
-
-Ensure your nodes are set to restart automatically after a crash. For guidance, refer to the [Running mina node as a service](/node-operators/validator-node/connecting-to-the-network#running-mina-node-as-a-service) section, which covers both `systemctl enable` for systemd and `--restart=always` for Docker.
+The hardware table above is Mesa-specific; everything else lives once in the Validator Node docs.
 
 ## Seed Peer Requirements
 
