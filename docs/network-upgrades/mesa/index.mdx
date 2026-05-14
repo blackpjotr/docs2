@@ -56,8 +56,8 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 | Milestone | When | What happens |
 |---|---|---|
 | **stop-transaction-slot** | Hours before the fork | Network stops accepting new transactions |
-| **stop-network-slot** | ~5 hours after stop-transaction-slot | Block production halts entirely |
-| **Mesa genesis timestamp** | ~1 hour after Mesa release is published | First Mesa block is produced |
+| **stop-network-slot** | Exactly 5 hours after stop-transaction-slot | Block production halts entirely |
+| **Mesa genesis timestamp** | Exactly 3 hours after the Mesa release is published | First Mesa block is produced |
 
 ---
 
@@ -83,7 +83,7 @@ Use the detailed [Pre-Upgrade checklist](/network-upgrades/mesa/upgrade-steps/pr
 
 ---
 
-### Phase 2: State Finalization — hours before the fork (~5 hours)
+### Phase 2: State Finalization — hours before the fork (exactly 5 hours)
 
 > **Goal:** The network reaches consensus on a final state. No new transactions are accepted.
 
@@ -126,7 +126,7 @@ At the **stop-network-slot**, block production stops entirely. o1Labs exports th
 
 > **Goal:** Block production resumes on the Mesa network. Normal operations return.
 
-At approximately **1 hour** after the Mesa release is published, at the predefined Mesa genesis timestamp, the first Mesa block is produced.
+Exactly **3 hours** after the Mesa release is published, at the predefined Mesa genesis timestamp, the first Mesa block is produced.
 
 | Actor | What to do |
 |---|---|
@@ -224,7 +224,7 @@ She starts her node normally. The automode dispatcher runs the pre-fork binary u
 
 > For full pre-upgrade checklist, see [Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade).
 
-**Hours before the fork (State Finalization)** — The network reaches the _stop-transaction-slot_. Alice's node keeps producing blocks — she does **nothing**. Empty blocks are produced for ~100 slots (~5 hours) until all nodes agree on the final state.
+**Hours before the fork (State Finalization)** — The network reaches the _stop-transaction-slot_. Alice's node keeps producing blocks — she does **nothing**. Empty blocks are produced for 100 slots (exactly 5 hours) until all nodes agree on the final state.
 
 > For details on this phase, see [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization).
 
@@ -232,7 +232,7 @@ She starts her node normally. The automode dispatcher runs the pre-fork binary u
 
 > For what happens if you chose manual mode instead, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade). For details on the restart mechanism, see [Upgrade Modes - Details](/network-upgrades/mesa/upgrade-modes-details#restart-and-filesystem-requirements).
 
-**After the fork (Post-Upgrade)** — About 1 hour after the Mesa release is published, the first Mesa block is produced. Alice verifies:
+**After the fork (Post-Upgrade)** — Exactly 3 hours after the Mesa release is published, the first Mesa block is produced. Alice verifies:
 
 ```bash
 # Check if the activated file exists (path depends on your config directory and network ID)
@@ -303,7 +303,7 @@ docker run --name mina -d \
 
 > For detailed upgrade instructions, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade).
 
-**After the fork (Post-Upgrade)** — About 1 hour later, block production starts. Carlos verifies:
+**After the fork (Post-Upgrade)** — Exactly 3 hours after the Mesa release is published, block production starts. Carlos verifies:
 
 ```bash
 docker exec mina mina client status   # confirms Mesa chain ID

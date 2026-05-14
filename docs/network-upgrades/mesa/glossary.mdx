@@ -34,7 +34,7 @@ The Mina release (version 3.x.x) that node operators install **before** the fork
 
 ### Stop-Transaction-Slot {#stop-transaction-slot}
 
-A predefined global slot number baked into the [stop-slot release](#stop-slot-release). When the network reaches this slot, nodes stop accepting new user transactions. Block production continues with empty blocks (no user commands, no coinbase, no fee transfers) for approximately 100 more slots until the [stop-network-slot](#stop-network-slot). This is the point where exchanges must disable deposits and withdrawals.
+A predefined global slot number baked into the [stop-slot release](#stop-slot-release). When the network reaches this slot, nodes stop accepting new user transactions. Block production continues with empty blocks (no user commands, no coinbase, no fee transfers) for exactly 100 more slots (5 hours) until the [stop-network-slot](#stop-network-slot). This is the point where exchanges must disable deposits and withdrawals.
 
 Referred to as `slot_tx_end` in the Mina codebase and daemon configuration.
 
@@ -46,11 +46,11 @@ Referred to as `slot_chain_end` in the Mina codebase and daemon configuration.
 
 ### State Finalization
 
-The stabilization period between the [stop-transaction-slot](#stop-transaction-slot) and the [stop-network-slot](#stop-network-slot) — approximately 100 slots (~5 hours). During this window, empty blocks are produced so that all nodes converge on the same final state. No operator action is required; nodes should remain running. See [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization).
+The stabilization period between the [stop-transaction-slot](#stop-transaction-slot) and the [stop-network-slot](#stop-network-slot) — 100 slots, which is exactly 5 hours. During this window, empty blocks are produced so that all nodes converge on the same final state. No operator action is required; nodes should remain running. See [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization).
 
 ### Mesa Genesis Timestamp
 
-The predefined time (approximately 1 hour after the Mesa release is published) at which the first block is produced on the new Mesa chain. This marks the start of the upgraded network.
+The predefined time at which the first block is produced on the new Mesa chain — exactly 3 hours after the Mesa release is published. This marks the start of the upgraded network.
 
 ### Mesa Release
 

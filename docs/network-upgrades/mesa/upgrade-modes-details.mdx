@@ -36,7 +36,7 @@ Both modes rely on two critical slot numbers baked into the stop-slot release (3
 | **stop-transaction-slot** | The network stops accepting transactions. Blocks produced after this slot are empty — no user commands, no coinbase rewards, no fee transfers. This begins the State Finalization period. |
 | **stop-network-slot** | The network stops producing and accepting blocks entirely. The chain halts. This is the point where the fork happens. |
 
-The gap between these two slots (approximately 100 slots) is the **State Finalization** period. It ensures all nodes converge on the same final state before the fork.
+The gap between these two slots is exactly 100 slots (5 hours) — the **State Finalization** period. It ensures all nodes converge on the same final state before the fork.
 
 :::tip For block producers
 You **will not earn block rewards** during State Finalization (no coinbase), but you **must keep your node running** to maintain network stability and block density. If you are in the Delegation Program, uptime tracking continues during this phase.
