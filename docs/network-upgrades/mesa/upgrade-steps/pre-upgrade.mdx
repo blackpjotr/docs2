@@ -93,21 +93,26 @@ During the Pre-Upgrade phase, node operators prepare their infrastructure for th
 </TabItem>
 <TabItem value="snark-worker" label="SNARK Worker">
 
-#### Infrastructure
+There are two SNARK worker deployment patterns and they prepare differently for the fork:
+
+**1. Worker spawned by a coordinator** (`--run-snark-worker` set on the coordinator)
 
 <ul className="checklist">
-  <li>Server meets <a href="/network-upgrades/mesa/requirements">hardware requirements</a> — 32 GB RAM, 6 core/12 threads per worker, AVX + BMI2</li>
+  <li>Server meets <a href="/network-upgrades/mesa/requirements">hardware requirements</a> — 8 GB RAM and 1 GB storage per worker, 6 core/12 threads, AVX + BMI2</li>
+  <li>No independent upgrade action needed — the spawned worker inherits the coordinator's binary</li>
+  <li>Ensure the coordinator is on the stop-slot release before the fork</li>
 </ul>
 
-#### Connectivity
+**2. Standalone worker** (`mina internal snark-worker …` run as a separate process or container)
 
 <ul className="checklist">
-  <li>Connected to a coordinator that is upgrading</li>
-  <li>No independent upgrade action needed — workers follow the coordinator</li>
+  <li>Server meets <a href="/network-upgrades/mesa/requirements">hardware requirements</a> — 8 GB RAM and 1 GB storage per worker, 6 core/12 threads, AVX + BMI2</li>
+  <li>Install the stop-slot release on the worker host as well — the worker must speak the same protocol as the coordinator</li>
+  <li>Plan a post-fork redeployment: the worker must be stopped and restarted with the Mesa binary after the coordinator transitions, otherwise it cannot submit work to the upgraded coordinator</li>
 </ul>
 
 :::info
-SNARK workers do not need to install the stop-slot release independently. They connect to a SNARK coordinator, which handles the upgrade. Just ensure your coordinator is ready.
+The "no independent upgrade" advice only applies to workers the coordinator spawns. Standalone `mina internal snark-worker` deployments need to be upgraded just like any other binary.
 :::
 
 </TabItem>

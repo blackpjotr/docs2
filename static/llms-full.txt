@@ -5970,7 +5970,8 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 |---|---|
 | **All operators** | Verify [hardware requirements](/network-upgrades/mesa/requirements) (32 GB RAM, 8-core CPU with AVX/BMI2). Back up keys. |
 | **Block Producers** | Choose [upgrade mode](/network-upgrades/mesa/upgrade-modes): **automode** (recommended) or manual. Install stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases). If automode, install both prefork and postfork packages. |
-| **SNARK Workers** | Follow the same path as block producers (automode or manual). |
+| **SNARK Coordinators** | A coordinator is a daemon node — follow the Block Producer path (automode or manual). |
+| **Standalone SNARK Workers** | Workers spawned by a coordinator (`--run-snark-worker`) need no separate action — they inherit the coordinator's binary. Workers run as a separate `mina internal snark-worker` process or container must be redeployed with the Mesa release after the fork. |
 | **Archive Nodes** | Install stop-slot release. Choose upgrade method: _trustless_ (run upgrade script now) or _trustful_ (import o1Labs dump later). If trustless, run the [archive upgrade script](/network-upgrades/mesa/archive-upgrade) — it is backward compatible and can be applied early. |
 | **Exchanges** | Install stop-slot release. Update integrations (mina-signer, Rosetta API). Test on devnet. Plan deposit/withdrawal freeze window. |
 | **zkApp Developers** | Update to the Mesa-compatible o1js version, recompile your contract, and verify it on the [preflight network](/network-upgrades/mesa/preflight-network). Plan to redeploy on Mesa after the fork — every zkApp must be redeployed because the protocol version bump changes the verification key. |
@@ -6011,7 +6012,8 @@ At the **stop-network-slot**, block production stops entirely. o1Labs exports th
 |---|---|
 | **Block Producers (automode)** | **Nothing.** Your node transitions to Mesa automatically. It will start producing blocks when the Mesa genesis timestamp arrives. |
 | **Block Producers (manual)** | Stop your node. Wait for the Mesa release announcement. Install the new package. Restart with [updated flags](/network-upgrades/mesa/upgrade-steps/post-upgrade). |
-| **SNARK Workers** | Follow the same mode as your coordinator (automode = automatic, manual = reinstall and restart). |
+| **SNARK Coordinators** | Same as block producers — automode transitions automatically, manual requires stop + install + restart. |
+| **Standalone SNARK Workers** | Coordinator-spawned workers follow the coordinator automatically. Standalone workers (`mina internal snark-worker` process or container) must be stopped and redeployed with the Mesa binary; an older worker cannot submit work to a Mesa coordinator. |
 | **Archive Nodes** | Install the Mesa archive node release. Point it at your upgraded database (trustless) or import the o1Labs SQL dump into a fresh database (trustful). |
 | **Exchanges** | Install the Mesa release. Keep deposits/withdrawals disabled until Mesa block production begins. |
 
@@ -6026,7 +6028,7 @@ At approximately **1 hour** after the Mesa release is published, at the predefin
 | Actor | What to do |
 |---|---|
 | **Block Producers** | Verify your node is on the Mesa chain (`mina client status`). If automode, check that the `activated` file exists in your config directory (see [Troubleshooting](/network-upgrades/mesa/upgrade-modes-details#how-do-i-know-which-binary-my-node-is-using)). Monitor block production. |
-| **SNARK Workers** | Reconnect workers to the upgraded coordinator. Verify SNARK work is being produced. |
+| **SNARK Workers** | Reconnect workers to the upgraded coordinator. Standalone workers must already be on the Mesa binary at this point. Verify SNARK work is being produced. |
 | **Archive Nodes** | Verify the archive database is in sync. Run [validation checks](/network-upgrades/mesa/upgrade-steps/post-upgrade#in-depth-validation). Fix any missing blocks using archive tooling. |
 | **Exchanges** | **Re-enable MINA deposits and withdrawals** once block production is confirmed and your systems are verified. |
 | **zkApp Developers** | **Redeploy every zkApp** on Mesa — the protocol version bump invalidates Berkeley verification keys, so a redeploy is required before any zkApp can accept transactions. You can also take advantage of the expanded 32-field on-chain state at this point. |
@@ -7026,7 +7028,7 @@ Please note the following are the hardware requirements for each node type after
 |--|--|--|--|--|
 | Mina Daemon Node | 32 GB RAM | 8 core processor with BMI2 and AVX CPU instruction set are required | 64 GB | 1 Mbps Internet Connection |
 | SNARK Coordinator | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
-| SNARK Worker | 32 GB RAM | 6 core/12 threads per worker with BMI2 and AVX CPU instruction set are required | 64 GB | 1 Mbps Internet Connection |
+| SNARK Worker (per worker) | 8 GB RAM | 6 core/12 threads with BMI2 and AVX CPU instruction set are required | 1 GB | 1 Mbps Internet Connection |
 | Archive Node | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
 | Rosetta API standalone Docker image | 8 GB RAM | 2 core processor | 16 GB | 1 Mbps Internet Connection |
 | Rosetta API + Archive Node | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
@@ -7381,7 +7383,7 @@ The Mesa upgrade supports two modes for daemon node operators: **Automode** and 
 
 ## Automode (Recommended)
 
-Automode is the recommended upgrade path for daemon nodes (block producers, SNARK coordinators). In automode, the node handles the entire fork transition automatically.
+Automode is the recommended upgrade path for the Mina daemon — the process that participates in consensus. This includes block producers and SNARK coordinators (a SNARK coordinator runs as a daemon). In automode, the node handles the entire fork transition automatically.
 
 ### How it works
 
@@ -7396,8 +7398,14 @@ Automode is the recommended upgrade path for daemon nodes (block producers, SNAR
 ### Who should use Automode
 
 - Block producers who want a hands-off upgrade experience
-- SNARK coordinators running daemon nodes
+- SNARK coordinators (run as a Mina daemon)
 - Operators who want to minimize downtime and operational risk
+
+Automode is **not** available for the following — operators of these node types must use Manual mode:
+
+- **Archive nodes** — schema upgrade is a separate manual step (see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade))
+- **Rosetta API nodes** — upgrade alongside the archive node they depend on
+- **Standalone SNARK workers** — `mina internal snark-worker` processes/containers run separately from any daemon; they must be stopped and redeployed with the Mesa binary after the fork. (Workers spawned by a coordinator inherit the coordinator's upgrade automatically.)
 
 ### Requirements
 
@@ -7406,7 +7414,7 @@ Automode is the recommended upgrade path for daemon nodes (block producers, SNAR
 - Meet the [hardware requirements](/network-upgrades/mesa/requirements)
 
 :::info
-Automode applies only to the daemon process. Archive nodes and Rosetta API instances require separate upgrade steps — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) and [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade).
+Automode applies only to the consensus-participating Mina daemon. Archive nodes, Rosetta API instances, and standalone SNARK workers all require separate manual upgrade steps — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) and [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade).
 :::
 
 ## Manual Mode
@@ -7463,7 +7471,7 @@ The Mesa upgrade proceeds through four sequential phases. Each phase has specifi
 | [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade) | Network halts, state is exported, Mesa build is published |
 | [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) | Block production resumes on Mesa, flags and configurations for the new network |
 
-**Please note:** A simplified Node Status service will be part of the upgrade tooling and enabled by default in the Pre-Upgrade release with stop-slots ([3.x.x](https://github.com/MinaProtocol/mina/releases)). This feature allows for a safe upgrade by monitoring the amount of upgraded active stake. Only non-sensitive data will be reported. If operators are not comfortable sharing their node version, they can disable the reports using the flag `--node-stats-type none`.
+**Please note:** A simplified Node Status service will be part of the upgrade tooling and enabled by default in the Pre-Upgrade release with stop-slots ([3.x.x](https://github.com/MinaProtocol/mina/releases)). This feature allows for a safe upgrade by monitoring the amount of upgraded active stake. Only non-sensitive data is reported.
 
 Before proceeding, make sure you have reviewed the [Requirements](/network-upgrades/mesa/requirements) and chosen your [Upgrade Mode](/network-upgrades/mesa/upgrade-modes).
 
@@ -7486,14 +7494,19 @@ This is the simplest path. You install one update and your node handles the rest
 # Pre-Upgrade: switch to the automode image
 docker pull minaprotocol/mina-daemon-auto-hardfork:<version>-bullseye-mainnet
 
+# Note: `--restart=always` + a named volume for the config directory are required.
+# Automode shuts the daemon down cleanly when the fork activates; the process
+# manager must restart it, and the `activated` marker file must survive that
+# restart so the dispatcher knows to launch the Mesa binary.
 docker run --name mina -d \
+  --restart=always \
+  -v mina-config:/root/.mina-config \
   minaprotocol/mina-daemon-auto-hardfork:<version>-bullseye-mainnet \
   daemon \
     --block-producer-key /keys/my-wallet \
     --config-directory /root/.mina-config \
     --libp2p-keypair /keys/libp2p-key \
     --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
-    --generate-genesis-proof true \
     --file-log-rotations 500 \
     --log-json
 
@@ -7515,7 +7528,6 @@ mina daemon \
   --config-directory ~/.mina-config \
   --libp2p-keypair ~/keys/libp2p-key \
   --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
-  --generate-genesis-proof true \
   --file-log-rotations 500 \
   --log-json
 
@@ -7540,6 +7552,7 @@ You control every step, but you need to act fast when the Mesa release is publis
 docker pull minaprotocol/mina-daemon:<version>-bullseye-mainnet
 
 docker run --name mina -d \
+  --restart=always \
   -v mina-config:/root/.mina-config \
   minaprotocol/mina-daemon:<version>-bullseye-mainnet \
   daemon \
@@ -7547,7 +7560,6 @@ docker run --name mina -d \
     --config-directory /root/.mina-config \
     --libp2p-keypair /keys/libp2p-key \
     --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
-    --generate-genesis-proof true \
     --file-log-rotations 500 \
     --log-json
 
@@ -7560,6 +7572,7 @@ docker stop mina && docker rm mina
 docker pull minaprotocol/mina-daemon:<mesa-version>-bullseye-mainnet
 
 docker run --name mina -d \
+  --restart=always \
   -v mina-config:/root/.mina-config \
   minaprotocol/mina-daemon:<mesa-version>-bullseye-mainnet \
   daemon \
@@ -7567,7 +7580,6 @@ docker run --name mina -d \
     --config-directory /root/.mina-config \
     --libp2p-keypair /keys/libp2p-key \
     --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
-    --generate-genesis-proof true \
     --file-log-rotations 500 \
     --log-json
 
@@ -7600,11 +7612,16 @@ After the fork, verify the chain:
 mina client status    # should show Mesa chain
 ```
 
-### SNARK Worker / Coordinator
+### SNARK Coordinator
 
-SNARK coordinators follow the same path as manual block producers. SNARK workers connect to a coordinator and do not need independent upgrades — they just need the coordinator to be on Mesa.
+A SNARK coordinator is a daemon node and follows the same path as a Block Producer in [Manual Mode](#block-producer-manual-mode). The coordinator does not transition automatically — you must stop it after the network halts, install the Mesa release, and restart.
 
-The coordinator schedule is identical to the block producer schedule above — use [Manual Mode](#block-producer-manual-mode) depending on your preference. After the coordinator transitions to Mesa, restart your SNARK workers and reconnect them to the coordinator.
+### SNARK Workers
+
+There are two deployment patterns and they upgrade differently:
+
+- **Workers spawned by a coordinator** (the common case — `--snark-worker-fee` / `--run-snark-worker` set on the coordinator) do not need an independent upgrade. They inherit the coordinator's binary, so when the coordinator restarts on Mesa, the spawned workers restart on Mesa.
+- **Standalone workers** (`mina internal snark-worker …` run as a separate process or container) must be redeployed with the Mesa binary themselves. Stop each standalone worker after the fork, install the Mesa release (or pull the Mesa Docker image), and restart it pointing at the upgraded coordinator. Workers running an older binary cannot submit work to a Mesa coordinator.
 
 ### Archive Node Operator
 
@@ -8142,21 +8159,26 @@ During the Pre-Upgrade phase, node operators prepare their infrastructure for th
 </TabItem>
 <TabItem value="snark-worker" label="SNARK Worker">
 
-#### Infrastructure
+There are two SNARK worker deployment patterns and they prepare differently for the fork:
+
+**1. Worker spawned by a coordinator** (`--run-snark-worker` set on the coordinator)
 
 <ul className="checklist">
-  <li>Server meets <a href="/network-upgrades/mesa/requirements">hardware requirements</a> — 32 GB RAM, 6 core/12 threads per worker, AVX + BMI2</li>
+  <li>Server meets <a href="/network-upgrades/mesa/requirements">hardware requirements</a> — 8 GB RAM and 1 GB storage per worker, 6 core/12 threads, AVX + BMI2</li>
+  <li>No independent upgrade action needed — the spawned worker inherits the coordinator's binary</li>
+  <li>Ensure the coordinator is on the stop-slot release before the fork</li>
 </ul>
 
-#### Connectivity
+**2. Standalone worker** (`mina internal snark-worker …` run as a separate process or container)
 
 <ul className="checklist">
-  <li>Connected to a coordinator that is upgrading</li>
-  <li>No independent upgrade action needed — workers follow the coordinator</li>
+  <li>Server meets <a href="/network-upgrades/mesa/requirements">hardware requirements</a> — 8 GB RAM and 1 GB storage per worker, 6 core/12 threads, AVX + BMI2</li>
+  <li>Install the stop-slot release on the worker host as well — the worker must speak the same protocol as the coordinator</li>
+  <li>Plan a post-fork redeployment: the worker must be stopped and restarted with the Mesa binary after the coordinator transitions, otherwise it cannot submit work to the upgraded coordinator</li>
 </ul>
 
 :::info
-SNARK workers do not need to install the stop-slot release independently. They connect to a SNARK coordinator, which handles the upgrade. Just ensure your coordinator is ready.
+The "no independent upgrade" advice only applies to workers the coordinator spawns. Standalone `mina internal snark-worker` deployments need to be upgraded just like any other binary.
 :::
 
 </TabItem>

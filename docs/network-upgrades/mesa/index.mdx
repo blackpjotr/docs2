@@ -61,7 +61,8 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 |---|---|
 | **All operators** | Verify [hardware requirements](/network-upgrades/mesa/requirements) (32 GB RAM, 8-core CPU with AVX/BMI2). Back up keys. |
 | **Block Producers** | Choose [upgrade mode](/network-upgrades/mesa/upgrade-modes): **automode** (recommended) or manual. Install stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases). If automode, install both prefork and postfork packages. |
-| **SNARK Workers** | Follow the same path as block producers (automode or manual). |
+| **SNARK Coordinators** | A coordinator is a daemon node — follow the Block Producer path (automode or manual). |
+| **Standalone SNARK Workers** | Workers spawned by a coordinator (`--run-snark-worker`) need no separate action — they inherit the coordinator's binary. Workers run as a separate `mina internal snark-worker` process or container must be redeployed with the Mesa release after the fork. |
 | **Archive Nodes** | Install stop-slot release. Choose upgrade method: _trustless_ (run upgrade script now) or _trustful_ (import o1Labs dump later). If trustless, run the [archive upgrade script](/network-upgrades/mesa/archive-upgrade) — it is backward compatible and can be applied early. |
 | **Exchanges** | Install stop-slot release. Update integrations (mina-signer, Rosetta API). Test on devnet. Plan deposit/withdrawal freeze window. |
 | **zkApp Developers** | Update to the Mesa-compatible o1js version, recompile your contract, and verify it on the [preflight network](/network-upgrades/mesa/preflight-network). Plan to redeploy on Mesa after the fork — every zkApp must be redeployed because the protocol version bump changes the verification key. |
@@ -102,7 +103,8 @@ At the **stop-network-slot**, block production stops entirely. o1Labs exports th
 |---|---|
 | **Block Producers (automode)** | **Nothing.** Your node transitions to Mesa automatically. It will start producing blocks when the Mesa genesis timestamp arrives. |
 | **Block Producers (manual)** | Stop your node. Wait for the Mesa release announcement. Install the new package. Restart with [updated flags](/network-upgrades/mesa/upgrade-steps/post-upgrade). |
-| **SNARK Workers** | Follow the same mode as your coordinator (automode = automatic, manual = reinstall and restart). |
+| **SNARK Coordinators** | Same as block producers — automode transitions automatically, manual requires stop + install + restart. |
+| **Standalone SNARK Workers** | Coordinator-spawned workers follow the coordinator automatically. Standalone workers (`mina internal snark-worker` process or container) must be stopped and redeployed with the Mesa binary; an older worker cannot submit work to a Mesa coordinator. |
 | **Archive Nodes** | Install the Mesa archive node release. Point it at your upgraded database (trustless) or import the o1Labs SQL dump into a fresh database (trustful). |
 | **Exchanges** | Install the Mesa release. Keep deposits/withdrawals disabled until Mesa block production begins. |
 
@@ -117,7 +119,7 @@ At approximately **1 hour** after the Mesa release is published, at the predefin
 | Actor | What to do |
 |---|---|
 | **Block Producers** | Verify your node is on the Mesa chain (`mina client status`). If automode, check that the `activated` file exists in your config directory (see [Troubleshooting](/network-upgrades/mesa/upgrade-modes-details#how-do-i-know-which-binary-my-node-is-using)). Monitor block production. |
-| **SNARK Workers** | Reconnect workers to the upgraded coordinator. Verify SNARK work is being produced. |
+| **SNARK Workers** | Reconnect workers to the upgraded coordinator. Standalone workers must already be on the Mesa binary at this point. Verify SNARK work is being produced. |
 | **Archive Nodes** | Verify the archive database is in sync. Run [validation checks](/network-upgrades/mesa/upgrade-steps/post-upgrade#in-depth-validation). Fix any missing blocks using archive tooling. |
 | **Exchanges** | **Re-enable MINA deposits and withdrawals** once block production is confirmed and your systems are verified. |
 | **zkApp Developers** | **Redeploy every zkApp** on Mesa — the protocol version bump invalidates Berkeley verification keys, so a redeploy is required before any zkApp can accept transactions. You can also take advantage of the expanded 32-field on-chain state at this point. |
