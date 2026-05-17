@@ -130,4 +130,4 @@ The [automode](#automode) Debian packages are published with a `-mesa` suffix (`
 
 ### Node Status Service
 
-An opt-in telemetry feature that reports non-sensitive node data (e.g., version, sync status) to help monitor the amount of upgraded active stake during the upgrade. Can be disabled with `--node-stats-type none`.
+A telemetry feature that reports non-sensitive node data (e.g., version, sync status) to help monitor the amount of upgraded active stake during the upgrade. Enabled by default on the Mesa daemon; pass `--simplified-node-stats` to keep the report minimal, or `--disable-node-status` to opt out entirely. See [Help Monitor the Network](/network-upgrades/mesa/upgrade-steps/post-upgrade#help-monitor-the-network) for the full flag set.

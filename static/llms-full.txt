@@ -5914,7 +5914,7 @@ The [automode](#automode) Debian packages are published with a `-mesa` suffix (`
 
 ### Node Status Service
 
-An opt-in telemetry feature that reports non-sensitive node data (e.g., version, sync status) to help monitor the amount of upgraded active stake during the upgrade. Can be disabled with `--node-stats-type none`.
+A telemetry feature that reports non-sensitive node data (e.g., version, sync status) to help monitor the amount of upgraded active stake during the upgrade. Enabled by default on the Mesa daemon; pass `--simplified-node-stats` to keep the report minimal, or `--disable-node-status` to opt out entirely. See [Help Monitor the Network](/network-upgrades/mesa/upgrade-steps/post-upgrade#help-monitor-the-network) for the full flag set.
 
 ---
 url: /network-upgrades/mesa
@@ -5946,11 +5946,14 @@ Unlike the Berkeley upgrade (which required up to 48 hours for archive database 
 
 ### Additional Protocol Improvements
 
-Mesa also ships a number of smaller MIPs (Mina Improvement Proposals) that affect protocol behavior, including:
+Beyond expanded zkApp state, Mesa ships several Mina Improvement Proposals (MIPs) that change protocol behavior. The canonical specs live in the [MinaProtocol/MIPs](https://github.com/MinaProtocol/MIPs/tree/main/MIPS) repository; the Mesa hard fork bundles:
 
-- **Account-update limit increase** — the maximum number of account updates a single zkApp transaction can include is raised, allowing more complex composed transactions in a single proof.
+- **[MIP6 — Reduce slot time to 90s](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0006-slot-reduction-90s.md)** — halves the slot duration from 180s to 90s, doubling network throughput.
+- **[MIP7 — Increase On-Chain State Size Limit](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md)** — raises per-account on-chain state from 8 to 32 field elements (the "Expanded zkApp State" change documented above).
+- **[MIP8 — Increase Events & Actions Limit](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0008-increase-events-actions-limit.md)** — raises the per-transaction event and action limit to 1024 field elements.
+- **[MIP9 — Increase zkApp Account-Update Limit](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0009-increase-zkapp-account-update-limit.md)** — triples the maximum number of account updates a single zkApp transaction can include (new rule: np + n2 + n1 ≤ 16).
 
-For the complete list of MIPs landing in Mesa, see the [Mesa upgrade overview on the o1Labs blog](https://www.o1labs.org/blog/mesa-upgrade). {/* TODO(PR #1133): Inline the canonical MIP list here once it is published in the Mesa release notes / mina-improvements repo, instead of relying on the blog post. */}
+For a narrative overview that summarizes each change in plain language, see the [Mesa upgrade post on the o1Labs blog](https://www.o1labs.org/blog/mesa-upgrade).
 
 ## Upgrade Flow — End-to-End Timeline
 
@@ -7750,15 +7753,19 @@ rosetta-cli check:construction --configuration-file config.json --start-block 2
 
 ## Help Monitor the Network
 
-The Node Status service is **not enabled by default** in the Mesa release. If you wish to help o1Labs monitor network health in the initial phase, add these flags to your node:
+The Node Status reporting service is **enabled by default** on the Mesa daemon. If you want to keep it on and point it at the o1Labs collection endpoints, pass:
 
 ```bash
---node-stats-type full
+--simplified-node-stats
 --node-status-url https://nodestats.minaprotocol.com/submit/stats
 --node-error-url https://nodestats.minaprotocol.com/submit/stats
 ```
 
-The error collection service reports any node crashes before the process terminates. If you are not comfortable sharing your node version, use `--node-stats-type none` or simply omit these flags.
+- `--simplified-node-stats` (no value) makes the reported payload a minimal, non-sensitive subset (version, sync status, peer count).
+- `--node-status-url` is the endpoint that receives status reports.
+- `--node-error-url` is the endpoint that receives crash reports the daemon emits just before terminating.
+
+To opt out of the Node Status service entirely, pass `--disable-node-status` (no value). Note: the previously-documented `--node-stats-type full|none` argument was never accepted by the daemon — `--simplified-node-stats` and `--disable-node-status` are the actual flag names in the Mesa release.
 
 ## Report Issues
 

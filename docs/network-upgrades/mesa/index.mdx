@@ -37,11 +37,14 @@ Unlike the Berkeley upgrade (which required up to 48 hours for archive database 
 
 ### Additional Protocol Improvements
 
-Mesa also ships a number of smaller MIPs (Mina Improvement Proposals) that affect protocol behavior, including:
+Beyond expanded zkApp state, Mesa ships several Mina Improvement Proposals (MIPs) that change protocol behavior. The canonical specs live in the [MinaProtocol/MIPs](https://github.com/MinaProtocol/MIPs/tree/main/MIPS) repository; the Mesa hard fork bundles:
 
-- **Account-update limit increase** — the maximum number of account updates a single zkApp transaction can include is raised, allowing more complex composed transactions in a single proof.
+- **[MIP6 — Reduce slot time to 90s](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0006-slot-reduction-90s.md)** — halves the slot duration from 180s to 90s, doubling network throughput.
+- **[MIP7 — Increase On-Chain State Size Limit](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md)** — raises per-account on-chain state from 8 to 32 field elements (the "Expanded zkApp State" change documented above).
+- **[MIP8 — Increase Events & Actions Limit](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0008-increase-events-actions-limit.md)** — raises the per-transaction event and action limit to 1024 field elements.
+- **[MIP9 — Increase zkApp Account-Update Limit](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0009-increase-zkapp-account-update-limit.md)** — triples the maximum number of account updates a single zkApp transaction can include (new rule: np + n2 + n1 ≤ 16).
 
-For the complete list of MIPs landing in Mesa, see the [Mesa upgrade overview on the o1Labs blog](https://www.o1labs.org/blog/mesa-upgrade). {/* TODO(PR #1133): Inline the canonical MIP list here once it is published in the Mesa release notes / mina-improvements repo, instead of relying on the blog post. */}
+For a narrative overview that summarizes each change in plain language, see the [Mesa upgrade post on the o1Labs blog](https://www.o1labs.org/blog/mesa-upgrade).
 
 ## Upgrade Flow — End-to-End Timeline
 
