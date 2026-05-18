@@ -108,9 +108,7 @@ Use the detailed [Pre-Upgrade checklist](/network-upgrades/mesa/upgrade-steps/pr
 
 > **Goal:** The network reaches consensus on a final state. No new transactions are accepted.
 
-At the predefined [**stop-transaction-slot**](/network-upgrades/mesa/glossary#stop-transaction-slot), nodes stop accepting new user transactions. Block production continues for ~100 more slots with empty blocks (no coinbase, no fees) until the [**stop-network-slot**](/network-upgrades/mesa/glossary#stop-network-slot) to ensure all nodes converge on the same state.
-
-{/* TODO(PR #1133, glyh #3198914880): Add a dedicated "Fork Schedule" page that lists the concrete values — Mesa genesis timestamp, stop-transaction-slot (`slot_tx_end`), stop-network-slot (`slot_chain_end`) — and link to it from every glossary anchor used here. Until it exists, links point at the glossary definitions. */}
+At the predefined [**stop-transaction-slot**](/network-upgrades/mesa/fork-schedule), nodes stop accepting new user transactions. Block production continues for ~100 more slots with empty blocks (no coinbase, no fees) until the [**stop-network-slot**](/network-upgrades/mesa/fork-schedule) to ensure all nodes converge on the same state. The concrete slot numbers and timestamps live on the [Fork Schedule](/network-upgrades/mesa/fork-schedule) page.
 
 | Actor | What to do |
 |---|---|
