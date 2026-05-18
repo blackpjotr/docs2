@@ -5793,6 +5793,73 @@ docker compose up -d
 :::
 
 ---
+url: /network-upgrades/mesa/fork-schedule
+---
+
+# Mesa Fork Schedule
+
+This page collects the concrete fork-schedule values for the Mesa upgrade per network. If you are integrating with Mina (exchange, custodian, indexer, Rosetta consumer, monitoring), this is the single source of truth for **when** to act and **which release** to run.
+
+The relevant moments are:
+
+- **`stop-transaction-slot`** (a.k.a. `slot_tx_end` in the daemon config) — the slot at which nodes stop accepting new user transactions. Block production continues with empty blocks until the network-slot. See the [glossary entry](/network-upgrades/mesa/glossary#stop-transaction-slot).
+- **`stop-network-slot`** (a.k.a. `slot_chain_end`) — the slot at which block production halts entirely. The network is offline between this slot and the Mesa genesis timestamp. See the [glossary entry](/network-upgrades/mesa/glossary#stop-network-slot).
+- **Mesa genesis timestamp** — the wall-clock time at which the first block on the Mesa chain is produced. Exactly 3 hours after the Mesa node release is published. See the [glossary entry](/network-upgrades/mesa/glossary#mesa-genesis-timestamp).
+
+## Mainnet
+
+:::warning Values not yet published
+The mainnet Mesa fork schedule has not been announced. The values below are placeholders. They will be filled in once o1Labs publishes the stop-slot release and the Mesa genesis timestamp.
+:::
+
+| Field | Value |
+|---|---|
+| Pre-fork (stop-slot) release | _TBD — will be a `3.x.x` tag_ |
+| Mesa release | _TBD — will be a `4.x.x` tag_ |
+| `stop-transaction-slot` (`slot_tx_end`) | _TBD_ |
+| `stop-network-slot` (`slot_chain_end`) | _TBD_ |
+| Mesa genesis timestamp (UTC) | _TBD — exactly 3 hours after the Mesa release is published_ |
+| State Finalization window | Exactly 100 slots = exactly 5 hours between `slot_tx_end` and `slot_chain_end` |
+
+Subscribe to the [MinaProtocol/mina releases](https://github.com/MinaProtocol/mina/releases?q=mesa) and watch the [Mina Foundation announcements channel](https://discord.gg/minaprotocol) for the schedule publication.
+
+## Devnet
+
+:::warning Values not yet published
+Devnet typically forks ahead of mainnet to give integrators a final dress rehearsal. Schedule will be posted here once announced.
+:::
+
+| Field | Value |
+|---|---|
+| Pre-fork (stop-slot) release | _TBD_ |
+| Mesa release | _TBD_ |
+| `stop-transaction-slot` (`slot_tx_end`) | _TBD_ |
+| `stop-network-slot` (`slot_chain_end`) | _TBD_ |
+| Mesa genesis timestamp (UTC) | _TBD_ |
+
+## Preflight
+
+The Mesa preflight network has already forked. The numbers below are historical; they will not change.
+
+| Field | Value |
+|---|---|
+| Pre-fork release | `4.0.0-preflight1-b649c79` |
+| Stop-slot release | `4.0.0-preflight-stop-2967b39` |
+| Mesa release | `4.0.0-preflight-3f038cb` |
+| Mesa hard-fork time (UTC) | 2026-04-27 13:00 |
+| Transaction protocol version after fork | 5.0.0 |
+| o1js version targeting protocol v5.0.0 | `o1js@3.0.0-mesa.698ca` |
+
+For the full preflight context, see [Preflight Network](/network-upgrades/mesa/preflight-network).
+
+## How to use these values
+
+- **Exchanges**: schedule your deposit/withdrawal freeze to begin **before** `stop-transaction-slot` and re-enable **after** the Mesa genesis timestamp confirms block production. See the [Exchanges tab on Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) for the full checklist.
+- **Block producers**: install the stop-slot release any time before `stop-transaction-slot`. If you are using [automode](/network-upgrades/mesa/upgrade-modes), no further action is needed — the dispatcher will swap to the Mesa binary automatically after the Mesa release is published.
+- **Archive operators**: schedule the archive schema upgrade for any time on or after `stop-network-slot`. The script is backward compatible and can also be run earlier. See [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
+- **Rosetta operators**: follow the manual-mode timeline — Rosetta does not support automode. See [Upgrade Modes — Manual Mode](/network-upgrades/mesa/upgrade-modes#manual-mode).
+
+---
 url: /network-upgrades/mesa/glossary
 ---
 
@@ -5924,8 +5991,6 @@ url: /network-upgrades/mesa
 
 The Mesa upgrade is a major network upgrade (hard fork) for the Mina Protocol mainnet. It is not backward compatible: every consensus-participating Mina daemon (block producers, SNARK coordinators, archive nodes, Rosetta API nodes, and seed nodes) must run a Mesa-compatible release to remain on the network. Wallets, off-chain services, and downstream tooling do not run a daemon and only need to update if they pin to a specific transaction format or version.
 
-Please refer to the Mesa node release notes [here](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa mainnet release tag URL once published. Until then this filter surfaces all `*mesa*` tags (preflight builds today). */}
-
 :::info New to the Mesa upgrade?
 This documentation uses terms like _automode_, _stop-slot_, _trustless upgrade_, _dispatcher_, and more. If you encounter an unfamiliar term, check the **[Glossary](/network-upgrades/mesa/glossary)** for definitions.
 :::
@@ -5969,7 +6034,7 @@ This depends on the SNARK-worker parallelization shipped as a prerequisite for [
 
 ### Automode Upgrades
 
-For the first time in Mina's history, node operators can upgrade through a hard fork **without manual intervention**. The automode mechanism ships both the pre-fork and post-fork binaries in a single package, with a dispatcher that automatically transitions to the new chain when the fork activates. See [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) for details.
+For the first time in Mina's history, block producers can upgrade through a hard fork **without manual intervention**. The automode mechanism ships both the pre-fork and post-fork binaries in a single package, with a dispatcher that automatically transitions to the new chain when the fork activates. Archive node and Rosetta API operators still use manual mode — automode is not available for those node types. See [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) for details.
 
 ### Simplified Archive Upgrade
 
@@ -5981,7 +6046,7 @@ The Mesa upgrade follows four phases. The timeline below shows what happens at e
 
 ### Overview
 
-{/* TODO(PR #1133): Replace with updated timeline diagram from design (Rebecca). Reference: the diagram used in the Berkeley upgrade-steps page and the Mesa upgrade slide deck. The previous AI-generated `simplified-schedule.png` has been removed pending the official version. */}
+<img src="/img/network-upgrades/mesa/mesa-upgrade-timeline.png" alt="Mina's Mesa Upgrade — four-phase timeline from Pre-Upgrade through Post-Upgrade, with state finalization and network shutdown markers" width="100%" />
 
 The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization**, **Upgrade**, and **Post-Upgrade** — anchored by three key moments:
 
@@ -6019,9 +6084,7 @@ Use the detailed [Pre-Upgrade checklist](/network-upgrades/mesa/upgrade-steps/pr
 
 > **Goal:** The network reaches consensus on a final state. No new transactions are accepted.
 
-At the predefined [**stop-transaction-slot**](/network-upgrades/mesa/glossary#stop-transaction-slot), nodes stop accepting new user transactions. Block production continues for ~100 more slots with empty blocks (no coinbase, no fees) until the [**stop-network-slot**](/network-upgrades/mesa/glossary#stop-network-slot) to ensure all nodes converge on the same state.
-
-{/* TODO(PR #1133, glyh #3198914880): Add a dedicated "Fork Schedule" page that lists the concrete values — Mesa genesis timestamp, stop-transaction-slot (`slot_tx_end`), stop-network-slot (`slot_chain_end`) — and link to it from every glossary anchor used here. Until it exists, links point at the glossary definitions. */}
+At the predefined [**stop-transaction-slot**](/network-upgrades/mesa/fork-schedule), nodes stop accepting new user transactions. Block production continues for ~100 more slots with empty blocks (no coinbase, no fees) until the [**stop-network-slot**](/network-upgrades/mesa/fork-schedule) to ensure all nodes converge on the same state. The concrete slot numbers and timestamps live on the [Fork Schedule](/network-upgrades/mesa/fork-schedule) page.
 
 | Actor | What to do |
 |---|---|
@@ -7804,7 +7867,7 @@ The flags below are **unchanged from Berkeley** — if your node was running cor
 For full details, see the [Mesa release notes](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa release tag URL once published (e.g. `/releases/tag/4.0.0`). */}
 
 :::info What changed in Mesa
-- **`--hardfork-handling` is no longer recognized.** This Berkeley-era flag selected how the daemon should behave around fork boundaries; in Mesa, fork handling lives in the automode dispatcher (for automode) or in the operator's explicit stop/install/restart procedure (for manual mode). The Mesa binary does not accept the flag at all — pass it and the daemon will exit with an unknown-argument error. Remove it from your startup config, systemd unit, Docker command, or Helm values before starting Mesa.
+- **`--hardfork-handling` should no longer be set.** This Berkeley-era flag selected how the daemon should behave around fork boundaries. The Mesa binary still parses it (so passing it will not crash the daemon), but the flag has no effect post-fork: once you are running on the Mesa chain there is no hardfork left to handle. Fork handling now lives in the automode dispatcher (for automode) or in the operator's explicit stop/install/restart procedure (for manual mode). Remove `--hardfork-handling` from your startup config, systemd unit, Docker command, or Helm values when you move to the Mesa release so it does not mask a real configuration mistake later.
 - **If you used manual mode, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`). Automode users do not need to do this — the dispatcher rewrites both arguments automatically.
 - **All other flags carry over unchanged** — `--block-producer-key`, `--libp2p-keypair`, `--peer-list-url`, `--external-ip/port`, log flags, etc. behave the same on Mesa as on Berkeley.
 :::
