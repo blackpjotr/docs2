@@ -93,7 +93,7 @@ The table below is a high-level summary. The concrete install commands (Debian, 
 | Actor | What to do |
 |---|---|
 | **All operators** | Verify [hardware requirements](/network-upgrades/mesa/requirements) (32 GB RAM, 8-core CPU with AVX/BMI2). Back up keys. |
-| **Block Producers** | Choose [upgrade mode](/network-upgrades/mesa/upgrade-modes): **automode** (recommended) or manual. Install stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases). If automode, install both prefork and postfork packages. |
+| **Block Producers** | Choose [upgrade mode](/network-upgrades/mesa/upgrade-modes): **automode** (recommended) or manual. Install stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases). If automode, install the `mina-{network}-automode` package — see [Installing automode](/network-upgrades/mesa/upgrade-modes#installing-automode). |
 | **SNARK Coordinators** | A coordinator is a daemon node — follow the Block Producer path (automode or manual). |
 | **Standalone SNARK Workers** | Workers spawned by a coordinator (`--run-snark-worker`) need no separate action — they inherit the coordinator's binary. Workers run as a separate `mina internal snark-worker` process or container must be redeployed with the Mesa release after the fork. |
 | **Archive Nodes** | Install stop-slot release. Choose upgrade method: _trustless_ (run upgrade script now) or _trustful_ (import o1Labs dump later). If trustless, run the [archive upgrade script](/network-upgrades/mesa/archive-upgrade) — it is backward compatible and can be applied early. |

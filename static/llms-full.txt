@@ -5862,11 +5862,11 @@ The Docker image that bundles the [automode](#automode) runtime — both the [pr
 
 ### Pre-Fork Binary {#pre-fork-binary}
 
-The binary that runs the current (Berkeley) chain up to the [stop-network-slot](#stop-network-slot). In [automode](#automode), this is packaged as `mina-{network}-prefork-mesa` and installed at `/usr/lib/mina/berkeley/mina`. In Docker, the [automode image](#automode-image) includes this binary.
+The binary that runs the current (Berkeley) chain up to the [stop-network-slot](#stop-network-slot). In [automode](#automode), this is shipped as part of the `mina-{network}-automode` package and installed at `/usr/lib/mina/berkeley/mina`. In Docker, the [automode image](#automode-image) includes this binary.
 
 ### Post-Fork Binary {#post-fork-binary}
 
-The binary that runs the new Mesa chain after the fork activates. In [automode](#automode), this is packaged as `mina-{network}-postfork-mesa` and installed at `/usr/lib/mina/mesa/mina`. The [dispatcher](#dispatcher) switches to this binary once the [activation file](#activation-file) is created.
+The binary that runs the new Mesa chain after the fork activates. In [automode](#automode), this is shipped as part of the `mina-{network}-automode` package and installed at `/usr/lib/mina/mesa/mina`. The [dispatcher](#dispatcher) switches to this binary once the [activation file](#activation-file) is created.
 
 ### Dispatcher {#dispatcher}
 
@@ -5910,7 +5910,7 @@ Mesa increases the on-chain state available to zkApps from 8 fields (indexes `0�
 
 ### Mesa Package Naming Convention
 
-The [automode](#automode) Debian packages are published with a `-mesa` suffix (`mina-{network}-prefork-mesa`, `mina-{network}-postfork-mesa`) to distinguish the dual-binary automode variants from the standard manual-mode `mina-{network}` package. This allows operators to install the automode packages side-by-side with the existing daemon without one replacing the other.
+The [automode](#automode) Debian package is published as `mina-{network}-automode` to distinguish the dual-binary automode variant from the standard manual-mode `mina-{network}` package. This allows operators to install the automode package side-by-side with the existing daemon without one replacing the other. `mina-{network}-automode` is an umbrella package: under the hood it depends on `mina-{network}-prefork-mesa` (the [pre-fork binary](#pre-fork-binary)) and `mina-{network}-postfork-mesa` (the [post-fork binary](#post-fork-binary) plus the [dispatcher](#dispatcher)), and apt resolves both transitively when you install it.
 
 ### Node Status Service
 
@@ -6002,7 +6002,7 @@ The table below is a high-level summary. The concrete install commands (Debian, 
 | Actor | What to do |
 |---|---|
 | **All operators** | Verify [hardware requirements](/network-upgrades/mesa/requirements) (32 GB RAM, 8-core CPU with AVX/BMI2). Back up keys. |
-| **Block Producers** | Choose [upgrade mode](/network-upgrades/mesa/upgrade-modes): **automode** (recommended) or manual. Install stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases). If automode, install both prefork and postfork packages. |
+| **Block Producers** | Choose [upgrade mode](/network-upgrades/mesa/upgrade-modes): **automode** (recommended) or manual. Install stop-slot release [3.x.x](https://github.com/MinaProtocol/mina/releases). If automode, install the `mina-{network}-automode` package — see [Installing automode](/network-upgrades/mesa/upgrade-modes#installing-automode). |
 | **SNARK Coordinators** | A coordinator is a daemon node — follow the Block Producer path (automode or manual). |
 | **Standalone SNARK Workers** | Workers spawned by a coordinator (`--run-snark-worker`) need no separate action — they inherit the coordinator's binary. Workers run as a separate `mina internal snark-worker` process or container must be redeployed with the Mesa release after the fork. |
 | **Archive Nodes** | Install stop-slot release. Choose upgrade method: _trustless_ (run upgrade script now) or _trustful_ (import o1Labs dump later). If trustless, run the [archive upgrade script](/network-upgrades/mesa/archive-upgrade) — it is backward compatible and can be applied early. |
@@ -6818,12 +6818,12 @@ You **will not earn block rewards** during State Finalization (no coinbase), but
 
 ### Dual-Binary Architecture
 
-The automode release ships with **two complete sets of Mina binaries** in a single package:
+The automode release ships **two complete sets of Mina binaries plus the dispatcher** in a single `mina-{network}-automode` Debian package:
 
 | Component | Path | Purpose |
 |---|---|---|
-| **Pre-fork binary** (`mina-{network}-prefork-mesa`) | `{RUNTIMES_BASE_PATH}/berkeley/mina` | Runs the current chain up to the stop-network-slot |
-| **Post-fork binary** (`mina-{network}-postfork-mesa`) | `{RUNTIMES_BASE_PATH}/mesa/mina` | Runs the Mesa chain after the fork |
+| **Pre-fork binary** | `{RUNTIMES_BASE_PATH}/berkeley/mina` | Runs the current chain up to the stop-network-slot |
+| **Post-fork binary** | `{RUNTIMES_BASE_PATH}/mesa/mina` | Runs the Mesa chain after the fork |
 | **Dispatcher** (`mina-dispatch`) | `/usr/local/bin/mina-dispatch` | Routes your commands to the correct binary |
 
 When you install the automode package (or use the [automode Docker image](/network-upgrades/mesa/glossary#automode-image)), all three components are installed together.
@@ -6928,9 +6928,8 @@ If your Helm chart or pod spec uses `emptyDir` for the config directory, the `ac
 
 Operator install instructions (Debian packages, Docker image) live on [Upgrade Modes — Installing automode](/network-upgrades/mesa/upgrade-modes#installing-automode). The detail worth keeping here is what each artifact contributes to the mechanism described above:
 
-- The `mina-{network}-prefork-mesa` Debian package supplies the pre-fork binary (`/usr/lib/mina/berkeley/mina`).
-- The `mina-{network}-postfork-mesa` Debian package supplies the post-fork binary (`/usr/lib/mina/mesa/mina`), the dispatcher (`/usr/local/bin/mina-dispatch`), and the dispatcher configuration (`/etc/default/mina-dispatch`).
-- The `minaprotocol/mina-daemon-auto-hardfork` Docker image bundles both packages and sets `MINA_APP=/usr/local/bin/mina-dispatch` and `MINA_HARDFORK_STATE_DIR=/root/.mina-config` in the entrypoint.
+- The `mina-{network}-automode` Debian package is an umbrella package whose dependencies pull in the pre-fork binary, post-fork binary, dispatcher, and dispatcher configuration. Internally it depends on `mina-{network}-prefork-mesa` (supplies `/usr/lib/mina/berkeley/mina`) and `mina-{network}-postfork-mesa` (supplies `/usr/lib/mina/mesa/mina`, plus `/usr/local/bin/mina-dispatch` and `/etc/default/mina-dispatch`). Operators only need to install `mina-{network}-automode`; apt resolves the rest.
+- The `minaprotocol/mina-daemon-auto-hardfork` Docker image bundles the same artifacts and sets `MINA_APP=/usr/local/bin/mina-dispatch` and `MINA_HARDFORK_STATE_DIR=/root/.mina-config` in the entrypoint.
 
 :::caution
 The dispatcher reads its configuration from `/etc/default/mina-dispatch`. This file must exist and be owned by root. Do not modify it unless you know what you are doing.
@@ -7055,14 +7054,16 @@ Pick the install method that matches how you run your daemon today.
 <Tabs groupId="install-method">
 <TabItem value="debian" label="Debian (apt)" default>
 
-Install **both** the prefork and postfork packages — they ship together so the dispatcher can route to the correct binary before and after the fork:
+Install the automode package — it ships the pre-fork binary, the post-fork binary, and the dispatcher together so the daemon routes to the correct binary before and after the fork:
 
 ```bash
 sudo apt-get update
-sudo apt-get install mina-{network}-prefork-mesa mina-{network}-postfork-mesa
+sudo apt-get install mina-{network}-automode=4.x.x
 ```
 
-Both packages are required for automode to work. The `postfork-mesa` package also installs the dispatcher at `/usr/local/bin/mina-dispatch` and the configuration in `/etc/default/mina-dispatch`.
+The package installs the pre-fork binary at `/usr/lib/mina/berkeley/mina`, the post-fork binary at `/usr/lib/mina/mesa/mina`, the dispatcher at `/usr/local/bin/mina-dispatch`, and the dispatcher configuration in `/etc/default/mina-dispatch`.
+
+`mina-{network}-automode` is an umbrella package — it depends on `mina-{network}-prefork-mesa` and `mina-{network}-postfork-mesa`, which apt pulls in automatically. You do not need to install them by hand.
 
 Start your node as usual — the dispatcher routes to the correct binary based on fork state. See the Debian automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
 
@@ -7183,7 +7184,7 @@ Imagine you are **Alice**, a block producer running on a Debian server. Here is 
 
 ```bash
 sudo apt-get update
-sudo apt-get install mina-mainnet-prefork-mesa=3.x.x mina-mainnet-postfork-mesa=4.x.x
+sudo apt-get install mina-mainnet-automode=4.x.x
 ```
 
 She starts her node normally. The automode dispatcher runs the pre-fork binary until the fork activates.
@@ -7958,7 +7959,7 @@ Hardware specifications (RAM, CPU, storage) for every role live on the [Requirem
   <li>Chosen an <a href="/network-upgrades/mesa/upgrade-modes">upgrade mode</a>: automode (recommended) or manual</li>
   <li>Upgraded node to the current stable version</li>
   <li>Installed stop-slot release <a href="https://github.com/MinaProtocol/mina/releases">3.x.x</a> <strong>before</strong> the <em>stop-transaction-slot</em></li>
-  <li>If using <strong>automode</strong>: installed both <code>mina-&#123;network&#125;-prefork-mesa</code> and <code>mina-&#123;network&#125;-postfork-mesa</code> packages (or the <a href="/network-upgrades/mesa/glossary#automode-image">automode Docker image</a>)</li>
+  <li>If using <strong>automode</strong>: installed the <code>mina-&#123;network&#125;-automode</code> package (or the <a href="/network-upgrades/mesa/glossary#automode-image">automode Docker image</a>)</li>
   <li>If using <strong>manual mode</strong>: installed <code>mina-mainnet=3.x.x</code> (stop-slot release only)</li>
 </ul>
 
@@ -7992,7 +7993,7 @@ Hardware specifications (RAM, CPU, storage) for every role live on the [Requirem
   <li>Chosen an <a href="/network-upgrades/mesa/upgrade-modes">upgrade mode</a>: automode (recommended) or manual</li>
   <li>Upgraded node to the current stable version</li>
   <li>Installed stop-slot release <a href="https://github.com/MinaProtocol/mina/releases">3.x.x</a> <strong>before</strong> the <em>stop-transaction-slot</em></li>
-  <li>If using <strong>automode</strong>: installed both prefork and postfork packages</li>
+  <li>If using <strong>automode</strong>: installed the <code>mina-&#123;network&#125;-automode</code> package</li>
   <li>If using <strong>manual mode</strong>: installed stop-slot release only</li>
 </ul>
 

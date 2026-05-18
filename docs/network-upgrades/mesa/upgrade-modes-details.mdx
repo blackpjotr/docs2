@@ -46,12 +46,12 @@ You **will not earn block rewards** during State Finalization (no coinbase), but
 
 ### Dual-Binary Architecture
 
-The automode release ships with **two complete sets of Mina binaries** in a single package:
+The automode release ships **two complete sets of Mina binaries plus the dispatcher** in a single `mina-{network}-automode` Debian package:
 
 | Component | Path | Purpose |
 |---|---|---|
-| **Pre-fork binary** (`mina-{network}-prefork-mesa`) | `{RUNTIMES_BASE_PATH}/berkeley/mina` | Runs the current chain up to the stop-network-slot |
-| **Post-fork binary** (`mina-{network}-postfork-mesa`) | `{RUNTIMES_BASE_PATH}/mesa/mina` | Runs the Mesa chain after the fork |
+| **Pre-fork binary** | `{RUNTIMES_BASE_PATH}/berkeley/mina` | Runs the current chain up to the stop-network-slot |
+| **Post-fork binary** | `{RUNTIMES_BASE_PATH}/mesa/mina` | Runs the Mesa chain after the fork |
 | **Dispatcher** (`mina-dispatch`) | `/usr/local/bin/mina-dispatch` | Routes your commands to the correct binary |
 
 When you install the automode package (or use the [automode Docker image](/network-upgrades/mesa/glossary#automode-image)), all three components are installed together.
@@ -156,9 +156,8 @@ If your Helm chart or pod spec uses `emptyDir` for the config directory, the `ac
 
 Operator install instructions (Debian packages, Docker image) live on [Upgrade Modes — Installing automode](/network-upgrades/mesa/upgrade-modes#installing-automode). The detail worth keeping here is what each artifact contributes to the mechanism described above:
 
-- The `mina-{network}-prefork-mesa` Debian package supplies the pre-fork binary (`/usr/lib/mina/berkeley/mina`).
-- The `mina-{network}-postfork-mesa` Debian package supplies the post-fork binary (`/usr/lib/mina/mesa/mina`), the dispatcher (`/usr/local/bin/mina-dispatch`), and the dispatcher configuration (`/etc/default/mina-dispatch`).
-- The `minaprotocol/mina-daemon-auto-hardfork` Docker image bundles both packages and sets `MINA_APP=/usr/local/bin/mina-dispatch` and `MINA_HARDFORK_STATE_DIR=/root/.mina-config` in the entrypoint.
+- The `mina-{network}-automode` Debian package is an umbrella package whose dependencies pull in the pre-fork binary, post-fork binary, dispatcher, and dispatcher configuration. Internally it depends on `mina-{network}-prefork-mesa` (supplies `/usr/lib/mina/berkeley/mina`) and `mina-{network}-postfork-mesa` (supplies `/usr/lib/mina/mesa/mina`, plus `/usr/local/bin/mina-dispatch` and `/etc/default/mina-dispatch`). Operators only need to install `mina-{network}-automode`; apt resolves the rest.
+- The `minaprotocol/mina-daemon-auto-hardfork` Docker image bundles the same artifacts and sets `MINA_APP=/usr/local/bin/mina-dispatch` and `MINA_HARDFORK_STATE_DIR=/root/.mina-config` in the entrypoint.
 
 :::caution
 The dispatcher reads its configuration from `/etc/default/mina-dispatch`. This file must exist and be owned by root. Do not modify it unless you know what you are doing.

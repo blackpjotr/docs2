@@ -78,11 +78,11 @@ The Docker image that bundles the [automode](#automode) runtime â€” both the [pr
 
 ### Pre-Fork Binary {#pre-fork-binary}
 
-The binary that runs the current (Berkeley) chain up to the [stop-network-slot](#stop-network-slot). In [automode](#automode), this is packaged as `mina-{network}-prefork-mesa` and installed at `/usr/lib/mina/berkeley/mina`. In Docker, the [automode image](#automode-image) includes this binary.
+The binary that runs the current (Berkeley) chain up to the [stop-network-slot](#stop-network-slot). In [automode](#automode), this is shipped as part of the `mina-{network}-automode` package and installed at `/usr/lib/mina/berkeley/mina`. In Docker, the [automode image](#automode-image) includes this binary.
 
 ### Post-Fork Binary {#post-fork-binary}
 
-The binary that runs the new Mesa chain after the fork activates. In [automode](#automode), this is packaged as `mina-{network}-postfork-mesa` and installed at `/usr/lib/mina/mesa/mina`. The [dispatcher](#dispatcher) switches to this binary once the [activation file](#activation-file) is created.
+The binary that runs the new Mesa chain after the fork activates. In [automode](#automode), this is shipped as part of the `mina-{network}-automode` package and installed at `/usr/lib/mina/mesa/mina`. The [dispatcher](#dispatcher) switches to this binary once the [activation file](#activation-file) is created.
 
 ### Dispatcher {#dispatcher}
 
@@ -126,7 +126,7 @@ Mesa increases the on-chain state available to zkApps from 8 fields (indexes `0â
 
 ### Mesa Package Naming Convention
 
-The [automode](#automode) Debian packages are published with a `-mesa` suffix (`mina-{network}-prefork-mesa`, `mina-{network}-postfork-mesa`) to distinguish the dual-binary automode variants from the standard manual-mode `mina-{network}` package. This allows operators to install the automode packages side-by-side with the existing daemon without one replacing the other.
+The [automode](#automode) Debian package is published as `mina-{network}-automode` to distinguish the dual-binary automode variant from the standard manual-mode `mina-{network}` package. This allows operators to install the automode package side-by-side with the existing daemon without one replacing the other. `mina-{network}-automode` is an umbrella package: under the hood it depends on `mina-{network}-prefork-mesa` (the [pre-fork binary](#pre-fork-binary)) and `mina-{network}-postfork-mesa` (the [post-fork binary](#post-fork-binary) plus the [dispatcher](#dispatcher)), and apt resolves both transitively when you install it.
 
 ### Node Status Service
 

@@ -83,14 +83,16 @@ Pick the install method that matches how you run your daemon today.
 <Tabs groupId="install-method">
 <TabItem value="debian" label="Debian (apt)" default>
 
-Install **both** the prefork and postfork packages — they ship together so the dispatcher can route to the correct binary before and after the fork:
+Install the automode package — it ships the pre-fork binary, the post-fork binary, and the dispatcher together so the daemon routes to the correct binary before and after the fork:
 
 ```bash
 sudo apt-get update
-sudo apt-get install mina-{network}-prefork-mesa mina-{network}-postfork-mesa
+sudo apt-get install mina-{network}-automode=4.x.x
 ```
 
-Both packages are required for automode to work. The `postfork-mesa` package also installs the dispatcher at `/usr/local/bin/mina-dispatch` and the configuration in `/etc/default/mina-dispatch`.
+The package installs the pre-fork binary at `/usr/lib/mina/berkeley/mina`, the post-fork binary at `/usr/lib/mina/mesa/mina`, the dispatcher at `/usr/local/bin/mina-dispatch`, and the dispatcher configuration in `/etc/default/mina-dispatch`.
+
+`mina-{network}-automode` is an umbrella package — it depends on `mina-{network}-prefork-mesa` and `mina-{network}-postfork-mesa`, which apt pulls in automatically. You do not need to install them by hand.
 
 Start your node as usual — the dispatcher routes to the correct binary based on fork state. See the Debian automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
 
