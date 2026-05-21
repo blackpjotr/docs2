@@ -50,7 +50,7 @@ The stabilization period between the [stop-transaction-slot](#stop-transaction-s
 
 ### Mesa Genesis Timestamp
 
-The predefined time at which the first block is produced on the new Mesa chain — exactly 3 hours after the Mesa release is published. This marks the start of the upgraded network.
+The predefined time at which the first block is produced on the new Mesa chain — exactly 3 hours after the network reaches the [stop-network-slot](#stop-network-slot). This marks the start of the upgraded network.
 
 ### Mesa Release
 
@@ -120,9 +120,23 @@ The official ledger checkpoint published with the [Mesa release](#mesa-release).
 
 ## Mesa-Specific Changes and Conventions
 
+Mesa bundles four Mina Improvement Proposals (MIPs) that change protocol behavior. Full descriptions live in the [Mesa overview](/network-upgrades/mesa/index#what-mesa-introduces); the brief definitions below link each to its canonical spec.
+
+### Faster Blocks
+
+Mesa reduces the slot time to 90 seconds and unsets the default zkApp soft limit (previously 24 commands per block). Defined in [MIP6](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0006-slot-reduction-90s.md).
+
 ### Expanded zkApp State
 
-Mesa increases the on-chain state available to zkApps from 8 fields (indexes `0–7`) to 32 fields (indexes `0–31`) per account. This applies to both the `zkapp_states` and `zkapp_states_nullable` database tables. See [Archive Node Schema Changes](/network-upgrades/mesa/appendix) for the SQL diff.
+Mesa increases the on-chain state available to zkApps from 8 fields (indexes `0–7`) to 32 fields (indexes `0–31`) per account. This applies to both the `zkapp_states` and `zkapp_states_nullable` database tables. Defined in [MIP7](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md). See [Archive Node Schema Changes](/network-upgrades/mesa/appendix) for the SQL diff.
+
+### Larger Events and Actions
+
+Mesa raises the per-transaction limit on events and actions from 100 to 1024 field elements each, and removes the previous 16-field-element cap per individual event or action. Defined in [MIP8](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0008-increase-events-actions-limit.md).
+
+### Larger zkApp Transactions
+
+Mesa roughly triples the maximum number of account updates a single zkApp transaction can contain. Defined in [MIP9](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0009-increase-zkapp-account-update-limit.md).
 
 ### Mesa Package Naming Convention
 
