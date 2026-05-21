@@ -17,7 +17,7 @@ import TabItem from '@theme/TabItem';
 
 # Post-Upgrade
 
-Exactly 3 hours after the publishing of the Mesa node release, at the predefined Mesa genesis timestamp slot, block production starts and the network is successfully upgraded.
+Exactly 3 hours after the network reaches the _stop-network-slot_, at the predefined Mesa genesis timestamp, block production starts and the network is successfully upgraded.
 
 This page helps you **verify your node is healthy** and running on the Mesa chain.
 
@@ -25,10 +25,7 @@ The checks are split into separate tabs for **Rosetta API** and **Exchange** bec
 
 ## Verify Your Node
 
-<Tabs groupId="operator-type">
-<TabItem value="block-producer" label="Block Producer" default>
-
-#### 1. Confirm you are on the Mesa chain
+First, confirm your node is on the Mesa chain — this check is identical for every role:
 
 ```bash
 # If using automode, check the activation file exists
@@ -40,31 +37,21 @@ mina client status
 
 You should see:
 - **Sync status**: `Synced`
-- **Chain ID** matching the Mesa chain ID (`a7351abc7ddf2ea92d1b38cc8e636c271c1dfd2c081c637f62ebc2af34eb7cc1`)
+- **Chain ID** matching the Mesa chain ID for your network. The chain ID changes at the fork and is network-specific (mainnet, devnet, and preflight each get their own) — the exact value is published in the Mesa release announcement alongside the first Mesa packages.
+- **Git SHA-1** matching the published Mesa daemon commit
+- **Genesis timestamp** matching the published Mesa genesis timestamp
 - **Block height** advancing
 
-#### 2. Verify block production
+Then run the role-specific checks below.
 
-```bash
-# Check that your node is at the tip of the Mesa chain and is producing blocks
-mina client status | grep -E "^(Block height|Block producers running|Coinbase receiver):"
-```
+<Tabs groupId="operator-type">
+<TabItem value="block-producer" label="Block Producer" default>
 
-Expected output looks like:
+#### Verify block production
 
-```text
-Block height:                                  1858
-Block producers running:                       1 (B62qjZ8yh17dCiEyu2WDCVWLreGCArYy3NTtJmNUdCxBmCMNjm5kxoE)
-Coinbase receiver:                             Block producer
-```
+Verify block production the same way you would on Berkeley — see [Block Producer Node](/node-operators/block-producer-node) for the relevant `mina client status` fields and checks. If you are a Delegation Program participant, your uptime continues to be tracked on the Mesa chain.
 
-```bash
-docker exec <container-name> mina client status | grep -E "^(Block height|Block producers running|Coinbase receiver):"
-```
-
-If you are a Delegation Program participant, your uptime will continue to be tracked on the Mesa chain.
-
-#### 3. Check logs for errors
+#### Check logs for errors
 
 ```bash
 # Look for any errors in recent logs
@@ -77,48 +64,34 @@ docker logs mina --since 1h 2>&1 | grep -i error
 </TabItem>
 <TabItem value="snark" label="SNARK Coordinator / Worker">
 
-#### 1. Confirm the coordinator is on Mesa
-
-```bash
-mina client status
-```
-
-Verify **Sync status** is `Synced` and the **Chain ID** matches Mesa.
-
-#### 2. Verify SNARK workers are connected
+#### Verify SNARK workers are connected
 
 ```bash
 # Check that workers are producing proofs
 mina client status | grep -i snark
 ```
 
-If workers were disconnected during the fork, restart them and reconnect to the coordinator:
+SNARK workers are **not compatible across the fork** — the transaction SNARK changed in Mesa, so a Berkeley-era worker cannot produce valid work for a Mesa coordinator. After the fork, every worker must run a Mesa-compatible release. Workers spawned by the coordinator pick up the new binary automatically; standalone workers must be redeployed.
+
+To restart a standalone worker against the coordinator:
 
 ```bash
-mina internal snark-worker \
+/usr/lib/mina/mesa/mina internal snark-worker \
   --proof-level full \
   --shutdown-on-disconnect false \
   --daemon-address <coordinator-ip>:<port>
 ```
 
-Note: above command does not work on mina automode dispatcher. You need to explicitly use mina-mesa binary
+The automode dispatcher does not route `mina internal` subcommands, and `mina-mesa` is not on `PATH` in the Docker image — invoke the Mesa worker binary by its full install path (`/usr/lib/mina/mesa/mina`) as shown above.
 
 </TabItem>
 <TabItem value="archive" label="Archive Node">
 
-#### 1. Confirm the daemon and archive process are running
+#### 1. Verify archive data integrity
 
 ```bash
-mina client status
-```
-
-Verify **Sync status** is `Synced`.
-
-#### 2. Verify archive data integrity
-
-```bash
-# Check the database version
-psql -U <user> -d <db> -c "SELECT * FROM version;"
+# Check the schema-version table
+psql -U <user> -d <db> -c "SELECT * FROM migration_history;"
 
 # Run the hardfork toolbox verification
 mina-archive-hardfork-toolbox verify-upgrade \
@@ -127,7 +100,7 @@ mina-archive-hardfork-toolbox verify-upgrade \
   --migration-version <version>
 ```
 
-#### 3. Check for missing blocks
+#### 2. Check for missing blocks
 
 Query the archive database to see if blocks are being captured:
 
@@ -168,21 +141,13 @@ curl -s http://localhost:3088/account/balance \
 </TabItem>
 <TabItem value="exchange" label="Exchange">
 
-#### 1. Confirm your node is on Mesa
-
-```bash
-mina client status
-```
-
-Verify **Sync status** is `Synced` and the **Chain ID** matches Mesa.
-
-#### 2. Verify your integration stack
+#### 1. Verify your integration stack
 
 - Confirm Rosetta API is responding (if used)
 - Confirm archive database is up to date (if used directly)
 - Test a small internal MINA transfer before re-enabling customer-facing operations
 
-#### 3. Re-enable deposits and withdrawals
+#### 2. Re-enable deposits and withdrawals
 
 Only re-enable MINA deposits and withdrawals after:
 - Block production is confirmed (blocks are advancing)
@@ -196,7 +161,8 @@ Only re-enable MINA deposits and withdrawals after:
 
 The checks in the tabs above cover basic health. This section provides deeper validation procedures for operators who want thorough verification.
 
-### Daemon Validation
+<Tabs groupId="indepth-validation">
+<TabItem value="daemon" label="Daemon" default>
 
 1. **Verify signature kind** — query the GraphQL endpoint to confirm the correct signature kind:
    ```graphql
@@ -208,7 +174,8 @@ The checks in the tabs above cover basic health. This section provides deeper va
 
 2. **Verify connectivity** — ensure your node has peers and is connected to the network. Check that the node is receiving and gossiping blocks.
 
-### Archive Node Validation
+</TabItem>
+<TabItem value="archive" label="Archive Node">
 
 Use the `mina-archive-hardfork-toolbox` to verify the upgrade. All commands require `--postgres-uri postgresql://<user>:<password>@<host>:<port>/<db>`. See the [Archive Upgrade](/network-upgrades/mesa/archive-upgrade#verification-with-the-archive-hardfork-toolbox) page for full toolbox documentation.
 
@@ -222,7 +189,7 @@ mina-archive-hardfork-toolbox verify-upgrade \
 
 You can also verify manually:
 ```sql
-SELECT * FROM version;
+SELECT * FROM migration_history;
 ```
 
 **Validate fork block integrity** (after the fork activates):
@@ -260,7 +227,8 @@ mina-missing-blocks-auditor --archive-uri postgres://<user>:<password>@<address>
 SELECT MAX(height) FROM blocks;
 ```
 
-### Rosetta API Validation
+</TabItem>
+<TabItem value="rosetta" label="Rosetta API">
 
 Use `rosetta-cli` to verify the API conforms to the Rosetta specification:
 
@@ -275,7 +243,8 @@ rosetta-cli check:data --configuration-file config.json
 rosetta-cli check:construction --configuration-file config.json --start-block 2
 ```
 
-### Network-Level Checks
+</TabItem>
+<TabItem value="network" label="Network-Level">
 
 1. **Verify seed connectivity** — confirm all seeds listed in `https://bootnodes.minaprotocol.com/networks/mainnet.txt` are connectable.
 
@@ -293,6 +262,13 @@ rosetta-cli check:construction --configuration-file config.json --start-block 2
    );
    ```
    This query should return zero rows.
+
+:::note
+In rare cases a non-empty block can appear after the _stop-transaction-slot_ — for example if a block producer and an archive operator both ran a build without the [stop-slot release](/network-upgrades/mesa/glossary#stop-slot-release). As long as the majority of stake upgraded, such a block lands on a short fork and does not affect the hard fork block, so it is not a problem for the upgrade.
+:::
+
+</TabItem>
+</Tabs>
 
 ---
 
@@ -328,8 +304,7 @@ The flags below are **unchanged from Berkeley** — if your node was running cor
 For full details, see the [Mesa release notes](https://github.com/MinaProtocol/mina/releases?q=mesa). {/* TODO(PR #1133): Replace with the specific Mesa release tag URL once published (e.g. `/releases/tag/4.0.0`). */}
 
 :::info What changed in Mesa
-- **`--hardfork-handling` should no longer be set.** This Berkeley-era flag selected how the daemon should behave around fork boundaries. The Mesa binary still parses it (so passing it will not crash the daemon), but the flag has no effect post-fork: once you are running on the Mesa chain there is no hardfork left to handle. Fork handling now lives in the automode dispatcher (for automode) or in the operator's explicit stop/install/restart procedure (for manual mode). Remove `--hardfork-handling` from your startup config, systemd unit, Docker command, or Helm values when you move to the Mesa release so it does not mask a real configuration mistake later.
-- **If you used manual mode, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`). Automode users do not need to do this — the dispatcher rewrites both arguments automatically.
+- **Only if you manually manage your genesis config or genesis ledgers, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Operators who rely on the package-installed genesis config — including all automode users — do not need to change anything. If you do override them, both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`).
 - **All other flags carry over unchanged** — `--block-producer-key`, `--libp2p-keypair`, `--peer-list-url`, `--external-ip/port`, log flags, etc. behave the same on Mesa as on Berkeley.
 :::
 
