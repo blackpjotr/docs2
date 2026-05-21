@@ -17,19 +17,19 @@ Please note the following are the hardware requirements for each node type after
 
 | Node Type | Memory | CPU | Storage | Network |
 |--|--|--|--|--|
-| Mina Daemon Node | 32 GB RAM | 8 core processor with BMI2 and AVX CPU instruction set are required | 64 GB | 1 Mbps Internet Connection |
-| SNARK Coordinator | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
+| Mina Daemon Node | 32 GB RAM | 8 core processor with BMI2 and AVX CPU instruction set are required | 16 GB | 1 Mbps Internet Connection |
+| SNARK Coordinator | 32 GB RAM | 8 core processor | 16 GB | 1 Mbps Internet Connection |
 | SNARK Worker (per worker) | 8 GB RAM | 6 core/12 threads with BMI2 and AVX CPU instruction set are required | 1 GB | 1 Mbps Internet Connection |
 | Archive Node | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
 | Rosetta API standalone Docker image | 8 GB RAM | 2 core processor | 16 GB | 1 Mbps Internet Connection |
 | Rosetta API + Archive Node | 32 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
-| Mina Seed Node | 64 GB RAM | 8 core processor | 64 GB | 1 Mbps Internet Connection |
+| Mina Seed Node | 64 GB RAM | 8 core processor | 16 GB | 1 Mbps Internet Connection |
 
 ## Mina Daemon Requirements
 
 The Mesa daemon inherits the same networking and process-management requirements as the Berkeley daemon. Rather than restate them here, refer to the canonical sections in the Validator Node docs:
 
-- **IP and port configuration** — `--external-ip`, `--external-port`, default port `8302` (libp2p). See [Validator Node Requirements](/node-operators/validator-node/requirements).
+- **IP and port configuration** — `--external-ip`, `--external-port`, default port `8302` (libp2p). See [Validator Node Requirements](/node-operators/validator-node/requirements#networking).
 - **Auto-restart on crash** — systemd `Restart=always`, Docker `--restart=always`. See [Running mina node as a service](/node-operators/validator-node/connecting-to-the-network#running-mina-node-as-a-service).
 
 The hardware table above is Mesa-specific; everything else lives once in the Validator Node docs.
@@ -46,4 +46,4 @@ Although the same libp2p keys can be reused from before the upgrade, if you need
 mina libp2p generate-keypair --privkey-path <path-to-the-key-file>
 ```
 
-Further information on [generating key pairs](/node-operators/validator-node/generating-a-keypair) on Mina Protocol.
+Further information on [generating a libp2p key pair](/node-operators/seed-peers/generating-a-libp2p-keypair) on Mina Protocol.
