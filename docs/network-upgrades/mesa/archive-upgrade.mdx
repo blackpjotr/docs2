@@ -51,9 +51,9 @@ you can always download it from the O1Labs Google Cloud bucket.
 ### Upgrade script
 
 Assuming that you have a PostgreSQL database with Mainnet archive data, in order to upgrade it to Mesa version, you need to run SQL upgrade script.
-We put all efforts to make the upgrade process as smooth as possible. Script can be run on archive node which is online or offline.
+The script can be run on an archive node that is either online or offline.
 Script can be run multiple times, it will skip steps that were already completed. It also performs sanity checks before each step to ensure that the upgrade process is successful.
-Finally it creates new table (version) in the database to keep track of the upgrade process.
+Finally it creates a new table (`migration_history`) in the database to keep track of the upgrade process.
 
 #### Getting the script
 
@@ -107,7 +107,7 @@ Make sure to replace `<username>` and `<database>` with your actual PostgreSQL u
 
 You can rollback the upgrade process by restoring the database from a backup taken before running the upgrade script.
 Another alternative is to run the rollback script, which is part of the upgrade script. It will drop all tables and other database objects created by the upgrade script.
-It will also update the version table to reflect the rollback.
+It will also update the `migration_history` table to reflect the rollback.
 
 ##### Running the rollback script
 
@@ -183,12 +183,12 @@ mina-archive-hardfork-toolbox verify-upgrade \
   --migration-version <version>
 ```
 
-You can also verify manually by checking the version table:
+You can also verify manually by checking the `migration_history` table:
 ```bash
-psql -U <username> -d <database> -c "SELECT * FROM version;"
+psql -U <username> -d <database> -c "SELECT * FROM migration_history;"
 ```
 
-If the upgrade was successful, the version table will contain an entry with the expected version number and a recent timestamp.
+If the upgrade was successful, the `migration_history` table will contain an entry with the expected migration version and a recent timestamp.
 
 #### Step 3: Post-fork validation
 

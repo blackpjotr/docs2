@@ -48,17 +48,21 @@ This expansion allows zkApps to store up to 32 state elements instead of the pre
 
 ### Version Tracking
 
-The upgrade introduces a new `version` table to keep track of the database schema version. The purpose of this table is to help with future database migrations. The table tracks which migration scripts were applied and when.
+The upgrade introduces a new `migration_history` table to keep track of the database schema version. The purpose of this table is to help with future database migrations. The table tracks which migration scripts were applied and when.
 
-**version table**
+**migration_history table**
 ```sql
-CREATE TABLE IF NOT EXISTS version (
-    version_num INT PRIMARY KEY,
-    applied_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS migration_history (
+    commit_start_at   timestamptz NOT NULL DEFAULT now() PRIMARY KEY,
+    protocol_version  text NOT NULL,
+    migration_version text NOT NULL,
+    description       text NOT NULL,
+    status            migration_status NOT NULL
 );
+
 ```
 
-The version table provides:
+The migration_history table provides:
 - **Migration tracking**: Records which migrations have been applied
 - **Timestamp tracking**: Shows when each migration was executed
 - **Idempotency**: Prevents duplicate migration runs
