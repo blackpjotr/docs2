@@ -86,7 +86,7 @@ The binary that runs the new Mesa chain after the fork activates. In [automode](
 
 ### Dispatcher {#dispatcher}
 
-A shell script wrapper (`mina-dispatch`) installed at `/usr/local/bin/` that routes commands to the correct binary — [pre-fork](#pre-fork-binary) or [post-fork](#post-fork-binary). For `daemon`, routing is based on whether the [activation file](#activation-file) exists. For `client`, commands are always routed to the [post-fork binary](#post-fork-binary). Other subcommands (e.g., `accounts list`) are not supported — use `mina-berkeley` or `mina-mesa` directly. See [Upgrade Modes - Details](/network-upgrades/mesa/upgrade-modes-details).
+A shell script wrapper (`mina-dispatch`) installed at `/usr/local/bin/` that routes commands to the correct binary — [pre-fork](#pre-fork-binary) or [post-fork](#post-fork-binary). For `daemon`, routing is based on whether the [activation file](#activation-file) exists. For `client`, commands are always routed to the [post-fork binary](#post-fork-binary). Other subcommands (e.g., `accounts list`) are not supported — use `mina-berkeley` or `mina-mesa` directly. See [Upgrade Modes - Details](/network-upgrades/mesa/appendix/upgrade-modes-details).
 
 ### Activation File {#activation-file}
 
@@ -128,7 +128,7 @@ Mesa reduces the slot time to 90 seconds and unsets the default zkApp soft limit
 
 ### Expanded zkApp State
 
-Mesa increases the on-chain state available to zkApps from 8 fields (indexes `0–7`) to 32 fields (indexes `0–31`) per account. This applies to both the `zkapp_states` and `zkapp_states_nullable` database tables. Defined in [MIP7](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md). See [Archive Node Schema Changes](/network-upgrades/mesa/appendix) for the SQL diff.
+Mesa increases the on-chain state available to zkApps from 8 fields (indexes `0–7`) to 32 fields (indexes `0–31`) per account. This applies to both the `zkapp_states` and `zkapp_states_nullable` database tables. Defined in [MIP7](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md). See [Archive Node Schema Changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) for the SQL diff.
 
 ### Larger Events and Actions
 

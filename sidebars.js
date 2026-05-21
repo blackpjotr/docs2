@@ -79,9 +79,9 @@ module.exports = {
               type: 'category',
               label: 'Appendix',
               items: [
-                'network-upgrades/mesa/appendix',
-                'network-upgrades/mesa/upgrade-modes-details',
-                'network-upgrades/mesa/docker-compose-quickstart',
+                'network-upgrades/mesa/appendix/archive-node-schema-changes',
+                'network-upgrades/mesa/appendix/upgrade-modes-details',
+                'network-upgrades/mesa/appendix/automode-docker-compose-quickstart',
               ],
             },
             'network-upgrades/mesa/glossary',

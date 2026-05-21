@@ -286,7 +286,19 @@ module.exports = {
           },
           {
             from: '/mesa-upgrade/appendix',
-            to: '/network-upgrades/mesa/appendix',
+            to: '/network-upgrades/mesa/appendix/archive-node-schema-changes',
+          },
+          {
+            from: '/network-upgrades/mesa/appendix',
+            to: '/network-upgrades/mesa/appendix/archive-node-schema-changes',
+          },
+          {
+            from: '/network-upgrades/mesa/upgrade-modes-details',
+            to: '/network-upgrades/mesa/appendix/upgrade-modes-details',
+          },
+          {
+            from: '/network-upgrades/mesa/docker-compose-quickstart',
+            to: '/network-upgrades/mesa/appendix/automode-docker-compose-quickstart',
           },
           {
             from: '/mesa-upgrade/upgrade-steps/state-finalization',

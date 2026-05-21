@@ -41,7 +41,7 @@ Mesa raises the on-chain state available to a zkApp account from **8 field eleme
 Implications:
 
 - **zkApp developers must redeploy** to take advantage of the new fields; older verification keys will not validate transactions touching indexes `8–31`.
-- **Archive databases gain new columns** (`element8` … `element31`) on `zkapp_states` and `zkapp_states_nullable`. The Mesa archive upgrade script handles this automatically — see [Archive Node Schema Changes](/network-upgrades/mesa/appendix) for the full schema diff.
+- **Archive databases gain new columns** (`element8` … `element31`) on `zkapp_states` and `zkapp_states_nullable`. The Mesa archive upgrade script handles this automatically — see [Archive Node Schema Changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) for the full schema diff.
 - **Transaction protocol version is bumped** because the on-chain serialization format changes.
 
 ### Larger Events and Actions — [MIP8](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0008-increase-events-actions-limit.md)
@@ -149,7 +149,7 @@ Exactly **3 hours** after the Mesa release is published, at the predefined Mesa 
 
 | Actor | What to do |
 |---|---|
-| **Block Producers** | Verify your node is on the Mesa chain (`mina client status`). If automode, check that the `activated` file exists in your config directory (see [Troubleshooting](/network-upgrades/mesa/upgrade-modes-details#how-do-i-know-which-binary-my-node-is-using)). Monitor block production. |
+| **Block Producers** | Verify your node is on the Mesa chain (`mina client status`). If automode, check that the `activated` file exists in your config directory (see [Troubleshooting](/network-upgrades/mesa/appendix/upgrade-modes-details#how-do-i-know-which-binary-my-node-is-using)). Monitor block production. |
 | **SNARK Workers** | Reconnect workers to the upgraded coordinator. Standalone workers must already be on the Mesa binary at this point. Verify SNARK work is being produced. |
 | **Archive Nodes** | Verify the archive database is in sync. Run [validation checks](/network-upgrades/mesa/upgrade-steps/post-upgrade#in-depth-validation). Fix any missing blocks using archive tooling. |
 | **Exchanges** | **Re-enable MINA deposits and withdrawals** once block production is confirmed and your systems are verified. |
@@ -163,7 +163,7 @@ For step-by-step instructions per phase, see [Upgrade Steps](/network-upgrades/m
 
 The Mesa upgrade supports two modes for daemon node operators: **[Automode](/network-upgrades/mesa/upgrade-modes)** (recommended — node handles the fork transition automatically) and **[Manual](/network-upgrades/mesa/upgrade-modes)** (operator stops the node, installs the Mesa release, and restarts).
 
-See [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) for the full comparison, requirements, and the persistent-filesystem / process-restart constraints that automode imposes. For low-level details on the dispatcher and dual-binary architecture, see [Upgrade Modes — Details](/network-upgrades/mesa/upgrade-modes-details).
+See [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) for the full comparison, requirements, and the persistent-filesystem / process-restart constraints that automode imposes. For low-level details on the dispatcher and dual-binary architecture, see [Upgrade Modes — Details](/network-upgrades/mesa/appendix/upgrade-modes-details).
 
 ## Examples
 
@@ -176,7 +176,7 @@ End-to-end walkthroughs of the four phases for different roles (block producer a
 | **SNARK Workers / Coordinators** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade Flags](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
 | **Archive Node Operators** | [Requirements](/network-upgrades/mesa/requirements), [Archive Upgrade](/network-upgrades/mesa/archive-upgrade), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
 | **Rosetta API Operators** | [Requirements](/network-upgrades/mesa/requirements), [Archive Upgrade](/network-upgrades/mesa/archive-upgrade), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) |
-| **Exchanges** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade), [Archive Node Schema Changes](/network-upgrades/mesa/appendix) |
+| **Exchanges** | [Requirements](/network-upgrades/mesa/requirements), [Upgrade Steps](/network-upgrades/mesa/upgrade-steps), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade), [Archive Node Schema Changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) |
 
 ## Network Details
 

@@ -39,7 +39,7 @@ She starts her node normally. The automode dispatcher runs the pre-fork binary u
 
 **Fork day (Upgrade)** — The network halts at the _stop-network-slot_. Alice's daemon generates the Mesa configuration, writes the `activated` marker file, and **shuts down cleanly** (exit code 0). Because Alice uses systemd with `Restart=always`, the daemon restarts automatically. On restart, the dispatcher detects the `activated` file and launches the Mesa binary. Alice does **nothing** — this all happens automatically.
 
-> For what happens if you chose manual mode instead, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade). For details on the restart mechanism, see [Upgrade Modes - Details](/network-upgrades/mesa/upgrade-modes-details#restart-and-filesystem-requirements).
+> For what happens if you chose manual mode instead, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade). For details on the restart mechanism, see [Upgrade Modes - Details](/network-upgrades/mesa/appendix/upgrade-modes-details#restart-and-filesystem-requirements).
 
 **After the fork (Post-Upgrade)** — Exactly 3 hours after the Mesa release is published, the first Mesa block is produced. Alice verifies:
 
@@ -259,7 +259,7 @@ If he is also adopting the expanded `8–31` state slots, this same deployment s
 
 **Bob** is an exchange operator. His main concern is avoiding lost deposits.
 
-**Weeks before the fork** — Bob tests his integration (Rosetta API, mina-signer) on the [preflight network](/network-upgrades/mesa/preflight-network). He reviews [schema changes](/network-upgrades/mesa/appendix) and installs the stop-slot release:
+**Weeks before the fork** — Bob tests his integration (Rosetta API, mina-signer) on the [preflight network](/network-upgrades/mesa/preflight-network). He reviews [schema changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) and installs the stop-slot release:
 
 ```bash
 sudo apt-get install mina-mainnet=3.x.x

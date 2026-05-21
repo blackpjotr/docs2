@@ -1,6 +1,6 @@
 ---
-title: Docker Compose Quickstart
-sidebar_label: Docker Compose Quickstart
+title: Automode Docker Compose Quickstart
+sidebar_label: Automode Docker Compose Quickstart
 hide_title: true
 description: Run a Mina node with automode enabled for the Mesa upgrade using Docker Compose.
 keywords:
@@ -10,7 +10,7 @@ keywords:
   - quickstart
 ---
 
-# Docker Compose Quickstart
+# Automode Docker Compose Quickstart
 
 ```yaml
 services:
@@ -36,6 +36,10 @@ services:
 ```
 
 Replace `<version>` with the published stop-slot release from the [Mina releases page](https://github.com/MinaProtocol/mina/releases).
+
+:::tip About `--hardfork-handling`
+The automode image still expects `--hardfork-handling migrate-exit`, so you always pass it here. The automode dispatcher consumes the flag and routes to the correct binary, so you do not need any conditional logic around it. Remove it only when you switch off the automode image (see [Switching back to normal Docker](#switching-back-to-normal-docker)).
+:::
 
 :::tip Docker image tag
 Use the stop-slot release image for your target network. For devnet, replace the image tag suffix `mainnet` with `devnet` and use the corresponding devnet release tag.
