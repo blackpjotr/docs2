@@ -15,7 +15,7 @@ keywords:
 
 # Examples
 
-The walkthroughs below follow concrete operators through the four Mesa upgrade phases ([Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade), [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization), [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade)) for different roles and setups. Click to expand the example that matches your situation.
+The walkthroughs below follow concrete operators through the four Mesa upgrade phases (Pre-Upgrade, [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization), [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade), [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade)) for different roles and setups. Click to expand the example that matches your situation.
 
 <details>
 <summary><b>Example: Block Producer Upgrading with Automode (Debian)</b></summary>
@@ -31,7 +31,7 @@ sudo apt-get install mina-mainnet-automode=4.x.x
 
 She starts her node normally. The automode dispatcher runs the pre-fork binary until the fork activates.
 
-> For full pre-upgrade checklist, see [Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade).
+> For the full preparation checklist, see [Requirements](/network-upgrades/mesa/requirements).
 
 **Hours before the fork (State Finalization)** — The network reaches the _stop-transaction-slot_. Alice's node keeps producing blocks — she does **nothing**. Empty blocks are produced for 100 slots (exactly 5 hours) until all nodes agree on the final state.
 
@@ -84,7 +84,7 @@ docker run --name mina -d \
     --log-json
 ```
 
-> For full pre-upgrade checklist, see [Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade).
+> For the full preparation checklist, see [Requirements](/network-upgrades/mesa/requirements).
 
 **Hours before the fork (State Finalization)** — Carlos keeps his node running. He does **nothing** during this phase.
 
@@ -265,7 +265,7 @@ If he is also adopting the expanded `8–31` state slots, this same deployment s
 sudo apt-get install mina-mainnet=3.x.x
 ```
 
-> For the full exchange pre-upgrade checklist, see [Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade).
+> For the full exchange preparation checklist, see [Requirements](/network-upgrades/mesa/requirements).
 
 **Hours before the fork** — Before the _stop-transaction-slot_ arrives, Bob **disables MINA deposits and withdrawals** on his platform and notifies customers about the maintenance window.
 

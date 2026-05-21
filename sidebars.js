@@ -65,7 +65,6 @@ module.exports = {
                 id: 'network-upgrades/mesa/upgrade-steps/index',
               },
               items: [
-                'network-upgrades/mesa/upgrade-steps/pre-upgrade',
                 'network-upgrades/mesa/upgrade-steps/state-finalization',
                 'network-upgrades/mesa/upgrade-steps/upgrade',
                 'network-upgrades/mesa/upgrade-steps/post-upgrade',

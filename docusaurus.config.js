@@ -289,10 +289,6 @@ module.exports = {
             to: '/network-upgrades/mesa/appendix',
           },
           {
-            from: '/mesa-upgrade/upgrade-steps/pre-upgrade',
-            to: '/network-upgrades/mesa/upgrade-steps/pre-upgrade',
-          },
-          {
             from: '/mesa-upgrade/upgrade-steps/state-finalization',
             to: '/network-upgrades/mesa/upgrade-steps/state-finalization',
           },

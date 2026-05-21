@@ -86,7 +86,7 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 
 > **Goal:** Every participant is prepared and running the stop-slot release before the fork begins.
 
-The table below is a high-level summary. The concrete install commands (Debian, Docker, etc.) and per-role checklists live in [Upgrade Steps — Pre-Upgrade](/network-upgrades/mesa/upgrade-steps/pre-upgrade) and the relevant [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) page — start there once you know your role and deployment style.
+The table below is a high-level summary. The concrete install commands (Debian, Docker, etc.) and hardware requirements live in the [Requirements](/network-upgrades/mesa/requirements) and [Upgrade Modes](/network-upgrades/mesa/upgrade-modes) pages — start there once you know your role and deployment style.
 
 | Actor | What to do |
 |---|---|
@@ -99,7 +99,7 @@ The table below is a high-level summary. The concrete install commands (Debian, 
 | **zkApp Developers** | Update to the Mesa-compatible o1js version (`o1js@3.0.0-mesa.698ca` for the preflight chain), recompile your contract, and verify it on the [preflight network](/network-upgrades/mesa/preflight-network). Plan to redeploy on Mesa after the fork — every zkApp must be redeployed because the protocol version bump changes the verification key. {/* TODO(PR #1133): Link to the official o1js Mesa upgrade guide once published (cjjdespres #3220525842). */} |
 
 :::tip Readiness checklist
-Use the detailed [Pre-Upgrade checklist](/network-upgrades/mesa/upgrade-steps/pre-upgrade) to verify every item before proceeding.
+Review the [Requirements](/network-upgrades/mesa/requirements) and pick your [Upgrade Mode](/network-upgrades/mesa/upgrade-modes) before proceeding.
 :::
 
 ---
