@@ -78,7 +78,7 @@ The upgrade moves through four phases — **Pre-Upgrade**, **State Finalization*
 |---|---|---|
 | **stop-transaction-slot** | Hours before the fork | Network stops accepting new transactions |
 | **stop-network-slot** | Exactly 5 hours after stop-transaction-slot | Block production halts entirely |
-| **Mesa genesis timestamp** | Exactly 3 hours after the Mesa release is published | First Mesa block is produced |
+| **Mesa genesis timestamp** | Exactly 3 hours after stop-network-slot | First Mesa block is produced |
 
 ---
 
@@ -145,7 +145,7 @@ At the **stop-network-slot**, block production stops entirely. o1Labs exports th
 
 > **Goal:** Block production resumes on the Mesa network. Normal operations return.
 
-Exactly **3 hours** after the Mesa release is published, at the predefined Mesa genesis timestamp, the first Mesa block is produced.
+Exactly **3 hours** after the _stop-network-slot_, at the predefined Mesa genesis timestamp, the first Mesa block is produced.
 
 | Actor | What to do |
 |---|---|

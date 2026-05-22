@@ -21,7 +21,7 @@ The relevant moments are:
 
 - **`stop-transaction-slot`** (a.k.a. `slot_tx_end` in the daemon config) — the slot at which nodes stop accepting new user transactions. Block production continues with empty blocks until the network-slot. See the [glossary entry](/network-upgrades/mesa/glossary#stop-transaction-slot).
 - **`stop-network-slot`** (a.k.a. `slot_chain_end`) — the slot at which block production halts entirely. The network is offline between this slot and the Mesa genesis timestamp. See the [glossary entry](/network-upgrades/mesa/glossary#stop-network-slot).
-- **Mesa genesis timestamp** — the wall-clock time at which the first block on the Mesa chain is produced. Exactly 3 hours after the Mesa node release is published. See the [glossary entry](/network-upgrades/mesa/glossary#mesa-genesis-timestamp).
+- **Mesa genesis timestamp** — the wall-clock time at which the first block on the Mesa chain is produced. Exactly 3 hours after the _stop-network-slot_. See the [glossary entry](/network-upgrades/mesa/glossary#mesa-genesis-timestamp).
 
 ## Mainnet
 
@@ -35,7 +35,7 @@ The mainnet Mesa fork schedule has not been announced. The values below are plac
 | Mesa release | _TBD — will be a `4.x.x` tag_ |
 | `stop-transaction-slot` (`slot_tx_end`) | _TBD_ |
 | `stop-network-slot` (`slot_chain_end`) | _TBD_ |
-| Mesa genesis timestamp (UTC) | _TBD — exactly 3 hours after the Mesa release is published_ |
+| Mesa genesis timestamp (UTC) | _TBD — exactly 3 hours after the stop-network-slot_ |
 | State Finalization window | Exactly 100 slots = exactly 5 hours between `slot_tx_end` and `slot_chain_end` |
 
 Subscribe to the [MinaProtocol/mina releases](https://github.com/MinaProtocol/mina/releases?q=mesa) and watch the [Mina Foundation announcements channel](https://discord.gg/minaprotocol) for the schedule publication.

@@ -41,7 +41,7 @@ She starts her node normally. The automode dispatcher runs the pre-fork binary u
 
 > For what happens if you chose manual mode instead, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade). For details on the restart mechanism, see [Upgrade Modes - Details](/network-upgrades/mesa/appendix/upgrade-modes-details#restart-and-filesystem-requirements).
 
-**After the fork (Post-Upgrade)** — Exactly 3 hours after the Mesa release is published, the first Mesa block is produced. Alice verifies:
+**After the fork (Post-Upgrade)** — Exactly 3 hours after the _stop-network-slot_, the first Mesa block is produced. Alice verifies:
 
 ```bash
 # Check if the activated file exists (path depends on your config directory and network ID)
@@ -114,7 +114,7 @@ docker run --name mina -d \
 
 > For detailed upgrade instructions, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade).
 
-**After the fork (Post-Upgrade)** — Exactly 3 hours after the Mesa release is published, block production starts. Carlos verifies:
+**After the fork (Post-Upgrade)** — Exactly 3 hours after the _stop-network-slot_, block production starts. Carlos verifies:
 
 ```bash
 docker exec mina mina client status   # confirms Mesa chain ID
