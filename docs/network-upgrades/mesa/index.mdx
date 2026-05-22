@@ -149,7 +149,7 @@ Exactly **3 hours** after the Mesa release is published, at the predefined Mesa 
 
 | Actor | What to do |
 |---|---|
-| **Block Producers** | Verify your node is on the Mesa chain (`mina client status`). If automode, check that the `activated` file exists in your config directory (see [Troubleshooting](/network-upgrades/mesa/appendix/upgrade-modes-details#how-do-i-know-which-binary-my-node-is-using)). Monitor block production. |
+| **Block Producers** | Verify your node is on the Mesa chain (`mina client status`). If automode, check that the `activated` file exists in your config directory (see [Troubleshooting](/network-upgrades/mesa/troubleshooting#how-do-i-know-which-binary-my-node-is-using)). Monitor block production. |
 | **SNARK Workers** | Reconnect workers to the upgraded coordinator. Standalone workers must already be on the Mesa binary at this point. Verify SNARK work is being produced. |
 | **Archive Nodes** | Verify the archive database is in sync. Run [validation checks](/network-upgrades/mesa/upgrade-steps/post-upgrade#in-depth-validation). Fix any missing blocks using archive tooling. |
 | **Exchanges** | **Re-enable MINA deposits and withdrawals** once block production is confirmed and your systems are verified. |
