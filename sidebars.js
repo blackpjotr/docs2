@@ -72,7 +72,6 @@ module.exports = {
               ],
             },
             'network-upgrades/mesa/archive-upgrade',
-            'network-upgrades/mesa/replayer',
             'network-upgrades/mesa/preflight-network',
             'network-upgrades/mesa/troubleshooting',
             {
@@ -1563,6 +1562,7 @@ module.exports = {
             'node-operators/archive-node/getting-started',
             'node-operators/archive-node/archive-redundancy',
             'node-operators/archive-node/docker-compose',
+            'node-operators/archive-node/replayer',
           ],
         },
         {

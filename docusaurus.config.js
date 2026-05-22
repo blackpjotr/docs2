@@ -301,6 +301,10 @@ module.exports = {
             to: '/network-upgrades/mesa/appendix/automode-docker-compose-quickstart',
           },
           {
+            from: '/network-upgrades/mesa/replayer',
+            to: '/node-operators/archive-node/replayer',
+          },
+          {
             from: '/mesa-upgrade/upgrade-steps/state-finalization',
             to: '/network-upgrades/mesa/upgrade-steps/state-finalization',
           },

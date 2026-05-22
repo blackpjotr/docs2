@@ -218,18 +218,18 @@ Optionally use `--stop-at-slot <slot>` to limit how far back in history the mark
 1. **Before the fork**: run `fork-candidate` commands to validate the fork block
 2. **After running the upgrade script**: run `verify-upgrade` to confirm the schema upgrade
 3. **After the fork activates**: run `validate-fork` to confirm data integrity
-4. **For full archive verification**: run the [Archive Replayer](/network-upgrades/mesa/replayer) to replay all transactions and compare the resulting ledger against the official fork config
+4. **For full archive verification**: run the [Archive Replayer](/node-operators/archive-node/replayer) to replay all transactions and compare the resulting ledger against the official fork config
 :::
 
 If you encounter any issues, reach out to the Mina community on [Discord](https://discord.gg/minaprotocol) or [GitHub Discussions](https://github.com/MinaProtocol/mina/discussions).
 
 ## Full Archive Verification with the Replayer
 
-The toolbox commands above verify the schema and fork block integrity, but they do not verify every transaction in the archive. For complete end-to-end verification, use the **[Archive Replayer](/network-upgrades/mesa/replayer)** — a tool that replays all transactions from genesis (or a checkpoint) through the fork point, recomputing the ledger state and comparing it against the official fork config.
+The toolbox commands above verify the schema and fork block integrity, but they do not verify every transaction in the archive. For complete end-to-end verification, use the **[Archive Replayer](/node-operators/archive-node/replayer)** — a tool that replays all transactions from genesis (or a checkpoint) through the fork point, recomputing the ledger state and comparing it against the official fork config.
 
 The replayer is not limited to upgrade-time use. It is an **ongoing verification tool** that can be run at any time to confirm your archive database faithfully represents the canonical chain. After the Mesa upgrade, you can continue running it against Mesa blocks to detect any data corruption or missing blocks.
 
-See [Archive Replayer](/network-upgrades/mesa/replayer) for usage, flags, and examples.
+See [Archive Replayer](/node-operators/archive-node/replayer) for usage, flags, and examples.
 
 ## Database Schema Changes
 
