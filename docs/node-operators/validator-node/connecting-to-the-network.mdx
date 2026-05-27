@@ -55,7 +55,10 @@ mina client stop-daemon
 
 ## Running mina node as a service
 
-Configure your node to keep running after logout and restart on reboot.
+Configure your node to keep running after logout, restart on reboot, and auto-restart on crash or clean exit:
+
+- **Systemd** — the Mina systemd unit ships with `Restart=always` by default, so the daemon is restarted automatically after a crash or a clean exit (e.g. the hard-fork stop-slot shutdown). No extra configuration is required.
+- **Docker** — pass `--restart=always` (or `--restart=unless-stopped`) when creating the container. The default (`no`) will **not** restart the daemon.
 
 ### Start the service
 
