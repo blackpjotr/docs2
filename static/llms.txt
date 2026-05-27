@@ -109,6 +109,7 @@ This file is auto-generated from `sidebars.js` and the frontmatter of each docum
 - [Archive Node](https://docs.minaprotocol.com/node-operators/archive-node): What are Archive nodes.
 - [Archive Nodes Getting Started](https://docs.minaprotocol.com/node-operators/archive-node/getting-started): Mina archive nodes maintain historical information about the network, block, and transactions. A zkApp can retrieve events and actions from one or more Mina archive nodes.
 - [Archive Redundancy](https://docs.minaprotocol.com/node-operators/archive-node/archive-redundancy): Strategies for archive node redundancy, backup, and data recovery.
+- [Backfilling Missing Blocks](https://docs.minaprotocol.com/node-operators/archive-node/backfilling-missing-blocks): How to detect and repair gaps in a Mina archive database using archive dumps, precomputed blocks, mina-archive-blocks, and the mina-missing-blocks-auditor.
 - [Docker Compose Archive](https://docs.minaprotocol.com/node-operators/archive-node/docker-compose): Example of how to run a Mina archive node using Docker Compose.
 - [Seed Peers](https://docs.minaprotocol.com/node-operators/seed-peers): What are seed peers
 - [Seed Peers Getting Started](https://docs.minaprotocol.com/node-operators/seed-peers/getting-started): How to run a seed peer. Seed Peers help connect to the network.

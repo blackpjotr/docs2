@@ -1528,6 +1528,7 @@ module.exports = {
           items: [
             'node-operators/archive-node/getting-started',
             'node-operators/archive-node/archive-redundancy',
+            'node-operators/archive-node/backfilling-missing-blocks',
             'node-operators/archive-node/docker-compose',
           ],
         },
