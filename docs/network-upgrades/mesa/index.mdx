@@ -31,18 +31,11 @@ Several second-order consequences flow from the slot-time change:
 
 - **Epoch duration halves** from ~14.9 days to ~7.4 days. Scripts and operational procedures tied to epoch boundaries (delegation cooldown, automated payouts, monitoring dashboards) trigger about twice as often.
 - **Vesting schedules on active vesting accounts are automatically migrated** during the hard fork so they continue unlocking on the same real-world cadence. No operator action is required.
-- **The default zkApp soft limit (24 commands per block) is unset**, allowing blocks to include more zkApp transactions when network demand is high.
 - **SNARK coordinators handling maximum-cost zkApp transactions should deploy at least 4 workers** (≈4 CPU cores each) to keep up with the new 90-second slot timing. A prerequisite SNARK-worker parallelization is delivered via soft fork before Mesa.
 
 ### Expanded zkApp State — [MIP7](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md)
 
 Mesa raises the on-chain state available to a zkApp account from **8 field elements (indexes `0–7`) to 32 field elements (indexes `0–31`)**. zkApps can now store roughly four times more data directly on chain without off-chain workarounds.
-
-Implications:
-
-- **zkApp developers must redeploy** to take advantage of the new fields; older verification keys will not validate transactions touching indexes `8–31`.
-- **Archive databases gain new columns** (`element8` … `element31`) on `zkapp_states` and `zkapp_states_nullable`. The Mesa archive upgrade script handles this automatically — see [Archive Node Schema Changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) for the full schema diff.
-- **Transaction protocol version is bumped** because the on-chain serialization format changes.
 
 ### Larger Events and Actions — [MIP8](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0008-increase-events-actions-limit.md)
 
