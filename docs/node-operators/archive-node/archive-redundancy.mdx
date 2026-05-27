@@ -101,7 +101,7 @@ pg_dump -U <user> -Fp <database> | gzip > archive-$(date +%F).sql.gz
 
 Schedule this regularly (a nightly cron is typical) and publish the dumps to object storage that your downstream consumers can reach.
 
-O1Labs publishes nightly dumps of its public-network archives to the [mina-archive-dumps](https://storage.googleapis.com/mina-archive-dumps/) GCS bucket as a convenience:
+o1Labs publishes nightly dumps of its public-network archives to the [mina-archive-dumps](https://storage.googleapis.com/mina-archive-dumps/) GCS bucket as a convenience:
 
 ```bash
 # Mainnet
