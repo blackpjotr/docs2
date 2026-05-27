@@ -73,8 +73,8 @@ The two public sources that o1Labs operates as a convenience are:
 
 | Bucket | Contents | Use for |
 | --- | --- | --- |
-| [`gs://mina-archive-dumps`](https://console.cloud.google.com/storage/browser/mina-archive-dumps) | Nightly archive-database snapshots (`<network>-archive-dump-<date>_0000.sql.tar.gz`) | Bootstrapping a fresh archive — apply the dump first, then backfill anything produced after the snapshot. |
-| [`gs://mina_network_block_data`](https://console.cloud.google.com/storage/browser/mina_network_block_data) | Per-block precomputed JSON files (`<network>-<height>-<state_hash>.json`) | The block-by-block input the auditor + guardian walk through to close gaps. |
+| [`gs://mina-archive-dumps`](https://storage.googleapis.com/mina-archive-dumps/) | Nightly archive-database snapshots (`<network>-archive-dump-<date>_0000.sql.tar.gz`) | Bootstrapping a fresh archive — apply the dump first, then backfill anything produced after the snapshot. |
+| [`gs://mina_network_block_data`](https://storage.googleapis.com/mina_network_block_data/) | Per-block precomputed JSON files (`<network>-<height>-<state_hash>.json`) | The block-by-block input the auditor + guardian walk through to close gaps. |
 
 :::tip Decentralization
 
