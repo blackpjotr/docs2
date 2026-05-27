@@ -19,9 +19,10 @@ module.exports = {
           label: 'Berkeley Upgrade',
           link: {
             type: 'doc',
-            id: 'network-upgrades/berkeley/requirements',
+            id: 'network-upgrades/berkeley/index',
           },
           items: [
+            'network-upgrades/berkeley/requirements',
             {
               type: 'category',
               label: 'Archive Migration',
@@ -48,9 +49,41 @@ module.exports = {
         {
           type: 'category',
           label: 'Mesa Upgrade',
+          link: {
+            type: 'doc',
+            id: 'network-upgrades/mesa/index',
+          },
           items: [
-            'network-upgrades/mesa/preflight-network',
+            'network-upgrades/mesa/requirements',
+            'network-upgrades/mesa/upgrade-modes',
+            'network-upgrades/mesa/fork-schedule',
+            {
+              type: 'category',
+              label: 'Upgrade Steps',
+              link: {
+                type: 'doc',
+                id: 'network-upgrades/mesa/upgrade-steps/index',
+              },
+              items: [
+                'network-upgrades/mesa/upgrade-steps/state-finalization',
+                'network-upgrades/mesa/upgrade-steps/upgrade',
+                'network-upgrades/mesa/upgrade-steps/post-upgrade',
+                'network-upgrades/mesa/upgrade-steps/examples',
+              ],
+            },
             'network-upgrades/mesa/archive-upgrade',
+            'network-upgrades/mesa/preflight-network',
+            'network-upgrades/mesa/troubleshooting',
+            {
+              type: 'category',
+              label: 'Appendix',
+              items: [
+                'network-upgrades/mesa/appendix/archive-node-schema-changes',
+                'network-upgrades/mesa/appendix/upgrade-modes-details',
+                'network-upgrades/mesa/appendix/automode-docker-compose-quickstart',
+              ],
+            },
+            'network-upgrades/mesa/glossary',
           ],
         },
       ],
@@ -1530,6 +1563,7 @@ module.exports = {
             'node-operators/archive-node/archive-redundancy',
             'node-operators/archive-node/backfilling-missing-blocks',
             'node-operators/archive-node/docker-compose',
+            'node-operators/archive-node/replayer',
           ],
         },
         {

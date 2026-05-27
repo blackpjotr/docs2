@@ -349,6 +349,42 @@ module.exports = {
             to: '/network-upgrades/mesa/archive-upgrade',
           },
           {
+            from: '/mesa-upgrade/flags-configs',
+            to: '/network-upgrades/mesa/upgrade-steps/post-upgrade',
+          },
+          {
+            from: '/mesa-upgrade/appendix',
+            to: '/network-upgrades/mesa/appendix/archive-node-schema-changes',
+          },
+          {
+            from: '/network-upgrades/mesa/appendix',
+            to: '/network-upgrades/mesa/appendix/archive-node-schema-changes',
+          },
+          {
+            from: '/network-upgrades/mesa/upgrade-modes-details',
+            to: '/network-upgrades/mesa/appendix/upgrade-modes-details',
+          },
+          {
+            from: '/network-upgrades/mesa/docker-compose-quickstart',
+            to: '/network-upgrades/mesa/appendix/automode-docker-compose-quickstart',
+          },
+          {
+            from: '/network-upgrades/mesa/replayer',
+            to: '/node-operators/archive-node/replayer',
+          },
+          {
+            from: '/mesa-upgrade/upgrade-steps/state-finalization',
+            to: '/network-upgrades/mesa/upgrade-steps/state-finalization',
+          },
+          {
+            from: '/mesa-upgrade/upgrade-steps/upgrade',
+            to: '/network-upgrades/mesa/upgrade-steps/upgrade',
+          },
+          {
+            from: '/mesa-upgrade/upgrade-steps/post-upgrade',
+            to: '/network-upgrades/mesa/upgrade-steps/post-upgrade',
+          },
+          {
             from: '/node-operators/requirements',
             to: '/node-operators/validator-node/requirements',
           },
