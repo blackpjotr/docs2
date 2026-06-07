@@ -13,7 +13,19 @@
     },
     {
       "source": "/zkapps/snarkyjs-reference/:path(.*)",
-      "destination": "/zkapps/o1js-reference/:path(.*)"
+      "destination": "https://docs.o1labs.org/o1js/api-reference/:path(.*)"
+    },
+    {
+      "source": "/zkapps/o1js-reference",
+      "destination": "https://docs.o1labs.org/o1js/api-reference/Introduction"
+    },
+    {
+      "source": "/zkapps/o1js-reference/README",
+      "destination": "https://docs.o1labs.org/o1js/api-reference/Introduction"
+    },
+    {
+      "source": "/zkapps/o1js-reference/:path(.*)",
+      "destination": "https://docs.o1labs.org/o1js/api-reference/:path(.*)"
     },
     {
       "source": "/zkapps/o1js/smart-contracts",

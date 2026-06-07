@@ -6,7 +6,8 @@ This file is auto-generated from `sidebars.js` and the frontmatter of each docum
 
 ## Network Upgrades
 
-- [Network Upgrades](https://docs.minaprotocol.com/network-upgrades): History of Mina protocol network upgrades on mainnet.
+- [Network Upgrades](https://docs.minaprotocol.com/network-upgrades): History of Mina Protocol mainnet network upgrades (hard forks), including Berkeley and Mesa.
+- [Berkeley Upgrade](https://docs.minaprotocol.com/network-upgrades/berkeley): Overview of the Berkeley network upgrade for Mina Protocol — the transition to the Berkeley proof system with zkApp support.
 - [Requirements](https://docs.minaprotocol.com/network-upgrades/berkeley/requirements): Berkeley upgrade is a major upgrade that requires all nodes in a network to upgrade to a newer version. It is not backward compatible.
 - [Archive Migration](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration): Berkeley upgrade is a major upgrade that requires all nodes in a network to upgrade to a newer version. It is not backward compatible.
 - [Understanding archive migration](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration/understanding-archive-migration): Overview of the migration tools and requirements to successfully migrate Devnet/Mainnet archive database.
@@ -20,8 +21,22 @@ This file is auto-generated from `sidebars.js` and the frontmatter of each docum
 - [Upgrade Steps](https://docs.minaprotocol.com/network-upgrades/berkeley/upgrade-steps): Detailed upgrade steps and operators' tasks
 - [Post-Upgrade Flags and Configurations for Mainnet](https://docs.minaprotocol.com/network-upgrades/berkeley/flags-configs): Post-Upgrade Flags and Configurations for Mainnet
 - [Appendix](https://docs.minaprotocol.com/network-upgrades/berkeley/appendix): Berkeley Upgrade Appendix
-- [Connect to Mesa Preflight Network](https://docs.minaprotocol.com/network-upgrades/mesa/preflight-network): Instructions for connecting to the Mesa upgrade preflight network for testing and validation.
+- [Mesa Upgrade](https://docs.minaprotocol.com/network-upgrades/mesa): Overview of the Mesa mainnet upgrade for Mina Protocol — expanded zkApp state, automode upgrades, and protocol improvements.
+- [Requirements](https://docs.minaprotocol.com/network-upgrades/mesa/requirements): Hardware and connectivity requirements for daemon node operators upgrading to Mesa — block producers, SNARK coordinators, archive nodes, Rosetta API nodes, and seed nodes.
+- [Upgrade Modes](https://docs.minaprotocol.com/network-upgrades/mesa/upgrade-modes): Automode and Manual upgrade paths for the Mesa hard fork. Automode handles the transition automatically for daemon nodes; Manual gives operators full control.
+- [Mesa Fork Schedule](https://docs.minaprotocol.com/network-upgrades/mesa/fork-schedule): Concrete fork-schedule values for the Mesa upgrade — Mesa genesis timestamp, stop-transaction-slot (slot_tx_end), stop-network-slot (slot_chain_end), and pre-fork / Mesa release versions per network.
+- [Upgrade Steps](https://docs.minaprotocol.com/network-upgrades/mesa/upgrade-steps): Step-by-step Mesa upgrade instructions with per-role timelines and examples for block producers, SNARK workers, archive nodes, and exchanges.
+- [State Finalization](https://docs.minaprotocol.com/network-upgrades/mesa/upgrade-steps/state-finalization): State finalization phase of the Mesa upgrade — stabilization period between stop-transaction-slot and stop-network-slot.
+- [Upgrade](https://docs.minaprotocol.com/network-upgrades/mesa/upgrade-steps/upgrade): Upgrade phase of the Mesa hard fork — network halt, state export, and Mesa build publication.
+- [Post-Upgrade](https://docs.minaprotocol.com/network-upgrades/mesa/upgrade-steps/post-upgrade): Post-upgrade verification, health checks, and monitoring for the Mesa mainnet network.
+- [Examples](https://docs.minaprotocol.com/network-upgrades/mesa/upgrade-steps/examples): End-to-end Mesa upgrade walkthroughs by role and deployment style — block producer (automode/manual), archive node, zkApp developer, and exchange.
 - [Archive Upgrade](https://docs.minaprotocol.com/network-upgrades/mesa/archive-upgrade): General guide for upgrading a Mina archive database to the Mesa schema — applies to preflight, devnet, and mainnet.
+- [Connect to Mesa Preflight Network](https://docs.minaprotocol.com/network-upgrades/mesa/preflight-network): Instructions for connecting to the Mesa upgrade preflight network for testing and validation.
+- [Troubleshooting](https://docs.minaprotocol.com/network-upgrades/mesa/troubleshooting): Troubleshooting the Mesa upgrade — checking which binary your node is running, dispatcher behavior, and debug mode for automode operators.
+- [Archive Node Schema Changes](https://docs.minaprotocol.com/network-upgrades/mesa/appendix/archive-node-schema-changes): Reference of database schema changes applied to the Mina archive node during the Mesa hard fork — new columns, modified tables, and the SQL applied by the upgrade script.
+- [Upgrade Modes - Details](https://docs.minaprotocol.com/network-upgrades/mesa/appendix/upgrade-modes-details): In-depth technical details of the Mesa upgrade mechanism, including automode internals, the dispatcher, stop-slot system, and manual upgrade flow.
+- [Automode Docker Compose Quickstart](https://docs.minaprotocol.com/network-upgrades/mesa/appendix/automode-docker-compose-quickstart): Run a Mina node with automode enabled for the Mesa upgrade using Docker Compose.
+- [Glossary](https://docs.minaprotocol.com/network-upgrades/mesa/glossary): Definitions of key terms used throughout the Mesa upgrade documentation — stop-slots, automode, dispatcher, trustless/trustful upgrades, and more.
 
 ## zkApp Developers
 
@@ -111,6 +126,7 @@ This file is auto-generated from `sidebars.js` and the frontmatter of each docum
 - [Archive Redundancy](https://docs.minaprotocol.com/node-operators/archive-node/archive-redundancy): Strategies for archive node redundancy, backup, and data recovery.
 - [Backfilling Missing Blocks](https://docs.minaprotocol.com/node-operators/archive-node/backfilling-missing-blocks): How to detect and repair gaps in a Mina archive database using archive dumps, precomputed blocks, mina-archive-blocks, and the mina-missing-blocks-auditor.
 - [Docker Compose Archive](https://docs.minaprotocol.com/node-operators/archive-node/docker-compose): Example of how to run a Mina archive node using Docker Compose.
+- [Archive Replayer](https://docs.minaprotocol.com/node-operators/archive-node/replayer): Use the mina-replayer tool to verify a Mina archive database by replaying its transactions and reconstructing the ledger state.
 - [Seed Peers](https://docs.minaprotocol.com/node-operators/seed-peers): What are seed peers
 - [Seed Peers Getting Started](https://docs.minaprotocol.com/node-operators/seed-peers/getting-started): How to run a seed peer. Seed Peers help connect to the network.
 - [Generating a libp2p Key Pair](https://docs.minaprotocol.com/node-operators/seed-peers/generating-a-libp2p-keypair): Generate a libp2p key pair for seed node identity on the Mina gossip network.

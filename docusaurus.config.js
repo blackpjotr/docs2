@@ -281,10 +281,6 @@ module.exports = {
             to: '/node-operators/rosetta/samples/send-transactions',
           },
           {
-            from: '/zkapps/snarkyjs-reference',
-            to: '/zkapps/o1js-reference',
-          },
-          {
             from: '/berkeley-upgrade/requirements',
             to: '/network-upgrades/berkeley/requirements',
           },
