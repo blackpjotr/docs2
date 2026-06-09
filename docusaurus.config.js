@@ -65,10 +65,6 @@ module.exports = {
             to: '/zkapps/tutorials/',
           },
           {
-            from: '/zkapps/how-to-test-a-zkapp',
-            to: '/zkapps/writing-a-zkapp/introduction-to-zkapps/testing-zkapps-locally',
-          },
-          {
             from: '/zkapps/simple-anonymous-message-board-tutorial',
             to: '/zkapps/tutorials/anonymous-message-board',
           },
