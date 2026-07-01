@@ -23,7 +23,7 @@ The Mesa upgrade proceeds through four sequential phases. Each phase has specifi
 | [Pre-Upgrade](/network-upgrades/mesa/requirements) | Prepare infrastructure, upgrade to the stop-slot release, run archive upgrade scripts |
 | [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization) | 100-slot stabilization period — no new transactions accepted, block production continues |
 | [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade) | Network halts, state is exported, Mesa build is published |
-| [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) | Block production resumes on Mesa, flags and configurations for the new network |
+| [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade) | Block production resumes on Mesa — verification and health checks for the new network |
 
 **Please note:** A simplified Node Status service will be part of the upgrade tooling and enabled by default in the Pre-Upgrade release with stop-slots ([3.x.x](https://github.com/MinaProtocol/mina/releases)). This feature allows for a safe upgrade by monitoring the amount of upgraded active stake. Only non-sensitive data is reported.
 
