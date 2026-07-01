@@ -71,7 +71,7 @@ For full preflight context, see [Preflight Network](/network-upgrades/mesa/prefl
 
 - **Exchanges**: schedule your deposit/withdrawal freeze to begin **before** `stop-transaction-slot` and re-enable **after** the Mesa genesis timestamp confirms block production.
 - **Block producers**: install the stop-slot release any time before `stop-transaction-slot`. If using [automode](/network-upgrades/mesa/upgrade-modes), no further action is needed — the dispatcher swaps to the Mesa binary automatically.
-- **Archive operators**: schedule the archive schema upgrade for any time on or after `stop-network-slot`. The script is backward compatible and can also be run earlier. See [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
+- **Archive operators**: schedule the archive schema upgrade for any time on or after `stop-network-slot`. The [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) script can also be run earlier.
 - **Rosetta operators**: follow the manual-mode timeline — Rosetta does not support automode. See [Upgrade Modes](/network-upgrades/mesa/upgrade-modes).
 
 ---
