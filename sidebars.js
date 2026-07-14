@@ -73,6 +73,7 @@ module.exports = {
             },
             'network-upgrades/mesa/archive-upgrade',
             'network-upgrades/mesa/preflight-network',
+            'network-upgrades/mesa/preflight-setup',
             'network-upgrades/mesa/troubleshooting',
             {
               type: 'category',

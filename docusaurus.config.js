@@ -341,6 +341,10 @@ module.exports = {
             to: '/network-upgrades/mesa/archive-upgrade',
           },
           {
+            from: '/mesa-upgrade/fork-schedule',
+            to: '/network-upgrades/mesa/fork-schedule',
+          },
+          {
             from: '/mesa-upgrade/flags-configs',
             to: '/network-upgrades/mesa/upgrade-steps/post-upgrade',
           },
@@ -352,6 +356,7 @@ module.exports = {
             from: '/network-upgrades/mesa/appendix',
             to: '/network-upgrades/mesa/appendix/archive-node-schema-changes',
           },
+          // Redirect removed — /network-upgrades/mesa/fork-schedule now resolves to the restored standalone page.
           {
             from: '/network-upgrades/mesa/upgrade-modes-details',
             to: '/network-upgrades/mesa/appendix/upgrade-modes-details',

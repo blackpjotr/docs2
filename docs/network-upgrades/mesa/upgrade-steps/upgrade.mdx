@@ -16,6 +16,18 @@ Starting at the _stop-network-slot_ the network will not produce nor accept new 
 
 There is a tool available to validate that the Mesa node was built from the pre-upgrade network state. See [In-Depth Validation](/network-upgrades/mesa/upgrade-steps/post-upgrade#in-depth-validation) for the `mina-archive-hardfork-toolbox` commands (`validate-fork`, `fork-candidate no-commands-after`) used to verify fork-block integrity. {/* TODO(PR #1133): If/when an authoritative `upgrading-to-mesa.md` lands in MinaProtocol/mina, link to it here. The previous link to `mina/blob/mesa/docs/upgrading-to-mesa.md` returned 404 — the `mesa` branch does not exist on the main repo. */}
 
+## Per-actor summary
+
+| Actor                          | During this phase                                                                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Block Producers (automode)** | Nothing. Your node transitions to Mesa automatically and will start producing blocks at the Mesa genesis timestamp.                                                                                                            |
+| **Block Producers (manual)**   | Stop your node. Wait for the Mesa release announcement, then install the new package and restart with [updated flags](/network-upgrades/mesa/upgrade-steps/post-upgrade).                                                      |
+| **SNARK Coordinators**         | Same as block producers — automode transitions automatically; manual requires stop, install, and restart.                                                                                                                      |
+| **Standalone SNARK Workers**   | Stop old workers. After the Mesa release is published, redeploy and start workers against the Mesa coordinator — an older worker cannot submit work to a Mesa coordinator.                                                     |
+| **Archive Node Operators**     | Install the Mesa archive node release. Point it at your upgraded database (trustless) or import the o1Labs SQL dump (trustful).                                                                                                |
+| **Rosetta Operators**          | Follow the archive node upgrade procedure for your archive database. Install the Mesa Rosetta release when published.                                                                                                          |
+| **Exchanges**                  | Install the Mesa release if running node infrastructure. **Keep deposits/withdrawals disabled** until block production is confirmed on the Mesa chain (see [Post-Upgrade](/network-upgrades/mesa/upgrade-steps/post-upgrade)). |
+
 ## Block Producers and SNARK Workers
 
 :::info
@@ -25,8 +37,8 @@ If you are using [Automode](/network-upgrades/mesa/upgrade-modes), your node han
 If you are using **Manual mode**:
 
 1. During the upgrade phase (between _stop-network-slot_ and the publishing of the Mesa release), block producers can shut down their nodes.
-2. After the publication of the Mesa node release, block producers and SNARK workers should upgrade their nodes and be prepared for block production at the genesis timestamp, which is the slot when the first Mesa block will be produced.
-3. It is possible to continue using the same libp2p key after the upgrade. Pass it to the Mesa daemon with the [`--libp2p-keypair`](/network-upgrades/mesa/upgrade-steps/post-upgrade#flag-and-configuration-reference) flag (see the Flag and Configuration Reference on the Post-Upgrade page).
+2. After the publication of the Mesa node release, block producers and SNARK workers should upgrade their nodes and be prepared for block production at the Mesa genesis timestamp, which is when the first Mesa block will be produced.
+3. It is possible to continue using the same libp2p key after the upgrade. Pass it to the Mesa daemon with the [`--libp2p-keypair`](/node-operators/block-producer-node/getting-started) flag. All daemon flags carry over unchanged from Berkeley — see the [Post-Upgrade flag reference](/network-upgrades/mesa/upgrade-steps/post-upgrade#flag-and-configuration-reference) for the full per-role configuration.
 
 ## Archive Node Operators and Rosetta Operators
 

@@ -19,6 +19,17 @@ During the state finalization slots, it is crucial to maintain a high block dens
 
 Archive nodes should also continue to execute to ensure finalized blocks are in the database and can be carried over to the upgraded schema, preserving the integrity and accessibility of the network's history.
 
+## Per-actor summary
+
+| Actor                      | During this phase                                                                                                                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Block Producers**        | Keep your node running. Block density during finalization is critical — do not stop your node. Both automode and manual operators simply keep running.                                       |
+| **SNARK Workers**          | Continue producing SNARK work. No special action required.                                                                                                                                   |
+| **Archive Node Operators** | Keep the archive node running to capture all finalized blocks. If doing trustless upgrade, run the [archive upgrade script](/network-upgrades/mesa/archive-upgrade) now if not done already. |
+| **Rosetta Operators**      | Follow the archive node instructions — keep your archive node running.                                                                                                                       |
+| **Exchanges**              | **Disable MINA deposits and withdrawals.** Any transactions submitted after the stop-transaction-slot will not carry over to the Mesa chain.                                                 |
+| **zkApp Developers**       | No action required. Monitor announcements for the Mesa genesis timestamp.                                                                                                                    |
+
 ## Block Producers and SNARK Workers
 
 1. It is crucial for the network's successful upgrade that all block producers and SNARK workers maintain their block-producing nodes up and running throughout the state finalization phase.
@@ -36,7 +47,7 @@ During this phase, both Automode and Manual mode operators simply keep their nod
 If you are doing the trustless upgrade, then:
 
 1. Continue to execute the archive node to ensure finalized blocks are in the database.
-2. Execute the archive node upgrade script, which is backward compatible.
+2. Execute the [archive node upgrade script](/network-upgrades/mesa/archive-upgrade). It can be applied before the fork.
 3. Continue to run archive node until after the network stops at the stop-network slot.
 4. For more information on the archive node upgrade process, please refer to the [Archive Upgrade](/network-upgrades/mesa/archive-upgrade) section.
 
