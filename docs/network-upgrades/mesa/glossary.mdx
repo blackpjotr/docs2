@@ -130,6 +130,7 @@ Several second-order consequences flow from the slot-time change:
 
 - **Epoch duration halves** from ~14.9 days to ~7.4 days. Scripts and operational procedures tied to epoch boundaries (delegation cooldown, automated payouts, monitoring dashboards) trigger about twice as often.
 - **Vesting schedules on active vesting accounts are automatically migrated** during the hard fork so they continue unlocking on the same real-world cadence. No operator action is required.
+- **The zkApp per-block command soft limit is lowered** from 24 to 12, ensuring SNARK workers can keep up with the faster 90-second block cadence. This change is delivered via soft fork before Mesa.
 - **SNARK coordinators handling maximum-cost zkApp transactions should deploy at least 4 workers** (≈4 CPU cores each) to keep up with the new 90-second slot timing. A prerequisite SNARK-worker parallelization is delivered via soft fork before Mesa.
 
 ### Expanded zkApp State — [MIP7](https://github.com/MinaProtocol/MIPs/blob/main/MIPS/mip-0007-increase-state-size-limit.md)
