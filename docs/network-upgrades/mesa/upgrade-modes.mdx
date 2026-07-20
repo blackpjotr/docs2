@@ -105,7 +105,7 @@ Use the `mina-daemon-auto-hardfork` image (the regular `mina-daemon` image is ma
 minaprotocol/mina-daemon-auto-hardfork:{version}-{codename}-{network}
 ```
 
-The image bundles both binaries and the dispatcher, and sets `MINA_APP=/usr/local/bin/mina-dispatch` so the entrypoint uses the dispatcher automatically. Start it with your normal flags **plus** `--restart=always` and a named volume mounted at `/root/.mina-config` — see the Docker automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
+The image bundles both binaries and the dispatcher. `/usr/local/bin/mina` is a symlink to `mina-dispatch`, and the entrypoint invokes `mina` by default, so the dispatcher is used automatically — no extra configuration is required. Start it with your normal flags **plus** `--restart=always` and a named volume mounted at `/root/.mina-config` — see the Docker automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
 
 For docker-compose users, see the [docker-compose quickstart](/network-upgrades/mesa/appendix/automode-docker-compose-quickstart) (under Appendix) for a ready-to-edit compose file.
 

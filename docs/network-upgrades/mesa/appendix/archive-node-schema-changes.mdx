@@ -46,6 +46,26 @@ ALTER TABLE zkapp_states ADD COLUMN IF NOT EXISTS element31 INT DEFAULT <zero_fi
 
 This expansion allows zkApps to store up to 32 state elements instead of the previous 8, significantly increasing the state storage capacity for complex smart contracts.
 
+### Dropped `element_ids` Uniqueness (events and actions)
+
+The `zkapp_events` and `zkapp_field_array` tables store their contents in an unbounded `int[]` `element_ids` column. Mesa **drops the `UNIQUE` constraint and the standalone btree index** on that column. A btree key over a large array (a max-cost zkApp can produce ~1024 elements) exceeds PostgreSQL's 2704-byte index-row limit, which previously caused inserts to fail for such zkApps. As a consequence, these rows are **no longer content-deduplicated**.
+
+```sql
+ALTER TABLE zkapp_field_array DROP CONSTRAINT IF EXISTS zkapp_field_array_element_ids_key;
+DROP INDEX IF EXISTS idx_zkapp_field_array_element_ids;
+ALTER TABLE zkapp_events DROP CONSTRAINT IF EXISTS zkapp_events_element_ids_key;
+DROP INDEX IF EXISTS idx_zkapp_events_element_ids;
+```
+
+### Nullable `events_id` / `actions_id`
+
+The `events_id` and `actions_id` columns on `zkapp_account_update_body` become **nullable**. After the upgrade, an empty events or actions list is stored as `NULL` (no `zkapp_events` row is created) instead of referencing an empty-array row.
+
+```sql
+ALTER TABLE zkapp_account_update_body ALTER COLUMN events_id DROP NOT NULL;
+ALTER TABLE zkapp_account_update_body ALTER COLUMN actions_id DROP NOT NULL;
+```
+
 ### Version Tracking
 
 The upgrade introduces a new `migration_history` table to keep track of the database schema version. The purpose of this table is to help with future database migrations. The table tracks which migration scripts were applied and when.
