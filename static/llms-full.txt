@@ -4126,8 +4126,6 @@ For unsupported subcommands, invoke the correct version-specific binary directly
 /usr/lib/mina/mesa/mina ledger export
 ```
 
-Invoke the binaries by their full paths — there is no `mina-mesa` or `mina-berkeley` command on `PATH`.
-
 :::note About `client` routing
 The `client` subcommand (e.g., `mina client status`) is always routed to the mesa binary because it communicates with the running daemon over GraphQL, and the GraphQL schema did not change between Berkeley and Mesa. This means `mina client status` works through the dispatcher at any point — before or after the fork — as long as a daemon is running.
 :::
