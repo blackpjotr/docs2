@@ -94,10 +94,14 @@ To restart a standalone worker against the coordinator:
   --daemon-address <coordinator-ip>:<port>
 ```
 
-The automode dispatcher does not route `mina internal` subcommands, and `mina-mesa` is not on `PATH` in the Docker image — invoke the Mesa worker binary by its full install path (`/usr/lib/mina/mesa/mina`) as shown above.
+The automode dispatcher does not route `mina internal` subcommands — invoke the Mesa worker binary by its full install path (`/usr/lib/mina/mesa/mina`) as shown above.
 
 </TabItem>
 <TabItem value="archive" label="Archive Node">
+
+:::info Full archive procedure
+The checks below confirm a healthy archive. For the complete upgrade workflow — running the schema migration, the post-fork finalization steps (`convert-chain-to-canonical`, `populate-genesis-accounts`), and toolbox verification — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
+:::
 
 #### 1. Verify archive data integrity
 
@@ -321,7 +325,7 @@ For the canonical flag reference, see the [Validator Node docs](/node-operators/
 
 :::info What changed in Mesa
 
-- **Only if you manually manage your genesis config or genesis ledgers, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Operators who rely on the package-installed genesis config — including all automode users — do not need to change anything. If you do override them, both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`).
+- **Only if you manually manage your genesis config or genesis ledgers, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Operators who rely on the package-installed genesis config — including all automode users — do not need to change anything. If you do override them, both ship inside the Mesa Debian/Docker package under `/var/lib/coda`: `--genesis-ledger-dir` should be `/var/lib/coda` (where the genesis ledger tarballs are installed), and `-config-file` should be the Mesa runtime config `/var/lib/coda/mainnet.json` (or the hash-suffixed `/var/lib/coda/config_<githash>.json`). The pre-fork config is preserved alongside it as `/var/lib/coda/mainnet.old.json`.
 - **All other flags carry over unchanged** — `--block-producer-key`, `--libp2p-keypair`, `--peer-list-url`, `--external-ip/port`, log flags, etc. behave the same on Mesa as on Berkeley.
   :::
 
@@ -422,7 +426,30 @@ mina-archive run
 <details>
 <summary><b>Rosetta API</b></summary>
 
-Once your Archive Node stack is running:
+Once your Archive Node stack is running, start Rosetta pointing at your archive database and daemon GraphQL endpoint. Pick the install method that matches how you run the rest of your stack.
+
+<Tabs groupId="install-method">
+<TabItem value="debian" label="Debian (apt)" default>
+
+Install the Mesa Rosetta package for your network, then run the binary directly:
+
+```bash
+sudo apt-get update
+sudo apt-get install mina-rosetta-mainnet=<mesa-version>
+# or: sudo apt-get install mina-rosetta-devnet=<mesa-version>
+```
+
+```bash
+mina-rosetta \
+  --archive-uri "${PG_CONNECTION_STRING}" \
+  --graphql-uri "${GRAPHQL_URL}" \
+  --log-json \
+  --log-level ${LOG_LEVEL} \
+  --port 3088
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
 
 ```bash
 docker run \
@@ -437,6 +464,9 @@ docker run \
     --log-level ${LOG_LEVEL} \
     --port 3088
 ```
+
+</TabItem>
+</Tabs>
 
 </details>
 

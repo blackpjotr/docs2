@@ -29,7 +29,21 @@ sudo apt-get update
 sudo apt-get install mina-mainnet-automode=4.x.x
 ```
 
-She starts her node normally. The automode dispatcher runs the pre-fork binary until the fork activates.
+She starts her node normally. The dispatcher (installed as `/usr/local/bin/mina`) needs one automode-specific setting: **`MINA_HARDFORK_STATE_DIR` must point at her config directory** — it must match `--config-directory`, because that is where the dispatcher looks for the `auto-fork-mesa-mainnet/activated` marker to choose between the pre-fork and Mesa runtime. Export the variable and pass the matching flag:
+
+```bash
+export MINA_HARDFORK_STATE_DIR=~/.mina-config
+
+mina daemon \
+  --block-producer-key ~/keys/my-wallet \
+  --config-directory ~/.mina-config \
+  --libp2p-keypair ~/keys/libp2p-key \
+  --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
+  --file-log-rotations 500 \
+  --log-json
+```
+
+The automode dispatcher runs the pre-fork binary until the fork activates. To preview which runtime and arguments the dispatcher will exec without running it, prefix the command with `MINA_DISPATCHER_DRYRUN=1`.
 
 > For the full preparation checklist, see [Requirements](/network-upgrades/mesa/requirements).
 
@@ -52,7 +66,7 @@ mina client status
 ```
 
 :::note Dispatcher and non-daemon commands
-The automode dispatcher only supports `daemon` and `client status` subcommands. For other commands, use `mina-mesa` or `mina-berkeley` directly. See [Troubleshooting](/network-upgrades/mesa/troubleshooting#can-i-run-non-daemon-commands-or-use-a-specific-binary-version) for details.
+The automode dispatcher only supports `daemon` and `client status` subcommands. For other commands, invoke the version-specific binary by its full path (`/usr/lib/mina/mesa/mina` or `/usr/lib/mina/berkeley/mina`) directly. See [Troubleshooting](/network-upgrades/mesa/troubleshooting#can-i-run-non-daemon-commands-or-use-a-specific-binary-version) for details.
 :::
 
 She's done. Her node is producing blocks on Mesa.
@@ -139,15 +153,20 @@ sudo apt-get install mina-mainnet=3.x.x
 She chooses the **trustless** path — running the upgrade script early, while her archive is still online:
 
 ```bash
+# Install the Mesa archive package — it ships the upgrade script at
+# /etc/mina/archive/upgrade_to_mesa.sql. The upgrade is backward-compatible,
+# so her Berkeley archive keeps running normally afterwards.
+sudo apt-get update
+sudo apt-get install mina-archive-mainnet=4.x.x
+
 # Back up the database first
 pg_dump -U <user> archive_db > berkeley-archive-backup.sql
 
-# Download and run the upgrade script (completes in under 1 minute)
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/app/archive/upgrade_to_mesa.sql
-psql -U <user> -d archive_db -f upgrade_to_mesa.sql
+# Run the shipped upgrade script (completes in under 1 minute)
+psql -U <user> -d archive_db -f /etc/mina/archive/upgrade_to_mesa.sql
 
 # Verify
-psql -U <user> -d archive_db -c "SELECT * FROM version;"
+psql -U <user> -d archive_db -c "SELECT * FROM migration_history;"
 ```
 
 The script is backward-compatible — her existing Berkeley archive node keeps working normally after the upgrade.
@@ -259,7 +278,15 @@ If he is also adopting the expanded `8–31` state slots, this same deployment s
 
 **Bob** is an exchange operator. His main concern is avoiding lost deposits.
 
-**Weeks before the fork** — Bob tests his integration (Rosetta API, mina-signer) on the [preflight network](/network-upgrades/mesa/preflight-network). He reviews [schema changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) and installs the stop-slot release:
+Bob runs the full Rosetta-based stack, so he upgrades **three packages** — the node, the archive node, and the Rosetta API — plus his PostgreSQL archive database:
+
+- `mina-mainnet` — the daemon
+- `mina-archive-mainnet` — the archive node
+- `mina-rosetta-mainnet` — the Rosetta API
+
+(Exchanges on a custom GraphQL integration that do not run Rosetta or an archive only need `mina-mainnet`.)
+
+**Weeks before the fork** — Bob tests his integration (Rosetta API, mina-signer) on the [preflight network](/network-upgrades/mesa/preflight-network). He reviews [schema changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) and installs the stop-slot release on his node:
 
 ```bash
 sudo apt-get install mina-mainnet=3.x.x
@@ -273,13 +300,21 @@ sudo apt-get install mina-mainnet=3.x.x
 Any transactions submitted after the stop-transaction-slot **will not exist on the Mesa chain**. See [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization#exchanges) for the full exchange guidance.
 :::
 
-**Fork day** — The network halts. Bob waits for the Mesa release announcement, then upgrades:
+**Fork day** — The network halts. Bob waits for the Mesa release announcement, then upgrades all three components and migrates his archive database:
 
 ```bash
-sudo systemctl stop mina
+# Stop the stack
+sudo systemctl stop mina mina-archive
+
+# Install the Mesa releases for the node, archive, and Rosetta
 sudo apt-get update
-sudo apt-get install mina-mainnet=4.x.x
-sudo systemctl start mina
+sudo apt-get install mina-mainnet=4.x.x mina-archive-mainnet=4.x.x mina-rosetta-mainnet=4.x.x
+
+# Upgrade the archive schema — the mina-archive package ships the script
+psql -U <user> -d archive_db -f /etc/mina/archive/upgrade_to_mesa.sql
+
+# Restart the node and archive, then bring Rosetta back up
+sudo systemctl start mina mina-archive
 ```
 
 > For detailed upgrade instructions, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade).

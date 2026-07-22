@@ -3925,6 +3925,26 @@ ALTER TABLE zkapp_states ADD COLUMN IF NOT EXISTS element31 INT DEFAULT <zero_fi
 
 This expansion allows zkApps to store up to 32 state elements instead of the previous 8, significantly increasing the state storage capacity for complex smart contracts.
 
+### Dropped `element_ids` Uniqueness (events and actions)
+
+The `zkapp_events` and `zkapp_field_array` tables store their contents in an unbounded `int[]` `element_ids` column. Mesa **drops the `UNIQUE` constraint and the standalone btree index** on that column. A btree key over a large array (a max-cost zkApp can produce ~1024 elements) exceeds PostgreSQL's 2704-byte index-row limit, which previously caused inserts to fail for such zkApps. As a consequence, these rows are **no longer content-deduplicated**.
+
+```sql
+ALTER TABLE zkapp_field_array DROP CONSTRAINT IF EXISTS zkapp_field_array_element_ids_key;
+DROP INDEX IF EXISTS idx_zkapp_field_array_element_ids;
+ALTER TABLE zkapp_events DROP CONSTRAINT IF EXISTS zkapp_events_element_ids_key;
+DROP INDEX IF EXISTS idx_zkapp_events_element_ids;
+```
+
+### Nullable `events_id` / `actions_id`
+
+The `events_id` and `actions_id` columns on `zkapp_account_update_body` become **nullable**. After the upgrade, an empty events or actions list is stored as `NULL` (no `zkapp_events` row is created) instead of referencing an empty-array row.
+
+```sql
+ALTER TABLE zkapp_account_update_body ALTER COLUMN events_id DROP NOT NULL;
+ALTER TABLE zkapp_account_update_body ALTER COLUMN actions_id DROP NOT NULL;
+```
+
 ### Version Tracking
 
 The upgrade introduces a new `migration_history` table to keep track of the database schema version. The purpose of this table is to help with future database migrations. The table tracks which migration scripts were applied and when.
@@ -4051,8 +4071,8 @@ The automode release ships **two complete sets of Mina binaries plus the dispatc
 
 | Component | Path | Purpose |
 |---|---|---|
-| **Pre-fork binary** | `{RUNTIMES_BASE_PATH}/berkeley/mina` | Runs the current chain up to the stop-network-slot |
-| **Post-fork binary** | `{RUNTIMES_BASE_PATH}/mesa/mina` | Runs the Mesa chain after the fork |
+| **Pre-fork binary** | `/usr/lib/mina/berkeley/mina` | Runs the current chain up to the stop-network-slot |
+| **Post-fork binary** | `/usr/lib/mina/mesa/mina` | Runs the Mesa chain after the fork |
 | **Dispatcher** (`mina-dispatch`) | `/usr/local/bin/mina-dispatch` | Routes your commands to the correct binary |
 
 When you install the automode package (or use the [automode Docker image](/network-upgrades/mesa/glossary#automode-image)), all three components are installed together.
@@ -4096,17 +4116,14 @@ For unsupported subcommands, invoke the correct version-specific binary directly
 
 | Binary | When to use | Path |
 |---|---|---|
-| `mina-berkeley` | Before the fork (or to query pre-fork state) | `/usr/lib/mina/berkeley/mina` |
-| `mina-mesa` | After the fork | `/usr/lib/mina/mesa/mina` |
+| Pre-fork (Berkeley) | Before the fork (or to query pre-fork state) | `/usr/lib/mina/berkeley/mina` |
+| Post-fork (Mesa) | After the fork | `/usr/lib/mina/mesa/mina` |
 
 ```bash
 # These work at any time — they bypass the dispatcher
-mina-berkeley client status
-mina-mesa accounts list
-mina-mesa ledger export
-
-# Full paths also work for any binary in either runtime
-/usr/lib/mina/mesa/mina client status
+/usr/lib/mina/berkeley/mina client status
+/usr/lib/mina/mesa/mina accounts list
+/usr/lib/mina/mesa/mina ledger export
 ```
 
 :::note About `client` routing
@@ -4208,7 +4225,7 @@ The "who should use" criteria for each mode and the side-by-side comparison live
 
 ## Operator troubleshooting
 
-Operator-facing troubleshooting (how to tell which binary is active, dispatcher debug mode, when to use `mina-berkeley` vs `mina-mesa` directly) has moved to its own page: [Troubleshooting](/network-upgrades/mesa/troubleshooting).
+Operator-facing troubleshooting (how to tell which binary is active, dispatcher debug mode, when to invoke the pre-fork vs post-fork binary by its full path) has moved to its own page: [Troubleshooting](/network-upgrades/mesa/troubleshooting).
 
 ---
 url: /network-upgrades/mesa/archive-upgrade
@@ -4282,29 +4299,32 @@ Finally it creates a new table (`migration_history`) in the database to keep tra
 
 #### Getting the script
 
-You can find the SQL upgrade script in the Mina repository on GitHub. Make sure to download the latest version of the script before proceeding.
-You can download the script directly using the following command:
+The upgrade script ships **inside the Mina archive Debian package and Docker image**, so the recommended way to get it is straight from the release you install — that copy is guaranteed to match your archive version.
 
-```bash
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/app/archive/upgrade_to_mesa.sql
-```
-
-We also ship the script in the Mina archive Docker image and Debian package.
-
-```bash
-docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mesa cat /etc/mina/archive/upgrade-to-mesa.sql > upgrade-to-mesa.sql
-```
+**From the Debian package (recommended)** — the `mina-archive-{network}` package installs the script at `/etc/mina/archive/upgrade_to_mesa.sql`:
 
 ```bash
 # Setup the Mina repository and install the archive package.
 # Repository setup (apt sources, GPG key, channel) is network-specific —
 # see Preflight Network for the preflight pin, or your network's release notes.
 
-apt-get install mina-archive-mesa=<MESA_VERSION>
+apt-get install mina-archive-mainnet=<MESA_VERSION>
 
 # View the upgrade and downgrade scripts
-cat /etc/mina/archive/upgrade-to-mesa.sql
-cat /etc/mina/archive/downgrade-to-berkeley.sql
+cat /etc/mina/archive/upgrade_to_mesa.sql
+cat /etc/mina/archive/downgrade_to_berkeley.sql
+```
+
+**From the Docker image** — extract it from the archive image:
+
+```bash
+docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mainnet cat /etc/mina/archive/upgrade_to_mesa.sql > upgrade_to_mesa.sql
+```
+
+**From GitHub (alternative)** — only if you are not installing the package; make sure to match the script to your release:
+
+```bash
+curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/app/archive/upgrade_to_mesa.sql
 ```
 
 #### Running the script
@@ -4322,7 +4342,7 @@ pg_dump -U <username> <database> > berkeley-archive-backup.sql
 To run the upgrade script, execute the following command:
 
 ```bash
-psql -U <username> -d <database> -f upgrade-to-mesa.sql
+psql -U <username> -d <database> -f /etc/mina/archive/upgrade_to_mesa.sql
 ```
 
 Make sure to replace `<username>` and `<database>` with your actual PostgreSQL username and database name.
@@ -4339,7 +4359,7 @@ It will also update the `migration_history` table to reflect the rollback.
 To run the rollback script, you need to execute the following command:
 
 ```bash
-psql -U <username> -d <database> -f /etc/mina/archive/downgrade-to-berkeley.sql
+psql -U <username> -d <database> -f /etc/mina/archive/downgrade_to_berkeley.sql
 ```
 
 Make sure to replace `<username>` and `<database>` with your actual PostgreSQL username and database name.
@@ -4354,7 +4374,7 @@ Changes in upgrade script are backward compatible and will be picked up by the a
 
 The `mina-archive-hardfork-toolbox` is a dedicated CLI tool for verifying the integrity of archive database upgrades and fork transitions. It is shipped with the Mina archive package and available as a standalone binary.
 
-For full details, see the [toolbox README](https://github.com/MinaProtocol/mina/blob/compatible/src/app/archive_hardfork_toolbox/README.md).
+For full details, see the [toolbox README](https://github.com/MinaProtocol/mina/blob/release/mesa/src/app/archive_hardfork_toolbox/README.md).
 
 All commands below require a `--postgres-uri` flag in the format:
 ```
@@ -4399,7 +4419,7 @@ mina-archive-hardfork-toolbox fork-candidate last-filled-block \
 
 #### Step 2: Verify the schema upgrade
 
-After running `upgrade-to-mesa.sql`, verify the database schema was upgraded correctly:
+After running `upgrade_to_mesa.sql`, verify the database schema was upgraded correctly:
 
 ```bash
 mina-archive-hardfork-toolbox verify-upgrade \
@@ -4415,9 +4435,60 @@ psql -U <username> -d <database> -c "SELECT * FROM migration_history;"
 
 If the upgrade was successful, the `migration_history` table will contain an entry with the expected migration version and a recent timestamp.
 
-#### Step 3: Post-fork validation
+#### Step 3: Post-fork finalization
 
-After the fork activates and the Mesa chain is running, validate the fork block and its ancestry:
+After the fork activates, a hardfork archive needs **two repair actions** before its data is coherent. Neither self-heals — you must run both once the Mesa chain is live. Run each with `--dry-run` first to preview the changes. **Run these before the Step 4 validation** — `validate-fork` checks data that these repairs put right.
+
+##### 3a. Finalize the stranded pre-fork chain — `convert-chain-to-canonical`
+
+When the pre-fork chain halts, its final _k_ blocks (the pruned-frontier depth, `k = 290`) can never reach _k_-depth: no consensus is left to bury them, so they stay `pending` and never become `canonical`. The result is incoherent — the fork genesis can be `canonical` while its own parent is still `pending`, and the canonical walk from the tip terminates early. The live Mesa chain passing `fork genesis + k` does **not** fix this. This is expected for every hardforked archive, and `convert-chain-to-canonical` is the intended finalization path, not a workaround.
+
+With no target flags, the tool auto-detects the latest hard-fork boundary and marks the chain leading to the fork block canonical:
+
+```bash
+mina-archive-hardfork-toolbox convert-chain-to-canonical \
+  --postgres-uri <uri> \
+  --dry-run
+```
+
+To target an explicit fork block and protect the live chain, pass the fork block's state hash and stop at the Mesa genesis slot so post-fork blocks stay untouched:
+
+```bash
+mina-archive-hardfork-toolbox convert-chain-to-canonical \
+  --postgres-uri <uri> \
+  --target-block-hash <fork-block-state-hash> \
+  --stop-at-slot <mesa-genesis-slot> \
+  --protocol-version <transaction>.<network>.<patch>
+```
+
+- `--target-block-hash` — state hash of the block that should remain canonical (the fork block). Defaults to the parent of the latest hard-fork block. `--fork-height <height>` is an alternative.
+- `--stop-at-slot` — blocks at or beyond this global slot stay untouched, protecting the live Mesa tip.
+- `--protocol-version` — defaults to the target block's own protocol version.
+
+##### 3b. Backfill the fork-genesis accounts — `populate-genesis-accounts`
+
+The Mesa fork-genesis block can land with **zero** rows in `accounts_accessed`. Rosetta resolves balances by reading that table at the genesis block; finding an empty set, it reports **zero balances** for every account. This is an operational gap (the accounts were never written), not a code defect. Backfill them from the runtime config's genesis ledger:
+
+```bash
+mina-archive-hardfork-toolbox populate-genesis-accounts \
+  --postgres-uri <uri> \
+  --config-file /var/lib/coda/mainnet.json
+```
+
+- `--config-file` (required) — the runtime config containing the (fork) genesis ledger. In the Mesa package this is `/var/lib/coda/mainnet.json` (or the hash-suffixed `config_<githash>.json`).
+- `--chunks-length` — accounts inserted per transaction (default `100`); lower it if a large ledger risks a Postgres OOM.
+
+After this runs, Rosetta `/account/balance` at the fork-genesis block returns the real migrated balance (with the carried-over nonce) instead of zero. Confirm the count matches expectations:
+
+```sql
+SELECT COUNT(*) FROM accounts_accessed aa
+JOIN blocks b ON b.id = aa.block_id
+WHERE b.height = <mesa-genesis-height>;
+```
+
+#### Step 4: Post-fork validation
+
+Once the fork is active and the archive has been finalized (Step 3), validate the fork block and its ancestry:
 
 ```bash
 mina-archive-hardfork-toolbox validate-fork \
@@ -4426,24 +4497,16 @@ mina-archive-hardfork-toolbox validate-fork \
   --fork-slot <slot>
 ```
 
-#### Step 4: Mark the canonical chain (if needed)
-
-If you need to mark the chain leading to a specific block as canonical for the new protocol version:
-
-```bash
-mina-archive-hardfork-toolbox convert-chain-to-canonical \
-  --postgres-uri <uri> \
-  --target-block-hash <state-hash> \
-  --protocol-version <transaction>.<network>.<patch>
-```
-
-Optionally use `--stop-at-slot <slot>` to limit how far back in history the marking goes.
-
 :::tip Typical workflow
 1. **Before the fork**: run `fork-candidate` commands to validate the fork block
 2. **After running the upgrade script**: run `verify-upgrade` to confirm the schema upgrade
-3. **After the fork activates**: run `validate-fork` to confirm data integrity
-4. **For full archive verification**: run the [Archive Replayer](/node-operators/archive-node/replayer) to replay all transactions and compare the resulting ledger against the official fork config
+3. **After the fork activates — finalize the archive** (required): run `convert-chain-to-canonical` and `populate-genesis-accounts` (Step 3)
+4. **Then validate**: run `validate-fork` to confirm data integrity (Step 4)
+5. **For full archive verification**: run the [Archive Replayer](/node-operators/archive-node/replayer) to replay all transactions and compare the resulting ledger against the official fork config
+:::
+
+:::caution Passing the fork slot
+The runtime config's `fork.global_slot_since_genesis` is the **new chain's genesis slot**, not the fork block's slot. The fork block sits one `hard_fork_genesis_slot_delta` earlier. Toolbox flags that want the fork block's slot (for example `--fork-slot`) expect that earlier value — copying the config value directly produces a spurious failure.
 :::
 
 If you encounter any issues, reach out to the Mina community on [Discord](https://discord.gg/minaprotocol) or [GitHub Discussions](https://github.com/MinaProtocol/mina/discussions).
@@ -4605,7 +4668,7 @@ The binary that runs the new Mesa chain after the fork activates. In [automode](
 
 ### Dispatcher {#dispatcher}
 
-A shell script wrapper (`mina-dispatch`) installed at `/usr/local/bin/` that routes commands to the correct binary — [pre-fork](#pre-fork-binary) or [post-fork](#post-fork-binary). For `daemon`, routing is based on whether the [activation file](#activation-file) exists. For `client`, commands are always routed to the [post-fork binary](#post-fork-binary). Other subcommands (e.g., `accounts list`) are not supported — use `mina-berkeley` or `mina-mesa` directly. See [Upgrade Modes - Details](/network-upgrades/mesa/appendix/upgrade-modes-details).
+A shell script wrapper (`mina-dispatch`) installed at `/usr/local/bin/` that routes commands to the correct binary — [pre-fork](#pre-fork-binary) or [post-fork](#post-fork-binary). For `daemon`, routing is based on whether the [activation file](#activation-file) exists. For `client`, commands are always routed to the [post-fork binary](#post-fork-binary). Other subcommands (e.g., `accounts list`) are not supported — invoke the [pre-fork](#pre-fork-binary) or [post-fork](#post-fork-binary) binary by its full path (`/usr/lib/mina/berkeley/mina` or `/usr/lib/mina/mesa/mina`) directly. See [Upgrade Modes - Details](/network-upgrades/mesa/appendix/upgrade-modes-details).
 
 ### Activation File {#activation-file}
 
@@ -5167,23 +5230,23 @@ As described in [Dispatcher Limitations](/network-upgrades/mesa/appendix/upgrade
 
 | Binary | Description | Full path |
 |---|---|---|
-| `mina-berkeley` | Pre-fork binary (current chain) | `/usr/lib/mina/berkeley/mina` |
-| `mina-mesa` | Post-fork binary (Mesa chain) | `/usr/lib/mina/mesa/mina` |
+| Pre-fork (Berkeley) | Current chain | `/usr/lib/mina/berkeley/mina` |
+| Post-fork (Mesa) | Mesa chain | `/usr/lib/mina/mesa/mina` |
 
 ```bash
-# Use mina-mesa for all non-daemon commands after the fork
-mina-mesa client status
-mina-mesa accounts list
-mina-mesa ledger export
+# Use the Mesa binary for all non-daemon commands after the fork
+/usr/lib/mina/mesa/mina client status
+/usr/lib/mina/mesa/mina accounts list
+/usr/lib/mina/mesa/mina ledger export
 
-# Use mina-berkeley for pre-fork queries
-mina-berkeley client status
+# Use the Berkeley binary for pre-fork queries
+/usr/lib/mina/berkeley/mina client status
 ```
 
-These symlinks (`mina-berkeley`, `mina-mesa`) are installed globally by the automode packages and are always available. They bypass the dispatcher entirely and run the binary directly, so they work regardless of the activation state.
+Both binaries are installed at these fixed paths by the automode packages and are always available. They bypass the dispatcher entirely and run the binary directly, so they work regardless of the activation state. (There is no `mina-mesa` or `mina-berkeley` command on `PATH` — invoke the binaries by their full paths.)
 
 :::caution Do not manipulate the activation state file
-While it is technically possible to force the dispatcher to use a specific runtime by creating or removing the `activated` file, **this is strongly discouraged**. Manually manipulating the state file while the network is live can put your node on the wrong chain. If you need to run a specific version, use `mina-berkeley` or `mina-mesa` directly instead.
+While it is technically possible to force the dispatcher to use a specific runtime by creating or removing the `activated` file, **this is strongly discouraged**. Manually manipulating the state file while the network is live can put your node on the wrong chain. If you need to run a specific version, invoke the full binary path (`/usr/lib/mina/berkeley/mina` or `/usr/lib/mina/mesa/mina`) directly instead.
 :::
 
 ## Debug mode
@@ -5295,7 +5358,7 @@ Use the `mina-daemon-auto-hardfork` image (the regular `mina-daemon` image is ma
 minaprotocol/mina-daemon-auto-hardfork:{version}-{codename}-{network}
 ```
 
-The image bundles both binaries and the dispatcher, and sets `MINA_APP=/usr/local/bin/mina-dispatch` so the entrypoint uses the dispatcher automatically. Start it with your normal flags **plus** `--restart=always` and a named volume mounted at `/root/.mina-config` — see the Docker automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
+The image bundles both binaries and the dispatcher. `/usr/local/bin/mina` is a symlink to `mina-dispatch`, and the entrypoint invokes `mina` by default, so the dispatcher is used automatically — no extra configuration is required. Start it with your normal flags **plus** `--restart=always` and a named volume mounted at `/root/.mina-config` — see the Docker automode example on the [Examples](/network-upgrades/mesa/upgrade-steps/examples) page.
 
 For docker-compose users, see the [docker-compose quickstart](/network-upgrades/mesa/appendix/automode-docker-compose-quickstart) (under Appendix) for a ready-to-edit compose file.
 
@@ -5404,7 +5467,21 @@ sudo apt-get update
 sudo apt-get install mina-mainnet-automode=4.x.x
 ```
 
-She starts her node normally. The automode dispatcher runs the pre-fork binary until the fork activates.
+She starts her node normally. The dispatcher (installed as `/usr/local/bin/mina`) needs one automode-specific setting: **`MINA_HARDFORK_STATE_DIR` must point at her config directory** — it must match `--config-directory`, because that is where the dispatcher looks for the `auto-fork-mesa-mainnet/activated` marker to choose between the pre-fork and Mesa runtime. Export the variable and pass the matching flag:
+
+```bash
+export MINA_HARDFORK_STATE_DIR=~/.mina-config
+
+mina daemon \
+  --block-producer-key ~/keys/my-wallet \
+  --config-directory ~/.mina-config \
+  --libp2p-keypair ~/keys/libp2p-key \
+  --peer-list-url https://bootnodes.minaprotocol.com/networks/mainnet.txt \
+  --file-log-rotations 500 \
+  --log-json
+```
+
+The automode dispatcher runs the pre-fork binary until the fork activates. To preview which runtime and arguments the dispatcher will exec without running it, prefix the command with `MINA_DISPATCHER_DRYRUN=1`.
 
 > For the full preparation checklist, see [Requirements](/network-upgrades/mesa/requirements).
 
@@ -5427,7 +5504,7 @@ mina client status
 ```
 
 :::note Dispatcher and non-daemon commands
-The automode dispatcher only supports `daemon` and `client status` subcommands. For other commands, use `mina-mesa` or `mina-berkeley` directly. See [Troubleshooting](/network-upgrades/mesa/troubleshooting#can-i-run-non-daemon-commands-or-use-a-specific-binary-version) for details.
+The automode dispatcher only supports `daemon` and `client status` subcommands. For other commands, invoke the version-specific binary by its full path (`/usr/lib/mina/mesa/mina` or `/usr/lib/mina/berkeley/mina`) directly. See [Troubleshooting](/network-upgrades/mesa/troubleshooting#can-i-run-non-daemon-commands-or-use-a-specific-binary-version) for details.
 :::
 
 She's done. Her node is producing blocks on Mesa.
@@ -5514,15 +5591,20 @@ sudo apt-get install mina-mainnet=3.x.x
 She chooses the **trustless** path — running the upgrade script early, while her archive is still online:
 
 ```bash
+# Install the Mesa archive package — it ships the upgrade script at
+# /etc/mina/archive/upgrade_to_mesa.sql. The upgrade is backward-compatible,
+# so her Berkeley archive keeps running normally afterwards.
+sudo apt-get update
+sudo apt-get install mina-archive-mainnet=4.x.x
+
 # Back up the database first
 pg_dump -U <user> archive_db > berkeley-archive-backup.sql
 
-# Download and run the upgrade script (completes in under 1 minute)
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/app/archive/upgrade_to_mesa.sql
-psql -U <user> -d archive_db -f upgrade_to_mesa.sql
+# Run the shipped upgrade script (completes in under 1 minute)
+psql -U <user> -d archive_db -f /etc/mina/archive/upgrade_to_mesa.sql
 
 # Verify
-psql -U <user> -d archive_db -c "SELECT * FROM version;"
+psql -U <user> -d archive_db -c "SELECT * FROM migration_history;"
 ```
 
 The script is backward-compatible — her existing Berkeley archive node keeps working normally after the upgrade.
@@ -5634,7 +5716,15 @@ If he is also adopting the expanded `8–31` state slots, this same deployment s
 
 **Bob** is an exchange operator. His main concern is avoiding lost deposits.
 
-**Weeks before the fork** — Bob tests his integration (Rosetta API, mina-signer) on the [preflight network](/network-upgrades/mesa/preflight-network). He reviews [schema changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) and installs the stop-slot release:
+Bob runs the full Rosetta-based stack, so he upgrades **three packages** — the node, the archive node, and the Rosetta API — plus his PostgreSQL archive database:
+
+- `mina-mainnet` — the daemon
+- `mina-archive-mainnet` — the archive node
+- `mina-rosetta-mainnet` — the Rosetta API
+
+(Exchanges on a custom GraphQL integration that do not run Rosetta or an archive only need `mina-mainnet`.)
+
+**Weeks before the fork** — Bob tests his integration (Rosetta API, mina-signer) on the [preflight network](/network-upgrades/mesa/preflight-network). He reviews [schema changes](/network-upgrades/mesa/appendix/archive-node-schema-changes) and installs the stop-slot release on his node:
 
 ```bash
 sudo apt-get install mina-mainnet=3.x.x
@@ -5648,13 +5738,21 @@ sudo apt-get install mina-mainnet=3.x.x
 Any transactions submitted after the stop-transaction-slot **will not exist on the Mesa chain**. See [State Finalization](/network-upgrades/mesa/upgrade-steps/state-finalization#exchanges) for the full exchange guidance.
 :::
 
-**Fork day** — The network halts. Bob waits for the Mesa release announcement, then upgrades:
+**Fork day** — The network halts. Bob waits for the Mesa release announcement, then upgrades all three components and migrates his archive database:
 
 ```bash
-sudo systemctl stop mina
+# Stop the stack
+sudo systemctl stop mina mina-archive
+
+# Install the Mesa releases for the node, archive, and Rosetta
 sudo apt-get update
-sudo apt-get install mina-mainnet=4.x.x
-sudo systemctl start mina
+sudo apt-get install mina-mainnet=4.x.x mina-archive-mainnet=4.x.x mina-rosetta-mainnet=4.x.x
+
+# Upgrade the archive schema — the mina-archive package ships the script
+psql -U <user> -d archive_db -f /etc/mina/archive/upgrade_to_mesa.sql
+
+# Restart the node and archive, then bring Rosetta back up
+sudo systemctl start mina mina-archive
 ```
 
 > For detailed upgrade instructions, see [Upgrade](/network-upgrades/mesa/upgrade-steps/upgrade).
@@ -5787,10 +5885,14 @@ To restart a standalone worker against the coordinator:
   --daemon-address <coordinator-ip>:<port>
 ```
 
-The automode dispatcher does not route `mina internal` subcommands, and `mina-mesa` is not on `PATH` in the Docker image — invoke the Mesa worker binary by its full install path (`/usr/lib/mina/mesa/mina`) as shown above.
+The automode dispatcher does not route `mina internal` subcommands — invoke the Mesa worker binary by its full install path (`/usr/lib/mina/mesa/mina`) as shown above.
 
 </TabItem>
 <TabItem value="archive" label="Archive Node">
+
+:::info Full archive procedure
+The checks below confirm a healthy archive. For the complete upgrade workflow — running the schema migration, the post-fork finalization steps (`convert-chain-to-canonical`, `populate-genesis-accounts`), and toolbox verification — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
+:::
 
 #### 1. Verify archive data integrity
 
@@ -6014,7 +6116,7 @@ For the canonical flag reference, see the [Validator Node docs](/node-operators/
 
 :::info What changed in Mesa
 
-- **Only if you manually manage your genesis config or genesis ledgers, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Operators who rely on the package-installed genesis config — including all automode users — do not need to change anything. If you do override them, both ship inside the Mesa Debian/Docker package: `--genesis-ledger-dir` should be `/var/lib/coda/mesa` (or the equivalent path your package installed), and `-config-file` should be the Mesa runtime config (typically `/etc/mina/mesa/daemon.json`).
+- **Only if you manually manage your genesis config or genesis ledgers, repoint `--genesis-ledger-dir` and `-config-file` at the Mesa-specific files.** Operators who rely on the package-installed genesis config — including all automode users — do not need to change anything. If you do override them, both ship inside the Mesa Debian/Docker package under `/var/lib/coda`: `--genesis-ledger-dir` should be `/var/lib/coda` (where the genesis ledger tarballs are installed), and `-config-file` should be the Mesa runtime config `/var/lib/coda/mainnet.json` (or the hash-suffixed `/var/lib/coda/config_<githash>.json`). The pre-fork config is preserved alongside it as `/var/lib/coda/mainnet.old.json`.
 - **All other flags carry over unchanged** — `--block-producer-key`, `--libp2p-keypair`, `--peer-list-url`, `--external-ip/port`, log flags, etc. behave the same on Mesa as on Berkeley.
   :::
 
@@ -6115,7 +6217,30 @@ mina-archive run
 <details>
 <summary><b>Rosetta API</b></summary>
 
-Once your Archive Node stack is running:
+Once your Archive Node stack is running, start Rosetta pointing at your archive database and daemon GraphQL endpoint. Pick the install method that matches how you run the rest of your stack.
+
+<Tabs groupId="install-method">
+<TabItem value="debian" label="Debian (apt)" default>
+
+Install the Mesa Rosetta package for your network, then run the binary directly:
+
+```bash
+sudo apt-get update
+sudo apt-get install mina-rosetta-mainnet=<mesa-version>
+# or: sudo apt-get install mina-rosetta-devnet=<mesa-version>
+```
+
+```bash
+mina-rosetta \
+  --archive-uri "${PG_CONNECTION_STRING}" \
+  --graphql-uri "${GRAPHQL_URL}" \
+  --log-json \
+  --log-level ${LOG_LEVEL} \
+  --port 3088
+```
+
+</TabItem>
+<TabItem value="docker" label="Docker">
 
 ```bash
 docker run \
@@ -6130,6 +6255,9 @@ docker run \
     --log-level ${LOG_LEVEL} \
     --port 3088
 ```
+
+</TabItem>
+</Tabs>
 
 </details>
 
@@ -6174,6 +6302,10 @@ During this phase, both Automode and Manual mode operators simply keep their nod
 :::
 
 ## Archive Node Operators and Rosetta Operators
+
+:::info Full archive procedure
+For the complete upgrade workflow — the schema migration you can run now (before the fork), plus the post-fork finalization steps (`convert-chain-to-canonical`, `populate-genesis-accounts`) and toolbox verification you run once Mesa is live — see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
+:::
 
 **If you plan to do the _trustful_ upgrade, you can skip this step.**
 

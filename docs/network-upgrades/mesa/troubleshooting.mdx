@@ -41,23 +41,23 @@ As described in [Dispatcher Limitations](/network-upgrades/mesa/appendix/upgrade
 
 | Binary | Description | Full path |
 |---|---|---|
-| `mina-berkeley` | Pre-fork binary (current chain) | `/usr/lib/mina/berkeley/mina` |
-| `mina-mesa` | Post-fork binary (Mesa chain) | `/usr/lib/mina/mesa/mina` |
+| Pre-fork (Berkeley) | Current chain | `/usr/lib/mina/berkeley/mina` |
+| Post-fork (Mesa) | Mesa chain | `/usr/lib/mina/mesa/mina` |
 
 ```bash
-# Use mina-mesa for all non-daemon commands after the fork
-mina-mesa client status
-mina-mesa accounts list
-mina-mesa ledger export
+# Use the Mesa binary for all non-daemon commands after the fork
+/usr/lib/mina/mesa/mina client status
+/usr/lib/mina/mesa/mina accounts list
+/usr/lib/mina/mesa/mina ledger export
 
-# Use mina-berkeley for pre-fork queries
-mina-berkeley client status
+# Use the Berkeley binary for pre-fork queries
+/usr/lib/mina/berkeley/mina client status
 ```
 
-These symlinks (`mina-berkeley`, `mina-mesa`) are installed globally by the automode packages and are always available. They bypass the dispatcher entirely and run the binary directly, so they work regardless of the activation state.
+Both binaries are installed at these fixed paths by the automode packages and are always available. They bypass the dispatcher entirely and run the binary directly, so they work regardless of the activation state. (There is no `mina-mesa` or `mina-berkeley` command on `PATH` — invoke the binaries by their full paths.)
 
 :::caution Do not manipulate the activation state file
-While it is technically possible to force the dispatcher to use a specific runtime by creating or removing the `activated` file, **this is strongly discouraged**. Manually manipulating the state file while the network is live can put your node on the wrong chain. If you need to run a specific version, use `mina-berkeley` or `mina-mesa` directly instead.
+While it is technically possible to force the dispatcher to use a specific runtime by creating or removing the `activated` file, **this is strongly discouraged**. Manually manipulating the state file while the network is live can put your node on the wrong chain. If you need to run a specific version, invoke the full binary path (`/usr/lib/mina/berkeley/mina` or `/usr/lib/mina/mesa/mina`) directly instead.
 :::
 
 ## Debug mode

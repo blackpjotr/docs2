@@ -82,29 +82,32 @@ Finally it creates a new table (`migration_history`) in the database to keep tra
 
 #### Getting the script
 
-You can find the SQL upgrade script in the Mina repository on GitHub. Make sure to download the latest version of the script before proceeding.
-You can download the script directly using the following command:
+The upgrade script ships **inside the Mina archive Debian package and Docker image**, so the recommended way to get it is straight from the release you install — that copy is guaranteed to match your archive version.
 
-```bash
-curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/app/archive/upgrade_to_mesa.sql
-```
-
-We also ship the script in the Mina archive Docker image and Debian package.
-
-```bash
-docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mesa cat /etc/mina/archive/upgrade-to-mesa.sql > upgrade-to-mesa.sql
-```
+**From the Debian package (recommended)** — the `mina-archive-{network}` package installs the script at `/etc/mina/archive/upgrade_to_mesa.sql`:
 
 ```bash
 # Setup the Mina repository and install the archive package.
 # Repository setup (apt sources, GPG key, channel) is network-specific —
 # see Preflight Network for the preflight pin, or your network's release notes.
 
-apt-get install mina-archive-mesa=<MESA_VERSION>
+apt-get install mina-archive-mainnet=<MESA_VERSION>
 
 # View the upgrade and downgrade scripts
-cat /etc/mina/archive/upgrade-to-mesa.sql
-cat /etc/mina/archive/downgrade-to-berkeley.sql
+cat /etc/mina/archive/upgrade_to_mesa.sql
+cat /etc/mina/archive/downgrade_to_berkeley.sql
+```
+
+**From the Docker image** — extract it from the archive image:
+
+```bash
+docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mainnet cat /etc/mina/archive/upgrade_to_mesa.sql > upgrade_to_mesa.sql
+```
+
+**From GitHub (alternative)** — only if you are not installing the package; make sure to match the script to your release:
+
+```bash
+curl -O https://raw.githubusercontent.com/MinaProtocol/mina/refs/heads/mesa/src/app/archive/upgrade_to_mesa.sql
 ```
 
 #### Running the script
@@ -122,7 +125,7 @@ pg_dump -U <username> <database> > berkeley-archive-backup.sql
 To run the upgrade script, execute the following command:
 
 ```bash
-psql -U <username> -d <database> -f upgrade-to-mesa.sql
+psql -U <username> -d <database> -f /etc/mina/archive/upgrade_to_mesa.sql
 ```
 
 Make sure to replace `<username>` and `<database>` with your actual PostgreSQL username and database name.
@@ -139,7 +142,7 @@ It will also update the `migration_history` table to reflect the rollback.
 To run the rollback script, you need to execute the following command:
 
 ```bash
-psql -U <username> -d <database> -f /etc/mina/archive/downgrade-to-berkeley.sql
+psql -U <username> -d <database> -f /etc/mina/archive/downgrade_to_berkeley.sql
 ```
 
 Make sure to replace `<username>` and `<database>` with your actual PostgreSQL username and database name.
@@ -154,7 +157,7 @@ Changes in upgrade script are backward compatible and will be picked up by the a
 
 The `mina-archive-hardfork-toolbox` is a dedicated CLI tool for verifying the integrity of archive database upgrades and fork transitions. It is shipped with the Mina archive package and available as a standalone binary.
 
-For full details, see the [toolbox README](https://github.com/MinaProtocol/mina/blob/compatible/src/app/archive_hardfork_toolbox/README.md).
+For full details, see the [toolbox README](https://github.com/MinaProtocol/mina/blob/release/mesa/src/app/archive_hardfork_toolbox/README.md).
 
 All commands below require a `--postgres-uri` flag in the format:
 ```
@@ -199,7 +202,7 @@ mina-archive-hardfork-toolbox fork-candidate last-filled-block \
 
 #### Step 2: Verify the schema upgrade
 
-After running `upgrade-to-mesa.sql`, verify the database schema was upgraded correctly:
+After running `upgrade_to_mesa.sql`, verify the database schema was upgraded correctly:
 
 ```bash
 mina-archive-hardfork-toolbox verify-upgrade \
@@ -215,9 +218,60 @@ psql -U <username> -d <database> -c "SELECT * FROM migration_history;"
 
 If the upgrade was successful, the `migration_history` table will contain an entry with the expected migration version and a recent timestamp.
 
-#### Step 3: Post-fork validation
+#### Step 3: Post-fork finalization
 
-After the fork activates and the Mesa chain is running, validate the fork block and its ancestry:
+After the fork activates, a hardfork archive needs **two repair actions** before its data is coherent. Neither self-heals — you must run both once the Mesa chain is live. Run each with `--dry-run` first to preview the changes. **Run these before the Step 4 validation** — `validate-fork` checks data that these repairs put right.
+
+##### 3a. Finalize the stranded pre-fork chain — `convert-chain-to-canonical`
+
+When the pre-fork chain halts, its final _k_ blocks (the pruned-frontier depth, `k = 290`) can never reach _k_-depth: no consensus is left to bury them, so they stay `pending` and never become `canonical`. The result is incoherent — the fork genesis can be `canonical` while its own parent is still `pending`, and the canonical walk from the tip terminates early. The live Mesa chain passing `fork genesis + k` does **not** fix this. This is expected for every hardforked archive, and `convert-chain-to-canonical` is the intended finalization path, not a workaround.
+
+With no target flags, the tool auto-detects the latest hard-fork boundary and marks the chain leading to the fork block canonical:
+
+```bash
+mina-archive-hardfork-toolbox convert-chain-to-canonical \
+  --postgres-uri <uri> \
+  --dry-run
+```
+
+To target an explicit fork block and protect the live chain, pass the fork block's state hash and stop at the Mesa genesis slot so post-fork blocks stay untouched:
+
+```bash
+mina-archive-hardfork-toolbox convert-chain-to-canonical \
+  --postgres-uri <uri> \
+  --target-block-hash <fork-block-state-hash> \
+  --stop-at-slot <mesa-genesis-slot> \
+  --protocol-version <transaction>.<network>.<patch>
+```
+
+- `--target-block-hash` — state hash of the block that should remain canonical (the fork block). Defaults to the parent of the latest hard-fork block. `--fork-height <height>` is an alternative.
+- `--stop-at-slot` — blocks at or beyond this global slot stay untouched, protecting the live Mesa tip.
+- `--protocol-version` — defaults to the target block's own protocol version.
+
+##### 3b. Backfill the fork-genesis accounts — `populate-genesis-accounts`
+
+The Mesa fork-genesis block can land with **zero** rows in `accounts_accessed`. Rosetta resolves balances by reading that table at the genesis block; finding an empty set, it reports **zero balances** for every account. This is an operational gap (the accounts were never written), not a code defect. Backfill them from the runtime config's genesis ledger:
+
+```bash
+mina-archive-hardfork-toolbox populate-genesis-accounts \
+  --postgres-uri <uri> \
+  --config-file /var/lib/coda/mainnet.json
+```
+
+- `--config-file` (required) — the runtime config containing the (fork) genesis ledger. In the Mesa package this is `/var/lib/coda/mainnet.json` (or the hash-suffixed `config_<githash>.json`).
+- `--chunks-length` — accounts inserted per transaction (default `100`); lower it if a large ledger risks a Postgres OOM.
+
+After this runs, Rosetta `/account/balance` at the fork-genesis block returns the real migrated balance (with the carried-over nonce) instead of zero. Confirm the count matches expectations:
+
+```sql
+SELECT COUNT(*) FROM accounts_accessed aa
+JOIN blocks b ON b.id = aa.block_id
+WHERE b.height = <mesa-genesis-height>;
+```
+
+#### Step 4: Post-fork validation
+
+Once the fork is active and the archive has been finalized (Step 3), validate the fork block and its ancestry:
 
 ```bash
 mina-archive-hardfork-toolbox validate-fork \
@@ -226,24 +280,16 @@ mina-archive-hardfork-toolbox validate-fork \
   --fork-slot <slot>
 ```
 
-#### Step 4: Mark the canonical chain (if needed)
-
-If you need to mark the chain leading to a specific block as canonical for the new protocol version:
-
-```bash
-mina-archive-hardfork-toolbox convert-chain-to-canonical \
-  --postgres-uri <uri> \
-  --target-block-hash <state-hash> \
-  --protocol-version <transaction>.<network>.<patch>
-```
-
-Optionally use `--stop-at-slot <slot>` to limit how far back in history the marking goes.
-
 :::tip Typical workflow
 1. **Before the fork**: run `fork-candidate` commands to validate the fork block
 2. **After running the upgrade script**: run `verify-upgrade` to confirm the schema upgrade
-3. **After the fork activates**: run `validate-fork` to confirm data integrity
-4. **For full archive verification**: run the [Archive Replayer](/node-operators/archive-node/replayer) to replay all transactions and compare the resulting ledger against the official fork config
+3. **After the fork activates — finalize the archive** (required): run `convert-chain-to-canonical` and `populate-genesis-accounts` (Step 3)
+4. **Then validate**: run `validate-fork` to confirm data integrity (Step 4)
+5. **For full archive verification**: run the [Archive Replayer](/node-operators/archive-node/replayer) to replay all transactions and compare the resulting ledger against the official fork config
+:::
+
+:::caution Passing the fork slot
+The runtime config's `fork.global_slot_since_genesis` is the **new chain's genesis slot**, not the fork block's slot. The fork block sits one `hard_fork_genesis_slot_delta` earlier. Toolbox flags that want the fork block's slot (for example `--fork-slot`) expect that earlier value — copying the config value directly produces a spurious failure.
 :::
 
 If you encounter any issues, reach out to the Mina community on [Discord](https://discord.gg/minaprotocol) or [GitHub Discussions](https://github.com/MinaProtocol/mina/discussions).
