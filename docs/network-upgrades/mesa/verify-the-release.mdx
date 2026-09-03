@@ -53,7 +53,9 @@ Two packages supply the programs. Versions carry a release tag and a commit suff
 
 ```bash
 # The Mesa daemon, which also carries the verification tooling
-sudo apt-get install mina-<network>=4.0.0-devnet-2dc9218
+# Mainnet: mina-mainnet=4.0.0-6850301
+# Devnet: mina-devnet=4.0.0-6965b50
+sudo apt-get install mina-<network>=<mesa-version>
 
 # The pre-fork genesis generator, used to build the reference ledgers
 sudo apt-get install mina-create-<network>-prefork-genesis-ledger=3.5.0-devnet-stop-slot-7a60364
