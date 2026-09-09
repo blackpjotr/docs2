@@ -5782,6 +5782,12 @@ Then run the role-specific checks below.
 
 Verify block production the same way you would on Berkeley — see [Block Producer Node](/node-operators/block-producer-node) for the relevant `mina client status` fields and checks. If you are a Delegation Program participant, your uptime continues to be tracked on the Mesa chain.
 
+:::caution `--minimum-block-reward` above the new coinbase
+Mesa halves the coinbase from 720 MINA to 360 MINA ([Faster Blocks — MIP6](/network-upgrades/mesa/glossary#faster-blocks--mip6)). If you set `--minimum-block-reward` to a threshold that made sense on Berkeley, it is probably above the Mesa coinbase now. A block producer whose reward falls under the threshold still wins its slot but produces an **empty block**, which carries no coinbase and no fees. Block production looks healthy while you earn nothing.
+
+The daemon does not currently warn about this ([mina#18919](https://github.com/MinaProtocol/mina/pull/18919) adds a startup warning but is not merged). Check the flag yourself and lower or remove it after the fork.
+:::
+
 #### Check logs for errors
 
 ```bash
