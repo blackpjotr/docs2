@@ -2297,7 +2297,7 @@ url: /network-upgrades/berkeley/archive-migration/archive-migration-installation
 
 :::note Historical procedure
 
-The Berkeley upgrade is complete. The `minaprotocol/mina-archive-migration` Docker images are no longer published on Docker Hub, and the migration tooling is no longer part of the `mina` repository. This page stays as a record of the procedure.
+The Berkeley upgrade is complete. The migration tooling is no longer part of the `mina` repository, and its Docker images are no longer published. The Debian packages below are still in the apt repository. This page stays as a record of the procedure.
 
 :::
 
@@ -2380,7 +2380,7 @@ To learn how to maintain archive data, see [Devnet/Mainnet database maintenance]
 
 ## Download the migration applications
 
-Migration applications are distributed as part of the archive migration Docker and Debian packages.
+Migration applications are distributed as part of the archive migration Debian packages.
 
 Choose the packages that are appropriate for your environment.
 
@@ -2397,11 +2397,6 @@ echo "deb [trusted=yes] http://packages.o1test.net $CODENAME $CHANNEL" | tee /et
 apt-get update
 apt-get install --allow-downgrades -y "mina-archive-migration=$VERSION"
 ```
-
-### Docker image
-
-The `mina-archive-migration` Docker images are no longer published. Use the Debian packages above.
-
 
 ## Devnet/Mainnet genesis ledger
 
