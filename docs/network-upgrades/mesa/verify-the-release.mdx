@@ -58,7 +58,9 @@ Two packages supply the programs. Versions carry a release tag and a commit suff
 sudo apt-get install mina-<network>=<mesa-version>
 
 # The pre-fork genesis generator, used to build the reference ledgers
-sudo apt-get install mina-create-<network>-prefork-genesis-ledger=3.5.0-devnet-stop-slot-7a60364
+# Mainnet: mina-create-mainnet-prefork-genesis-ledger=3.5.0-mainnet-stop-slot-8110ede
+# Devnet: mina-create-devnet-prefork-genesis-ledger=3.5.0-devnet-stop-slot-7a60364
+sudo apt-get install mina-create-<network>-prefork-genesis-ledger=<prefork-version>
 ```
 
 The two versions differ because the packages come from different branches: the Mesa side is built from the post-fork release, and the pre-fork generator from the `compatible` branch that the chain runs before the fork.
