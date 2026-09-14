@@ -15170,6 +15170,39 @@ this.num.requireEquals(currentState);
 
 This ensures that the transaction fails if the value of the field in question has changed.
 
+### How do I restrict a provable method so that it can be invoked only by a specific address?
+
+There are a number of ways to accomplish this:
+
+- Provably add a signed child account update. Then, the method can be invoked only with a signature from the predefined address.
+
+  ```TypeScript
+  // in your method, create an empty signed account update
+  AccountUpdate.createSigned(someAddress);
+  ```
+
+  ```TypeScript
+  // later, sign the transaction
+  tx.sign([privateKeyOfAddress]);
+  ```
+
+- Require a private key as a private input, and check that the key belongs to the address you permit.
+
+  ```TypeScript
+  privateKey.toPublicKey().assertEquals(this.address);
+  ```
+
+  `this.address` is the address of the zkApp account that the contract runs on. To permit a different address, compare the key against that `PublicKey` instead.
+
+- Require a signature as a method argument, and verify it in the circuit against the address you permit.
+
+  ```TypeScript
+  // message is the Field[] that the address signed
+  signature.verify(someAddress, message).assertTrue();
+  ```
+
+  The proof checks this signature. It is not the account `signature` permission, which controls who can change a part of the account. See [Keypairs and signatures](https://docs.o1labs.org/o1js/basic-types/keypairs-and-signatures) for the API, and [Permissions](https://docs.o1labs.org/o1js/zkapps/permissions) for account permissions.
+
 ### Can I pass hex values into Fields?
 
 Yes, just pass in the appropriate BigInt literal.
@@ -15214,9 +15247,11 @@ Yes. It is possible to use the Kimchi proof system without the Pickles recursion
 
 Pasta curves (Pallas and Vesta). See [Pasta Curves](https://o1-labs.github.io/proof-systems/specs/pasta.html?highlight=curves#pasta-curves) in the Mina book.
 
-### When do I use Provable conditional logic?
+### When do I use provable conditional logic?
 
-Are there situations in which I would not want to use the Provable versions? If the conditional logic is not part of your provable code, you do not need to use Provable conditional statements.
+Use a provable conditional, such as `Provable.if()`, when the condition depends on a value that is known only when the proof is made. A plain JavaScript `if` statement cannot select a branch from such a value, because the circuit is fixed before the value exists.
+
+If the conditional logic is not part of your provable code, a plain `if` statement is sufficient. See [Conditional logic](https://docs.o1labs.org/o1js/writing-constraint-systems/conditional-logic).
 
 ---
 url: /zkapps/front-end-integration-guides/angular
