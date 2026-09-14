@@ -115,19 +115,35 @@ This ensures that the transaction fails if the value of the field in question ha
 ### How do I restrict a provable method so that it can be invoked only by a specific address?
 
 There are a number of ways to accomplish this:
-- Provably add a signed child account update. Then, you can invoke the method only with a signature from the predefined address.
-```TypeScript
-// in your method create empty signed account update
-AccountUpdate.createSigned(someAddress);
-```
 
-```TypeScript
-// later, sign the tx
-tx.sign([privateKeyOfAddress]);
-```
+- Provably add a signed child account update. Then, the method can be invoked only with a signature from the predefined address.
 
-- Require a private key as a private input, and check that `privateKey.toPublicKey().assertEquals(this.address)`
-- Require a signature as an input.
+  ```TypeScript
+  // in your method, create an empty signed account update
+  AccountUpdate.createSigned(someAddress);
+  ```
+
+  ```TypeScript
+  // later, sign the transaction
+  tx.sign([privateKeyOfAddress]);
+  ```
+
+- Require a private key as a private input, and check that the key belongs to the address you permit.
+
+  ```TypeScript
+  privateKey.toPublicKey().assertEquals(this.address);
+  ```
+
+  `this.address` is the address of the zkApp account that the contract runs on. To permit a different address, compare the key against that `PublicKey` instead.
+
+- Require a signature as a method argument, and verify it in the circuit against the address you permit.
+
+  ```TypeScript
+  // message is the Field[] that the address signed
+  signature.verify(someAddress, message).assertTrue();
+  ```
+
+  The proof checks this signature. It is not the account `signature` permission, which controls who can change a part of the account. See [Keypairs and signatures](https://docs.o1labs.org/o1js/basic-types/keypairs-and-signatures) for the API, and [Permissions](https://docs.o1labs.org/o1js/zkapps/permissions) for account permissions.
 
 ### Can I pass hex values into Fields?
 
@@ -175,4 +191,4 @@ Pasta curves (Pallas and Vesta). See [Pasta Curves](https://o1-labs.github.io/pr
 
 ### When do I use provable conditional logic?
 
-Are there situations in which I would not want to use the provable versions? If the conditional logic is not part of your provable code, you do not need to use Provable conditional statements.
+Are there situations in which I would not want to use the provable versions? If the conditional logic is not part of your provable code, you do not need to use provable conditional statements. See [Conditional logic](https://docs.o1labs.org/o1js/writing-constraint-systems/conditional-logic).
