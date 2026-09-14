@@ -163,9 +163,11 @@ async function checkDockerHubImage(imageName, tag) {
     const url = `${DOCKER_HUB_API}/${imageName}/tags/${tag}`;
     const response = await httpsRequest(url);
 
+    // The Docker Hub tags API answers 404 for a private repository rather
+    // than 401, so a private image is reported as missing. Either way the
+    // job fails, which is the outcome this check is for.
     return {
       exists: response.statusCode === 200,
-      requiresAuth: response.statusCode === 401 || response.statusCode === 403,
       statusCode: response.statusCode,
       registry: 'Docker Hub'
     };

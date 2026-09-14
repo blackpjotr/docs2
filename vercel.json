@@ -1,14 +1,8 @@
 {
   "cleanUrls": true,
   "redirects": [
-    {
-      "source": "/en",
-      "destination": "/"
-    },
-    {
-      "source": "/en/:path(.*)",
-      "destination": "/:path(.*)"
-    },
+    { "source": "/en", "destination": "/" },
+    { "source": "/en/:path(.*)", "destination": "/:path(.*)" },
     {
       "source": "/zkapps/o1js/recursion",
       "destination": "https://docs.o1labs.org/o1js/advanced-concepts/recursion"
