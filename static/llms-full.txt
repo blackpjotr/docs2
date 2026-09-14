@@ -15249,7 +15249,9 @@ Pasta curves (Pallas and Vesta). See [Pasta Curves](https://o1-labs.github.io/pr
 
 ### When do I use provable conditional logic?
 
-Are there situations in which I would not want to use the provable versions? If the conditional logic is not part of your provable code, you do not need to use provable conditional statements. See [Conditional logic](https://docs.o1labs.org/o1js/writing-constraint-systems/conditional-logic).
+Use a provable conditional, such as `Provable.if()`, when the condition depends on a value that is known only when the proof is made. A plain JavaScript `if` statement cannot select a branch from such a value, because the circuit is fixed before the value exists.
+
+If the conditional logic is not part of your provable code, a plain `if` statement is sufficient. See [Conditional logic](https://docs.o1labs.org/o1js/writing-constraint-systems/conditional-logic).
 
 ---
 url: /zkapps/front-end-integration-guides/angular
