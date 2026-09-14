@@ -13,6 +13,41 @@ const https = require('https');
 const DOCS_DIR = path.join(__dirname, '..', 'docs');
 const DOCKER_HUB_API = 'https://hub.docker.com/v2/repositories';
 const GCR_API = 'https://gcr.io/v2';
+const GCR_TOKEN_API = 'https://gcr.io/v2/token';
+const GCR_SERVICE = 'gcr.io';
+
+// Media types a registry may answer a manifest request with. Without the
+// list types, a multi-architecture image can be reported as missing.
+const MANIFEST_ACCEPT = [
+  'application/vnd.docker.distribution.manifest.v2+json',
+  'application/vnd.docker.distribution.manifest.list.v2+json',
+  'application/vnd.oci.image.manifest.v1+json',
+  'application/vnd.oci.image.index.v1+json',
+].join(', ');
+
+// Images that a public CI runner cannot verify. Every entry must give a
+// reason. These images are reported as SKIPPED and do not fail the job.
+// Remove an entry as soon as the image becomes publicly resolvable again.
+const UNVERIFIABLE_IMAGES = [
+  {
+    pattern: /^gcr\.io\/o1labs-192920\//i,
+    reason:
+      'private o1Labs registry: anonymous pulls are denied, so the image cannot be verified without Google credentials',
+  },
+  {
+    pattern: /^minaprotocol\/mina-archive-migration:/i,
+    reason:
+      'the Berkeley migration images were retired with the migration tooling and are no longer on Docker Hub',
+  },
+];
+
+/**
+ * Return the reason an image cannot be verified, or null if it must be checked
+ */
+function unverifiableReason(imageRef) {
+  const entry = UNVERIFIABLE_IMAGES.find(({ pattern }) => pattern.test(imageRef));
+  return entry ? entry.reason : null;
+}
 
 // Regular expressions to find Docker images
 const DOCKER_IMAGE_PATTERNS = [
@@ -167,20 +202,50 @@ async function checkDockerHubImage(imageName, tag) {
 }
 
 /**
+ * Request an anonymous pull token for a GCR repository
+ *
+ * GCR speaks the Docker Registry HTTP API V2, which answers an unauthenticated
+ * manifest request with 401 and a challenge. Public repositories hand out an
+ * anonymous bearer token; private ones refuse it.
+ */
+async function getGcrToken(imagePath) {
+  try {
+    const url = `${GCR_TOKEN_API}?scope=repository:${imagePath}:pull&service=${GCR_SERVICE}`;
+    const response = await httpsRequest(url);
+
+    if (response.statusCode !== 200) {
+      return null;
+    }
+
+    return JSON.parse(response.body).token || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * Check if GCR image exists using manifest API
  */
 async function checkGcrImage(imagePath, tag) {
   try {
-    // GCR uses Docker Registry HTTP API V2
     const url = `${GCR_API}/${imagePath}/manifests/${tag}`;
-    const response = await httpsRequest(url, {
-      headers: {
-        'Accept': 'application/vnd.docker.distribution.manifest.v2+json'
-      }
-    });
+    const headers = { 'Accept': MANIFEST_ACCEPT };
+    let response = await httpsRequest(url, { headers });
 
-    // GCR may require authentication even when the historical image still
-    // exists. Treat that as unverifiable rather than as a confirmed 404.
+    // Answer the authentication challenge with an anonymous pull token. A
+    // public repository issues one; a private repository does not.
+    if (response.statusCode === 401 || response.statusCode === 403) {
+      const token = await getGcrToken(imagePath);
+
+      if (token) {
+        response = await httpsRequest(url, {
+          headers: { ...headers, 'Authorization': `Bearer ${token}` }
+        });
+      }
+    }
+
+    // Authentication is still refused after the handshake: the repository is
+    // private. Treat that as unverifiable rather than as a confirmed 404.
     return {
       exists: response.statusCode === 200 || response.statusCode === 307,
       error: response.statusCode === 401 || response.statusCode === 403
@@ -239,6 +304,12 @@ function parseImageRef(imageRef) {
  * Validate a Docker image
  */
 async function validateImage(imageRef) {
+  const reason = unverifiableReason(imageRef);
+
+  if (reason) {
+    return { exists: false, skipped: true, reason, registry: 'skipped' };
+  }
+
   const parsed = parseImageRef(imageRef);
 
   if (parsed.type === 'gcr') {
@@ -288,6 +359,7 @@ async function main() {
   let validCount = 0;
   let invalidCount = 0;
   let errorCount = 0;
+  let skippedCount = 0;
 
   for (const imageRef of sortedImages) {
     process.stdout.write(`Checking ${imageRef}... `);
@@ -295,7 +367,10 @@ async function main() {
     const result = await validateImage(imageRef);
     results.push({ imageRef, ...result });
 
-    if (result.exists) {
+    if (result.skipped) {
+      console.log(`⏭️  SKIPPED (${result.reason})`);
+      skippedCount++;
+    } else if (result.exists) {
       console.log('✅ EXISTS');
       validCount++;
     } else if (result.error) {
@@ -317,6 +392,7 @@ async function main() {
   console.log(`✅ Valid images: ${validCount}`);
   console.log(`❌ Invalid images: ${invalidCount}`);
   console.log(`⚠️  Errors: ${errorCount}`);
+  console.log(`⏭️  Skipped images: ${skippedCount}`);
 
   // List invalid images with locations
   if (invalidCount > 0) {
@@ -324,7 +400,7 @@ async function main() {
     console.log('\n❌ INVALID IMAGES:\n');
 
     results
-      .filter(r => !r.exists && !r.error)
+      .filter(r => !r.exists && !r.error && !r.skipped)
       .forEach(({ imageRef }) => {
         console.log(`\n${imageRef}`);
         console.log(`  Registry: ${results.find(r => r.imageRef === imageRef).registry}`);
@@ -343,7 +419,7 @@ async function main() {
     console.log('They may still exist, but verification failed.\n');
 
     results
-      .filter(r => r.error)
+      .filter(r => r.error && !r.skipped)
       .forEach(({ imageRef, error, registry }) => {
         console.log(`\n${imageRef}`);
         console.log(`  Registry: ${registry}`);
@@ -355,9 +431,28 @@ async function main() {
       });
   }
 
+  // List images that are known to be unverifiable from a public runner
+  if (skippedCount > 0) {
+    console.log('\n' + '='.repeat(80));
+    console.log('\n⏭️  SKIPPED IMAGES:\n');
+    console.log('These images cannot be checked from a public CI runner.');
+    console.log('Each one is listed in UNVERIFIABLE_IMAGES with its reason.\n');
+
+    results
+      .filter(r => r.skipped)
+      .forEach(({ imageRef, reason }) => {
+        console.log(`\n${imageRef}`);
+        console.log(`  Reason: ${reason}`);
+        console.log(`  Found in:`);
+        imageLocations.get(imageRef).forEach(loc => {
+          console.log(`    - ${loc}`);
+        });
+      });
+  }
+
   // Exit with error code if invalid images found
   if (invalidCount > 0) {
-    console.log('\n⚠️  Some images could not be validated!');
+    console.log('\n❌ Some images are missing from their registry!');
     process.exit(1);
   } else if (errorCount > 0) {
     console.log('\n⚠️  All images appear valid, but some had validation errors.');
@@ -377,4 +472,10 @@ if (require.main === module) {
   });
 }
 
-module.exports = { findMdxFiles, extractDockerImages, validateImage };
+module.exports = {
+  findMdxFiles,
+  extractDockerImages,
+  validateImage,
+  unverifiableReason,
+  UNVERIFIABLE_IMAGES,
+};
