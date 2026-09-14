@@ -2295,6 +2295,12 @@ The Berkeley upgrade introduces two new operation types:
 url: /network-upgrades/berkeley/archive-migration/archive-migration-installation
 ---
 
+:::note Historical procedure
+
+The Berkeley upgrade is complete. The migration tooling is no longer part of the `mina` repository, and its Docker images are no longer published. The Debian packages below are still in the apt repository. This page stays as a record of the procedure.
+
+:::
+
 The archive node Berkeley migration package is sufficient for satisfying the migration from Devnet/Mainnet to Berkeley.
 However, it has some limitations. For example, the migration package does not migrate a non-canonical chain and it skips orphaned blocks that are not part of a canonical chain.
 
@@ -2374,7 +2380,7 @@ To learn how to maintain archive data, see [Devnet/Mainnet database maintenance]
 
 ## Download the migration applications
 
-Migration applications are distributed as part of the archive migration Docker and Debian packages.
+Migration applications are distributed as part of the archive migration Debian packages.
 
 Choose the packages that are appropriate for your environment.
 
@@ -2391,20 +2397,6 @@ echo "deb [trusted=yes] http://packages.o1test.net $CODENAME $CHANNEL" | tee /et
 apt-get update
 apt-get install --allow-downgrades -y "mina-archive-migration=$VERSION"
 ```
-
-### Docker image
-
-To get the Docker image:
-
-```
-docker pull minaprotocol/mina-archive-migration:3.0.1-e848ecb-{codename}
-```
-
-Where supported codenames are:
-- bullseye
-- focal
-- buster
-
 
 ## Devnet/Mainnet genesis ledger
 
@@ -2574,73 +2566,6 @@ mina-berkeley-migration-script final \
 ```
 
 ---
-url: /network-upgrades/berkeley/archive-migration/docker-example
----
-
-# Docker example
-
-You can follow these steps that can be copy-pasted directly into a OS running Docker.
-
-This example performs a Mainnet initial migration following the [debian-example](/network-upgrades/berkeley/archive-migration/debian-example)
-
-```sh
-
-# Create a new directory for the migration data
-mkdir $(pwd)/mainnet-migration && cd $(pwd)/mainnet-migration
-
-# Create Network
-docker network create mainnet
-
-# Launch Local Postgres Database
-docker run --name postgres -d -p 5432:5432 --network mainnet -v $(pwd)/mainnet-migration/postgresql/data:/var/lib/postgresql/data -e POSTGRES_USER=mina -e POSTGRES_PASSWORD=minamina -d postgres:13-bullseye
-
-export PGHOST="localhost"
-export PGPORT=5432
-export PGUSER="mina"
-export PGPASSWORD="minamina"
-
-# Drop DBs if they exist
-psql -c "DROP DATABASE IF EXISTS mainnet_balances_migrated;"
-psql -c "DROP DATABASE IF EXISTS mainnet_really_migrated;"
-
-# Create DBs
-psql -c "CREATE DATABASE mainnet_balances_migrated;"
-psql -c "CREATE DATABASE mainnet_really_migrated;"
-
-# Retrieve Archive Node Backup
-wget https://storage.googleapis.com/mina-archive-dumps/mainnet-archive-dump-2024-04-29_0000.sql.tar.gz
-tar -xf mainnet-archive-dump-2024-04-29_0000.sql.tar.gz
-
-# Replace the database name in the dump
-sed -i -e s/archive_balances_migrated/mainnet_balances_migrated/g mainnet-archive-dump-2024-04-29_0000.sql
-psql mainnet_balances_migrated -f mainnet-archive-dump-2024-04-29_0000.sql
-
-# Prepare target
-wget https://raw.githubusercontent.com/MinaProtocol/mina/berkeley/src/app/archive/create_schema.sql
-wget https://raw.githubusercontent.com/MinaProtocol/mina/berkeley/src/app/archive/zkapp_tables.sql
-psql mainnet_really_migrated -f create_schema.sql
-
-# Start migration
-docker create --name mainnet-db-migration \
-       -v $(pwd)/mainnet-migration:/data \
-       --network mainnet minaprotocol/mina-archive-migration:3.0.1-e848ecb-bullseye -- bash -c '
-        wget http://673156464838-mina-genesis-ledgers.s3-website-us-west-2.amazonaws.com/mainnet/genesis_ledger.json; mina-berkeley-migration-script initial \
-          --genesis-ledger genesis_ledger.json \
-          --source-db postgres://mina:minamina@postgres:5432/mainnet_balances_migrated \
-          --target-db postgres://mina:minamina@postgres:5432/mainnet_really_migrated \
-          --blocks-batch-size 5000 \
-          --blocks-bucket mina_network_block_data \
-          --checkpoint-output-path /data/checkpoints/. \
-          --precomputed-blocks-local-path /data/precomputed_blocks/. \
-          --network mainnet'
-
-docker start mainnet-db-migration
-
-docker logs -f mainnet-db-migration
-
-```
-
----
 url: /network-upgrades/berkeley/archive-migration
 ---
 
@@ -2664,7 +2589,6 @@ Learn about the archive data migration:
 Finally, see the shell script example that is compatible with a stock Debian 11 container:
 
 - [Worked Devnet Debian example using March 22 data](/network-upgrades/berkeley/archive-migration/debian-example)
-- [Worked Mainnet Docker example using April 29 data](/network-upgrades/berkeley/archive-migration/docker-example)
 
 ## What will happen with original Devnet/Mainnet data
 
@@ -3333,10 +3257,6 @@ where:
 ### Example migration steps using Mina Foundation data for Devnet using Debian
 
 See: [Worked example using March 22 data](/network-upgrades/berkeley/archive-migration/debian-example)
-
-### Example migration steps using Mina Foundation data for Mainnet using Docker
-
-See: [Worked example using March 22 data](/network-upgrades/berkeley/archive-migration/docker-example)
 
 ## How to verify a successful migration
 
@@ -4258,7 +4178,7 @@ This guide describes the general procedure for upgrading a Mina archive database
 <Tabs groupId="network">
 <TabItem value="mesa-trail" label="Mesa Trail" default>
 
-The Mesa Trail archive version is **`4.0.0-rc2-3418329`**. Docker tag: `gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`. See [Mesa Trail Network](./mesa-trail) for the full release matrix.
+The Mesa Trail archive version is **`4.0.0-rc2-3418329`**, published as a Debian package only — Mesa Trail has no Docker images. See [Mesa Trail Network](./mesa-trail) for the full release matrix.
 
 ```bash
 # Substitute this version wherever <MESA_VERSION> appears below
@@ -4313,7 +4233,7 @@ Finally it creates a new table (`migration_history`) in the database to keep tra
 
 #### Getting the script
 
-The upgrade script ships **inside the Mina archive Debian package and Docker image**, so the recommended way to get it is straight from the release you install — that copy is guaranteed to match your archive version.
+The upgrade script ships **inside the Mina archive Debian package**, and inside the Docker image where the release publishes one, so the recommended way to get it is straight from the release you install — that copy is guaranteed to match your archive version.
 
 **From the Debian package (recommended)** — the `mina-archive-{network}` package installs the script at `/etc/mina/archive/upgrade_to_mesa.sql`:
 
@@ -4329,10 +4249,10 @@ cat /etc/mina/archive/upgrade_to_mesa.sql
 cat /etc/mina/archive/downgrade_to_berkeley.sql
 ```
 
-**From the Docker image** — extract it from the archive image:
+**From the Docker image** — for a release that publishes one (devnet and mainnet; Mesa Trail is Debian-only), extract it from the archive image:
 
 ```bash
-docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mainnet cat /etc/mina/archive/upgrade_to_mesa.sql > upgrade_to_mesa.sql
+docker run --rm minaprotocol/mina-archive:<MESA_VERSION>-bookworm-mainnet cat /etc/mina/archive/upgrade_to_mesa.sql > upgrade_to_mesa.sql
 ```
 
 **From GitHub (alternative)** — only if you are not installing the package; make sure to match the script to your release:
@@ -4940,15 +4860,11 @@ Two earlier Mesa test networks — **preflight** and **MUT** — are archived an
 
 **Compatible o1js release:** `o1js@3.0.0-mesa.rc2` — the matching SDK for the Mesa transaction protocol. Install with `npm install o1js@3.0.0-mesa.rc2` (or the equivalent for your package manager) when developing or redeploying zkApps against Mesa Trail. Earlier `o1js` versions produce transactions that Mesa nodes reject.
 
-### Docker Images
+:::note Debian packages only
 
-Images are published to `gcr.io/o1labs-192920`. The tag format is `<version>-<codename>-devnet`:
+Mesa Trail does not publish Docker images. Install the Debian packages below. Docker images are published for the devnet and mainnet Mesa releases.
 
-- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet`
-- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`
-- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet`
-
-Available base distributions: `bullseye`, `bookworm`, `focal`, `jammy`, `noble`. Swap the codename in the tag to select one — for example `mina-daemon:4.0.0-rc2-3418329-noble-devnet`.
+:::
 
 ### Debian Packages
 
@@ -4979,64 +4895,6 @@ All node types must use the Mesa Trail seed peer list:
 ```bash
 --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt
 ```
-
-<Tabs groupId="install-method">
-<TabItem value="docker" label="Docker" default>
-
-### Mina Daemon
-
-```bash
-docker run --name mina-mesa-trail -d \
-  -p 8302:8302 \
-  --restart=always \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
-  daemon \
-  --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt
-```
-
-For a long-running node, mount config directories and add additional flags:
-
-```bash
-docker run --name mina-mesa-trail -d \
-  -p 8302:8302 \
-  --restart=always \
-  -v $(pwd)/.mina-config:/root/.mina-config \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
-  daemon \
-  --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt \
-  --libp2p-keypair /data/.mina-config/keys/libp2p-key
-```
-
-### Archive Node
-
-```bash
-docker run --name mina-archive-mesa-trail -d \
-  -p 3086:3086 \
-  --restart=always \
-  gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet \
-  mina-archive run \
-  --postgres-uri postgresql://archive_user:your-secure-password@postgres-host:5432/archive \
-  --server-port 3086
-```
-
-If upgrading an existing Berkeley database, see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
-
-### Rosetta API
-
-```bash
-docker run --name mina-rosetta-mesa-trail -d \
-  -p 3087:3087 \
-  --restart=always \
-  gcr.io/o1labs-192920/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet \
-  --port 3087 \
-  --archive-uri http://archive-host:3086/graphql \
-  --graphql-uri http://mina-daemon-host:3085/graphql
-```
-
-**Note:** Rosetta requires a running Mina daemon (port 3085) and archive node (port 3086). Both must be fully synced.
-
-</TabItem>
-<TabItem value="debian" label="Debian">
 
 First, install dependencies and configure the repository:
 
@@ -5093,9 +4951,6 @@ mina-rosetta \
   --graphql-uri http://localhost:3085/graphql
 ```
 
-</TabItem>
-</Tabs>
-
 ### Connecting Mina Daemon to Archive
 
 Configure your daemon to send blocks to the archive node:
@@ -5113,20 +4968,13 @@ After starting your node, verify connectivity to Mesa Trail:
 ### Check Node Status
 
 ```bash
-# For Docker
-docker exec -it mina-mesa-trail mina client status
-
-# For Debian installation
 mina client status
 ```
 
 ### Monitor Logs
 
 ```bash
-# For Docker
-docker logs -f mina-mesa-trail
-
-# For systemd service (Debian)
+# For the systemd service
 journalctl -u mina -f
 ```
 

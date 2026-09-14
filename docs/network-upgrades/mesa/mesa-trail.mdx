@@ -1,18 +1,14 @@
 ---
 title: Mesa Trail Network
 sidebar_label: Mesa Trail
-description: Build matrix and connection guide for Mesa Trail, the current Mesa upgrade test network — Docker images, Debian packages, compatible SDK releases, and node setup.
+description: Build matrix and connection guide for Mesa Trail, the current Mesa upgrade test network — Debian packages, compatible SDK releases, and node setup.
 keywords:
   - Mesa upgrade
   - Mesa Trail
   - test network
   - mesa version
-  - docker
   - debian packages
 ---
-
-import Tabs from '@theme/Tabs';
-import TabItem from '@theme/TabItem';
 
 # Mesa Trail Network
 
@@ -32,15 +28,11 @@ Two earlier Mesa test networks — **preflight** and **MUT** — are archived an
 
 **Compatible o1js release:** `o1js@3.0.0-mesa.rc2` — the matching SDK for the Mesa transaction protocol. Install with `npm install o1js@3.0.0-mesa.rc2` (or the equivalent for your package manager) when developing or redeploying zkApps against Mesa Trail. Earlier `o1js` versions produce transactions that Mesa nodes reject.
 
-### Docker Images
+:::note Debian packages only
 
-Images are published to `gcr.io/o1labs-192920`. The tag format is `<version>-<codename>-devnet`:
+Mesa Trail does not publish Docker images. Install the Debian packages below. Docker images are published for the devnet and mainnet Mesa releases.
 
-- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet`
-- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`
-- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet`
-
-Available base distributions: `bullseye`, `bookworm`, `focal`, `jammy`, `noble`. Swap the codename in the tag to select one — for example `mina-daemon:4.0.0-rc2-3418329-noble-devnet`.
+:::
 
 ### Debian Packages
 
@@ -71,64 +63,6 @@ All node types must use the Mesa Trail seed peer list:
 ```bash
 --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt
 ```
-
-<Tabs groupId="install-method">
-<TabItem value="docker" label="Docker" default>
-
-### Mina Daemon
-
-```bash
-docker run --name mina-mesa-trail -d \
-  -p 8302:8302 \
-  --restart=always \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
-  daemon \
-  --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt
-```
-
-For a long-running node, mount config directories and add additional flags:
-
-```bash
-docker run --name mina-mesa-trail -d \
-  -p 8302:8302 \
-  --restart=always \
-  -v $(pwd)/.mina-config:/root/.mina-config \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
-  daemon \
-  --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt \
-  --libp2p-keypair /data/.mina-config/keys/libp2p-key
-```
-
-### Archive Node
-
-```bash
-docker run --name mina-archive-mesa-trail -d \
-  -p 3086:3086 \
-  --restart=always \
-  gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet \
-  mina-archive run \
-  --postgres-uri postgresql://archive_user:your-secure-password@postgres-host:5432/archive \
-  --server-port 3086
-```
-
-If upgrading an existing Berkeley database, see [Archive Upgrade](/network-upgrades/mesa/archive-upgrade).
-
-### Rosetta API
-
-```bash
-docker run --name mina-rosetta-mesa-trail -d \
-  -p 3087:3087 \
-  --restart=always \
-  gcr.io/o1labs-192920/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet \
-  --port 3087 \
-  --archive-uri http://archive-host:3086/graphql \
-  --graphql-uri http://mina-daemon-host:3085/graphql
-```
-
-**Note:** Rosetta requires a running Mina daemon (port 3085) and archive node (port 3086). Both must be fully synced.
-
-</TabItem>
-<TabItem value="debian" label="Debian">
 
 First, install dependencies and configure the repository:
 
@@ -185,9 +119,6 @@ mina-rosetta \
   --graphql-uri http://localhost:3085/graphql
 ```
 
-</TabItem>
-</Tabs>
-
 ### Connecting Mina Daemon to Archive
 
 Configure your daemon to send blocks to the archive node:
@@ -205,20 +136,13 @@ After starting your node, verify connectivity to Mesa Trail:
 ### Check Node Status
 
 ```bash
-# For Docker
-docker exec -it mina-mesa-trail mina client status
-
-# For Debian installation
 mina client status
 ```
 
 ### Monitor Logs
 
 ```bash
-# For Docker
-docker logs -f mina-mesa-trail
-
-# For systemd service (Debian)
+# For the systemd service
 journalctl -u mina -f
 ```
 

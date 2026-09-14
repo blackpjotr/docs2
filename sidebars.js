@@ -37,7 +37,6 @@ module.exports = {
                 'network-upgrades/berkeley/archive-migration/migrating-archive-database-to-berkeley',
                 'network-upgrades/berkeley/archive-migration/mainnet-database-maintenance',
                 'network-upgrades/berkeley/archive-migration/debian-example',
-                'network-upgrades/berkeley/archive-migration/docker-example',
                 'network-upgrades/berkeley/archive-migration/appendix',
               ],
             },

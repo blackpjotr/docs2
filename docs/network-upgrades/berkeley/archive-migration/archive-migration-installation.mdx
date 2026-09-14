@@ -13,6 +13,12 @@ keywords:
   - archive node
 ---
 
+:::note Historical procedure
+
+The Berkeley upgrade is complete. The migration tooling is no longer part of the `mina` repository, and its Docker images are no longer published. The Debian packages below are still in the apt repository. This page stays as a record of the procedure.
+
+:::
+
 The archive node Berkeley migration package is sufficient for satisfying the migration from Devnet/Mainnet to Berkeley.
 However, it has some limitations. For example, the migration package does not migrate a non-canonical chain and it skips orphaned blocks that are not part of a canonical chain.
 
@@ -92,7 +98,7 @@ To learn how to maintain archive data, see [Devnet/Mainnet database maintenance]
 
 ## Download the migration applications
 
-Migration applications are distributed as part of the archive migration Docker and Debian packages.
+Migration applications are distributed as part of the archive migration Debian packages.
 
 Choose the packages that are appropriate for your environment.
 
@@ -109,20 +115,6 @@ echo "deb [trusted=yes] http://packages.o1test.net $CODENAME $CHANNEL" | tee /et
 apt-get update
 apt-get install --allow-downgrades -y "mina-archive-migration=$VERSION"
 ```
-
-### Docker image
-
-To get the Docker image:
-
-```
-docker pull minaprotocol/mina-archive-migration:3.0.1-e848ecb-{codename}
-```
-
-Where supported codenames are:
-- bullseye
-- focal
-- buster
-
 
 ## Devnet/Mainnet genesis ledger
 

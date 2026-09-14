@@ -146,6 +146,10 @@
     {
       "source": "/zkapps/o1js/offchain-storage",
       "destination": "/zkapps/writing-a-zkapp/feature-overview/offchain-storage"
+    },
+    {
+      "source": "/network-upgrades/berkeley/archive-migration/docker-example",
+      "destination": "/network-upgrades/berkeley/archive-migration/debian-example"
     }
   ]
 }

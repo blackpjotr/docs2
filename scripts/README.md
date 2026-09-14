@@ -42,7 +42,7 @@ The script provides:
 1. **Discovery Phase**: Lists all found Docker images and their locations
 2. **Validation Phase**: Checks each image against its registry
 3. **Summary**: Shows counts of valid, invalid, and error cases
-4. **Detailed Report**: Lists invalid images with their locations
+4. **Detailed Report**: Lists invalid images with their locations and the reason
 
 ### Example Output:
 
@@ -82,8 +82,9 @@ Total images found: 17
 
 ## Exit Codes
 
-- **0**: All images validated successfully
-- **1**: One or more images failed validation
+- **0**: All images validated successfully, or the only problems were
+  validation errors (network or API issues)
+- **1**: One or more images cannot be pulled by a reader of the documentation
 
 ## Supported Registries
 
@@ -93,14 +94,32 @@ Total images found: 17
 - No authentication required for public images
 
 ### Google Container Registry (GCR)
-- Images from `gcr.io/o1labs-192920/*`
+- Images from `gcr.io/*`
 - Uses Docker Registry HTTP API V2
+- Answers the registry authentication challenge with an anonymous pull token,
+  so public GCR repositories are validated in the same way as Docker Hub ones.
+  A repository that still refuses the token is private and cannot be validated
+  without credentials.
+
+## Every Documented Image Must Be Public
+
+A reader must be able to pull each image the documentation shows. The script
+therefore fails the job in two cases:
+
+- **`NOT FOUND (404)`**: the registry has no such image. Correct the reference.
+- **`NOT PUBLIC (401)`**: the registry refuses an anonymous pull, which means
+  the image is private. Publish it to a public registry, or point the
+  documentation at an image that is already public.
+
+Do not add an exception list for either case. A private image is as useless to
+a reader as a missing one, and hiding it from the job hides the problem.
 
 ## Limitations
 
 1. **Rate Limiting**: The script includes a 100ms delay between requests to avoid rate limiting, but excessive runs may still hit API limits.
 
-2. **Private Registries**: Only public Docker Hub and GCR registries are supported.
+2. **Private Registries**: Only public Docker Hub and GCR registries can be
+   validated. An image in a private registry fails the job by design.
 
 ## Integration with CI/CD
 

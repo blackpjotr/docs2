@@ -13,6 +13,17 @@ const https = require('https');
 const DOCS_DIR = path.join(__dirname, '..', 'docs');
 const DOCKER_HUB_API = 'https://hub.docker.com/v2/repositories';
 const GCR_API = 'https://gcr.io/v2';
+const GCR_TOKEN_API = 'https://gcr.io/v2/token';
+const GCR_SERVICE = 'gcr.io';
+
+// Media types a registry may answer a manifest request with. Without the
+// list types, a multi-architecture image can be reported as missing.
+const MANIFEST_ACCEPT = [
+  'application/vnd.docker.distribution.manifest.v2+json',
+  'application/vnd.docker.distribution.manifest.list.v2+json',
+  'application/vnd.oci.image.manifest.v1+json',
+  'application/vnd.oci.image.index.v1+json',
+].join(', ');
 
 // Regular expressions to find Docker images
 const DOCKER_IMAGE_PATTERNS = [
@@ -152,6 +163,9 @@ async function checkDockerHubImage(imageName, tag) {
     const url = `${DOCKER_HUB_API}/${imageName}/tags/${tag}`;
     const response = await httpsRequest(url);
 
+    // The Docker Hub tags API answers 404 for a private repository rather
+    // than 401, so a private image is reported as missing. Either way the
+    // job fails, which is the outcome this check is for.
     return {
       exists: response.statusCode === 200,
       statusCode: response.statusCode,
@@ -167,25 +181,54 @@ async function checkDockerHubImage(imageName, tag) {
 }
 
 /**
+ * Request an anonymous pull token for a GCR repository
+ *
+ * GCR speaks the Docker Registry HTTP API V2, which answers an unauthenticated
+ * manifest request with 401 and a challenge. Public repositories hand out an
+ * anonymous bearer token; private ones refuse it.
+ */
+async function getGcrToken(imagePath) {
+  try {
+    const url = `${GCR_TOKEN_API}?scope=repository:${imagePath}:pull&service=${GCR_SERVICE}`;
+    const response = await httpsRequest(url);
+
+    if (response.statusCode !== 200) {
+      return null;
+    }
+
+    return JSON.parse(response.body).token || null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
  * Check if GCR image exists using manifest API
  */
 async function checkGcrImage(imagePath, tag) {
   try {
-    // GCR uses Docker Registry HTTP API V2
     const url = `${GCR_API}/${imagePath}/manifests/${tag}`;
-    const response = await httpsRequest(url, {
-      headers: {
-        'Accept': 'application/vnd.docker.distribution.manifest.v2+json'
-      }
-    });
+    const headers = { 'Accept': MANIFEST_ACCEPT };
+    let response = await httpsRequest(url, { headers });
 
-    // GCR may require authentication even when the historical image still
-    // exists. Treat that as unverifiable rather than as a confirmed 404.
+    // Answer the authentication challenge with an anonymous pull token. A
+    // public repository issues one; a private repository does not.
+    if (response.statusCode === 401 || response.statusCode === 403) {
+      const token = await getGcrToken(imagePath);
+
+      if (token) {
+        response = await httpsRequest(url, {
+          headers: { ...headers, 'Authorization': `Bearer ${token}` }
+        });
+      }
+    }
+
+    // Authentication is still refused after the handshake: the repository is
+    // private. A reader cannot pull the image, so the reference is as broken
+    // as a 404 and must fail the job.
     return {
       exists: response.statusCode === 200 || response.statusCode === 307,
-      error: response.statusCode === 401 || response.statusCode === 403
-        ? `Registry authentication required (${response.statusCode})`
-        : undefined,
+      requiresAuth: response.statusCode === 401 || response.statusCode === 403,
       statusCode: response.statusCode,
       registry: 'GCR'
     };
@@ -301,6 +344,9 @@ async function main() {
     } else if (result.error) {
       console.log(`⚠️  ERROR: ${result.error}`);
       errorCount++;
+    } else if (result.requiresAuth) {
+      console.log(`❌ NOT PUBLIC (${result.statusCode}: the registry refuses an anonymous pull)`);
+      invalidCount++;
     } else {
       console.log(`❌ NOT FOUND (${result.statusCode})`);
       invalidCount++;
@@ -325,9 +371,12 @@ async function main() {
 
     results
       .filter(r => !r.exists && !r.error)
-      .forEach(({ imageRef }) => {
+      .forEach(({ imageRef, requiresAuth, statusCode, registry }) => {
         console.log(`\n${imageRef}`);
-        console.log(`  Registry: ${results.find(r => r.imageRef === imageRef).registry}`);
+        console.log(`  Registry: ${registry}`);
+        console.log(`  Problem: ${requiresAuth
+          ? `the registry refuses an anonymous pull (${statusCode}), so a reader cannot get this image`
+          : `the registry has no such image (${statusCode})`}`);
         console.log(`  Found in:`);
         imageLocations.get(imageRef).forEach(loc => {
           console.log(`    - ${loc}`);
@@ -357,7 +406,8 @@ async function main() {
 
   // Exit with error code if invalid images found
   if (invalidCount > 0) {
-    console.log('\n⚠️  Some images could not be validated!');
+    console.log('\n❌ Some images cannot be pulled by a reader of the docs!');
+    console.log('Publish the image to a public registry, or correct the reference.');
     process.exit(1);
   } else if (errorCount > 0) {
     console.log('\n⚠️  All images appear valid, but some had validation errors.');
