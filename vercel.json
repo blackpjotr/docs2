@@ -1,8 +1,14 @@
 {
   "cleanUrls": true,
   "redirects": [
-    { "source": "/en", "destination": "/" },
-    { "source": "/en/:path(.*)", "destination": "/:path(.*)" },
+    {
+      "source": "/en",
+      "destination": "/"
+    },
+    {
+      "source": "/en/:path(.*)",
+      "destination": "/:path(.*)"
+    },
     {
       "source": "/zkapps/o1js/recursion",
       "destination": "https://docs.o1labs.org/o1js/advanced-concepts/recursion"
@@ -146,6 +152,10 @@
     {
       "source": "/zkapps/o1js/offchain-storage",
       "destination": "/zkapps/writing-a-zkapp/feature-overview/offchain-storage"
+    },
+    {
+      "source": "/network-upgrades/berkeley/archive-migration/docker-example",
+      "destination": "/network-upgrades/berkeley/archive-migration/debian-example"
     }
   ]
 }

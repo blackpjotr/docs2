@@ -16,7 +16,6 @@ This file is auto-generated from `sidebars.js` and the frontmatter of each docum
 - [Migrating Devnet/Mainnet Archive to Berkeley Archive](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration/migrating-archive-database-to-berkeley): Steps to properly migrate archives from Devnet/Mainnet to Berkeley.
 - [Devnet/Mainnet database maintenance](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration/mainnet-database-maintenance): Steps to properly maintain correctness of archive database.
 - [Example of Devnet Archive Migration (Debian)](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration/debian-example): A copy-paste example of how to do a Devnet migration.
-- [Example of Mainnet Archive Migration (Docker)](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration/docker-example): A copy-paste example of how to do a Mainnet migration.
 - [Appendix](https://docs.minaprotocol.com/network-upgrades/berkeley/archive-migration/appendix): archive node schema changes between Mainnet and Berkeley
 - [Upgrade Steps](https://docs.minaprotocol.com/network-upgrades/berkeley/upgrade-steps): Detailed upgrade steps and operators' tasks
 - [Post-Upgrade Flags and Configurations for Mainnet](https://docs.minaprotocol.com/network-upgrades/berkeley/flags-configs): Post-Upgrade Flags and Configurations for Mainnet

@@ -27,7 +27,7 @@ This guide describes the general procedure for upgrading a Mina archive database
 <Tabs groupId="network">
 <TabItem value="mesa-trail" label="Mesa Trail" default>
 
-The Mesa Trail archive version is **`4.0.0-rc2-3418329`**. Docker tag: `gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`. See [Mesa Trail Network](./mesa-trail) for the full release matrix.
+The Mesa Trail archive version is **`4.0.0-rc2-3418329`**. Docker tag: `minaprotocol/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`. See [Mesa Trail Network](./mesa-trail) for the full release matrix.
 
 ```bash
 # Substitute this version wherever <MESA_VERSION> appears below
@@ -101,7 +101,7 @@ cat /etc/mina/archive/downgrade_to_berkeley.sql
 **From the Docker image** — extract it from the archive image:
 
 ```bash
-docker run --rm gcr.io/o1labs-192920/mina-archive:<MESA_VERSION>-bookworm-mainnet cat /etc/mina/archive/upgrade_to_mesa.sql > upgrade_to_mesa.sql
+docker run --rm minaprotocol/mina-archive:<MESA_VERSION>-bookworm-mainnet cat /etc/mina/archive/upgrade_to_mesa.sql > upgrade_to_mesa.sql
 ```
 
 **From GitHub (alternative)** — only if you are not installing the package; make sure to match the script to your release:

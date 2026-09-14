@@ -25,30 +25,6 @@ const MANIFEST_ACCEPT = [
   'application/vnd.oci.image.index.v1+json',
 ].join(', ');
 
-// Images that a public CI runner cannot verify. Every entry must give a
-// reason. These images are reported as SKIPPED and do not fail the job.
-// Remove an entry as soon as the image becomes publicly resolvable again.
-const UNVERIFIABLE_IMAGES = [
-  {
-    pattern: /^gcr\.io\/o1labs-192920\//i,
-    reason:
-      'private o1Labs registry: anonymous pulls are denied, so the image cannot be verified without Google credentials',
-  },
-  {
-    pattern: /^minaprotocol\/mina-archive-migration:/i,
-    reason:
-      'the Berkeley migration images were retired with the migration tooling and are no longer on Docker Hub',
-  },
-];
-
-/**
- * Return the reason an image cannot be verified, or null if it must be checked
- */
-function unverifiableReason(imageRef) {
-  const entry = UNVERIFIABLE_IMAGES.find(({ pattern }) => pattern.test(imageRef));
-  return entry ? entry.reason : null;
-}
-
 // Regular expressions to find Docker images
 const DOCKER_IMAGE_PATTERNS = [
   // Matches: gcr.io/project/image-name:tag (must be first to capture full path)
@@ -189,6 +165,7 @@ async function checkDockerHubImage(imageName, tag) {
 
     return {
       exists: response.statusCode === 200,
+      requiresAuth: response.statusCode === 401 || response.statusCode === 403,
       statusCode: response.statusCode,
       registry: 'Docker Hub'
     };
@@ -245,12 +222,11 @@ async function checkGcrImage(imagePath, tag) {
     }
 
     // Authentication is still refused after the handshake: the repository is
-    // private. Treat that as unverifiable rather than as a confirmed 404.
+    // private. A reader cannot pull the image, so the reference is as broken
+    // as a 404 and must fail the job.
     return {
       exists: response.statusCode === 200 || response.statusCode === 307,
-      error: response.statusCode === 401 || response.statusCode === 403
-        ? `Registry authentication required (${response.statusCode})`
-        : undefined,
+      requiresAuth: response.statusCode === 401 || response.statusCode === 403,
       statusCode: response.statusCode,
       registry: 'GCR'
     };
@@ -304,12 +280,6 @@ function parseImageRef(imageRef) {
  * Validate a Docker image
  */
 async function validateImage(imageRef) {
-  const reason = unverifiableReason(imageRef);
-
-  if (reason) {
-    return { exists: false, skipped: true, reason, registry: 'skipped' };
-  }
-
   const parsed = parseImageRef(imageRef);
 
   if (parsed.type === 'gcr') {
@@ -359,7 +329,6 @@ async function main() {
   let validCount = 0;
   let invalidCount = 0;
   let errorCount = 0;
-  let skippedCount = 0;
 
   for (const imageRef of sortedImages) {
     process.stdout.write(`Checking ${imageRef}... `);
@@ -367,15 +336,15 @@ async function main() {
     const result = await validateImage(imageRef);
     results.push({ imageRef, ...result });
 
-    if (result.skipped) {
-      console.log(`⏭️  SKIPPED (${result.reason})`);
-      skippedCount++;
-    } else if (result.exists) {
+    if (result.exists) {
       console.log('✅ EXISTS');
       validCount++;
     } else if (result.error) {
       console.log(`⚠️  ERROR: ${result.error}`);
       errorCount++;
+    } else if (result.requiresAuth) {
+      console.log(`❌ NOT PUBLIC (${result.statusCode}: the registry refuses an anonymous pull)`);
+      invalidCount++;
     } else {
       console.log(`❌ NOT FOUND (${result.statusCode})`);
       invalidCount++;
@@ -392,7 +361,6 @@ async function main() {
   console.log(`✅ Valid images: ${validCount}`);
   console.log(`❌ Invalid images: ${invalidCount}`);
   console.log(`⚠️  Errors: ${errorCount}`);
-  console.log(`⏭️  Skipped images: ${skippedCount}`);
 
   // List invalid images with locations
   if (invalidCount > 0) {
@@ -400,10 +368,13 @@ async function main() {
     console.log('\n❌ INVALID IMAGES:\n');
 
     results
-      .filter(r => !r.exists && !r.error && !r.skipped)
-      .forEach(({ imageRef }) => {
+      .filter(r => !r.exists && !r.error)
+      .forEach(({ imageRef, requiresAuth, statusCode, registry }) => {
         console.log(`\n${imageRef}`);
-        console.log(`  Registry: ${results.find(r => r.imageRef === imageRef).registry}`);
+        console.log(`  Registry: ${registry}`);
+        console.log(`  Problem: ${requiresAuth
+          ? `the registry refuses an anonymous pull (${statusCode}), so a reader cannot get this image`
+          : `the registry has no such image (${statusCode})`}`);
         console.log(`  Found in:`);
         imageLocations.get(imageRef).forEach(loc => {
           console.log(`    - ${loc}`);
@@ -419,7 +390,7 @@ async function main() {
     console.log('They may still exist, but verification failed.\n');
 
     results
-      .filter(r => r.error && !r.skipped)
+      .filter(r => r.error)
       .forEach(({ imageRef, error, registry }) => {
         console.log(`\n${imageRef}`);
         console.log(`  Registry: ${registry}`);
@@ -431,28 +402,10 @@ async function main() {
       });
   }
 
-  // List images that are known to be unverifiable from a public runner
-  if (skippedCount > 0) {
-    console.log('\n' + '='.repeat(80));
-    console.log('\n⏭️  SKIPPED IMAGES:\n');
-    console.log('These images cannot be checked from a public CI runner.');
-    console.log('Each one is listed in UNVERIFIABLE_IMAGES with its reason.\n');
-
-    results
-      .filter(r => r.skipped)
-      .forEach(({ imageRef, reason }) => {
-        console.log(`\n${imageRef}`);
-        console.log(`  Reason: ${reason}`);
-        console.log(`  Found in:`);
-        imageLocations.get(imageRef).forEach(loc => {
-          console.log(`    - ${loc}`);
-        });
-      });
-  }
-
   // Exit with error code if invalid images found
   if (invalidCount > 0) {
-    console.log('\n❌ Some images are missing from their registry!');
+    console.log('\n❌ Some images cannot be pulled by a reader of the docs!');
+    console.log('Publish the image to a public registry, or correct the reference.');
     process.exit(1);
   } else if (errorCount > 0) {
     console.log('\n⚠️  All images appear valid, but some had validation errors.');
@@ -472,10 +425,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = {
-  findMdxFiles,
-  extractDockerImages,
-  validateImage,
-  unverifiableReason,
-  UNVERIFIABLE_IMAGES,
-};
+module.exports = { findMdxFiles, extractDockerImages, validateImage };

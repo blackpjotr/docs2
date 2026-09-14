@@ -326,7 +326,7 @@ module.exports = {
           },
           {
             from: '/berkeley-upgrade/archive-migration/docker-example',
-            to: '/network-upgrades/berkeley/archive-migration/docker-example',
+            to: '/network-upgrades/berkeley/archive-migration/debian-example',
           },
           {
             from: '/berkeley-upgrade/archive-migration/appendix',

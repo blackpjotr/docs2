@@ -34,11 +34,11 @@ Two earlier Mesa test networks — **preflight** and **MUT** — are archived an
 
 ### Docker Images
 
-Images are published to `gcr.io/o1labs-192920`. The tag format is `<version>-<codename>-devnet`:
+Images are published to Docker Hub under `minaprotocol`. The tag format is `<version>-<codename>-devnet`:
 
-- **Mina Daemon:** `gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet`
-- **Archive Node:** `gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`
-- **Rosetta:** `gcr.io/o1labs-192920/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet`
+- **Mina Daemon:** `minaprotocol/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet`
+- **Archive Node:** `minaprotocol/mina-archive:4.0.0-rc2-3418329-bullseye-devnet`
+- **Rosetta:** `minaprotocol/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet`
 
 Available base distributions: `bullseye`, `bookworm`, `focal`, `jammy`, `noble`. Swap the codename in the tag to select one — for example `mina-daemon:4.0.0-rc2-3418329-noble-devnet`.
 
@@ -81,7 +81,7 @@ All node types must use the Mesa Trail seed peer list:
 docker run --name mina-mesa-trail -d \
   -p 8302:8302 \
   --restart=always \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
+  minaprotocol/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
   daemon \
   --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt
 ```
@@ -93,7 +93,7 @@ docker run --name mina-mesa-trail -d \
   -p 8302:8302 \
   --restart=always \
   -v $(pwd)/.mina-config:/root/.mina-config \
-  gcr.io/o1labs-192920/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
+  minaprotocol/mina-daemon:4.0.0-rc2-3418329-bullseye-devnet \
   daemon \
   --peer-list-url https://storage.googleapis.com/o1labs-gitops-infrastructure/mina-mesa-rc/mina-mesa-rc-peer-list-url.txt \
   --libp2p-keypair /data/.mina-config/keys/libp2p-key
@@ -105,7 +105,7 @@ docker run --name mina-mesa-trail -d \
 docker run --name mina-archive-mesa-trail -d \
   -p 3086:3086 \
   --restart=always \
-  gcr.io/o1labs-192920/mina-archive:4.0.0-rc2-3418329-bullseye-devnet \
+  minaprotocol/mina-archive:4.0.0-rc2-3418329-bullseye-devnet \
   mina-archive run \
   --postgres-uri postgresql://archive_user:your-secure-password@postgres-host:5432/archive \
   --server-port 3086
@@ -119,7 +119,7 @@ If upgrading an existing Berkeley database, see [Archive Upgrade](/network-upgra
 docker run --name mina-rosetta-mesa-trail -d \
   -p 3087:3087 \
   --restart=always \
-  gcr.io/o1labs-192920/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet \
+  minaprotocol/mina-rosetta:4.0.0-rc2-3418329-bullseye-devnet \
   --port 3087 \
   --archive-uri http://archive-host:3086/graphql \
   --graphql-uri http://mina-daemon-host:3085/graphql

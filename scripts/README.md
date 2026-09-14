@@ -41,8 +41,8 @@ The script provides:
 
 1. **Discovery Phase**: Lists all found Docker images and their locations
 2. **Validation Phase**: Checks each image against its registry
-3. **Summary**: Shows counts of valid, invalid, error, and skipped cases
-4. **Detailed Report**: Lists invalid and skipped images with their locations
+3. **Summary**: Shows counts of valid, invalid, and error cases
+4. **Detailed Report**: Lists invalid images with their locations and the reason
 
 ### Example Output:
 
@@ -78,14 +78,13 @@ Total images found: 17
 ✅ Valid images: 6
 ❌ Invalid images: 11
 ⚠️  Errors: 0
-⏭️  Skipped images: 0
 ```
 
 ## Exit Codes
 
-- **0**: All images validated successfully, or the only problems were skipped
-  images and validation errors (network or API issues)
-- **1**: One or more images are missing from their registry
+- **0**: All images validated successfully, or the only problems were
+  validation errors (network or API issues)
+- **1**: One or more images cannot be pulled by a reader of the documentation
 
 ## Supported Registries
 
@@ -102,38 +101,25 @@ Total images found: 17
   A repository that still refuses the token is private and cannot be validated
   without credentials.
 
-## Images That Cannot Be Validated
+## Every Documented Image Must Be Public
 
-Some images in the documentation cannot be checked from a public CI runner: the
-image sits in a private registry, or it was retired and is no longer published.
-Checking them would fail the job for a reason no documentation change can fix.
+A reader must be able to pull each image the documentation shows. The script
+therefore fails the job in two cases:
 
-List each of these in the `UNVERIFIABLE_IMAGES` array in
-`validate-docker-images.js`. Each entry has a `pattern` that matches the image
-reference and a `reason` that explains why the image cannot be checked. The
-script reports matching images as `⏭️ SKIPPED` with the reason, and they do not
-fail the job.
+- **`NOT FOUND (404)`**: the registry has no such image. Correct the reference.
+- **`NOT PUBLIC (401)`**: the registry refuses an anonymous pull, which means
+  the image is private. Publish it to a public registry, or point the
+  documentation at an image that is already public.
 
-```js
-const UNVERIFIABLE_IMAGES = [
-  {
-    pattern: /^gcr\.io\/o1labs-192920\//i,
-    reason: 'private o1Labs registry: anonymous pulls are denied, ...',
-  },
-];
-```
-
-Remove an entry as soon as the image becomes publicly resolvable again. Do not
-use this list for an image that is simply wrong in the documentation: correct
-the documentation instead.
+Do not add an exception list for either case. A private image is as useless to
+a reader as a missing one, and hiding it from the job hides the problem.
 
 ## Limitations
 
 1. **Rate Limiting**: The script includes a 100ms delay between requests to avoid rate limiting, but excessive runs may still hit API limits.
 
 2. **Private Registries**: Only public Docker Hub and GCR registries can be
-   validated. Images in a private registry must be listed in
-   `UNVERIFIABLE_IMAGES` with a reason.
+   validated. An image in a private registry fails the job by design.
 
 ## Integration with CI/CD
 
@@ -169,9 +155,8 @@ validate-docker-images:
 To modify the script:
 
 1. **Add new registries**: Update the validation functions in `validate-docker-images.js`
-2. **Skip an unverifiable image**: Add an entry with a reason to `UNVERIFIABLE_IMAGES`
-3. **Adjust patterns**: Modify `DOCKER_IMAGE_PATTERNS` array to match new formats
-4. **Change timeout**: Adjust the timeout value in `httpsRequest()` function
+2. **Adjust patterns**: Modify `DOCKER_IMAGE_PATTERNS` array to match new formats
+3. **Change timeout**: Adjust the timeout value in `httpsRequest()` function
 
 ## Related Documentation
 
