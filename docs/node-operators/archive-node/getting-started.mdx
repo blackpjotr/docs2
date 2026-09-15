@@ -81,6 +81,14 @@ However, inserting genesis accounts can take significant time and resources. You
 
 :::
 
+:::danger Do not expose the archive server port
+
+The archive server port (`--server-port`, 3086 in these examples) has no authentication. Anyone who can reach it can write blocks into your archive database.
+
+Only the daemon or daemons feeding this archive should be able to reach the port. Keep the daemon and archive on localhost, a private network, a Docker network, or inside one Kubernetes cluster, and never expose the port to the public internet. On a shared Kubernetes cluster, add a NetworkPolicy so only the daemon pods can reach the archive.
+
+:::
+
 <Tabs groupId="install-method">
 <TabItem value="native" label="Native">
 
@@ -128,7 +136,7 @@ To run a local archive node in the foreground for testing:
      --archive-address 3086
    ```
 
-   To connect to an archive process on another machine, specify a hostname with `<ipaddress:portnumber>` i.e. `154.97.53.97:3086`.
+   To connect to an archive process on another machine, specify `<ipaddress:portnumber>`, for example `10.0.0.5:3086`. Both machines must be on a trusted private network.
 
 </TabItem>
 <TabItem value="docker" label="Docker">
@@ -178,7 +186,7 @@ To run a local archive node in the foreground for testing:
    ```sh
    docker run \
    --name archive \
-   -p 3086:3086 \
+   -p 127.0.0.1:3086:3086 \
    -v /tmp/archive:/data \
    minaprotocol/mina-archive:3.3.0-8c0c2e6-bullseye-mainnet \
    mina-archive run \
@@ -194,7 +202,7 @@ To run a local archive node in the foreground for testing:
      --archive-address 3086
    ```
 
-   To connect to an archive process on another machine, specify a hostname with `<ipaddress:portnumber>` i.e. `154.97.53.97:3086`.
+   To connect to an archive process on another machine, specify `<ipaddress:portnumber>`, for example `10.0.0.5:3086`. Both machines must be on a trusted private network.
 
 </TabItem>
 <TabItem value="docker-compose" label="Docker Compose">
@@ -237,7 +245,7 @@ With Compose, you use a YAML file to configure your application's services. Then
        volumes:
          - '/tmp/archive:/data'
        ports:
-         - '3086:3086'
+         - '127.0.0.1:3086:3086'
        depends_on:
          - postgres
    ```
@@ -256,7 +264,7 @@ With Compose, you use a YAML file to configure your application's services. Then
      --archive-address 3086
    ```
 
-   To connect to an archive process on another machine, specify a hostname with `<ipaddress:portnumber>` i.e. `154.97.53.97:3086`.
+   To connect to an archive process on another machine, specify `<ipaddress:portnumber>`, for example `10.0.0.5:3086`. Both machines must be on a trusted private network.
 
 </TabItem>
 </Tabs>

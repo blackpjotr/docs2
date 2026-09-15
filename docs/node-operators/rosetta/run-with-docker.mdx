@@ -46,7 +46,7 @@ Run the container with following command (replace the image tag with one from do
 ```
     docker run -it --rm --name rosetta \
         --entrypoint=./docker-start.sh \
-        -p 10101:10101 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
+        -p 10101:10101 -p 3085:3085 -p 127.0.0.1:3086:3086 -p 3087:3087 \
         minaprotocol/mina-rosetta:3.3.0-8c0c2e6-bullseye-mainnet
 ```
 
@@ -65,7 +65,7 @@ Then run the container with the following command:
 ```
     docker run -it --rm --name rosetta \
         --entrypoint=./docker-start.sh \
-        -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
+        -p 8302:8302 -p 3085:3085 -p 127.0.0.1:3086:3086 -p 3087:3087 \
         --env-file mainnet.env \
         minaprotocol/mina-rosetta:<tag>
 ```
@@ -77,7 +77,7 @@ Example environment files for public networks can be found in [this](https://git
 - It can take 20 min to 1 hour for your node to sync
 - Port 8302 is the default P2P port and must be exposed to the open internet
 - The GraphQL API runs on port 3085 (accessible via localhost:3085/graphql)
-- PostgreSQL runs on port 3086
+- The archive server runs on port 3086. It has no authentication, so the commands above publish it on 127.0.0.1 only. Do not expose it to the internet
 - Rosetta runs on port 3087
 
 :::
