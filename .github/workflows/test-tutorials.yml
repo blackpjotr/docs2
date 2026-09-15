@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         example-path:
           - examples/zkapps/01-hello-world
           - examples/zkapps/02-private-inputs-and-hash-functions
@@ -64,7 +64,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         example-path:
           - examples/zkapps/feature-overview
           - examples/zkapps/04-zkapp-browser-ui/contracts
@@ -95,7 +95,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        node-version: [20, 22, 24]
+        node-version: [22, 24]
         example-path:
           - examples/zkapps/04-zkapp-browser-ui/ui
           - examples/zkapps/07-oracles/oracle
@@ -118,7 +118,13 @@ jobs:
 
       - name: Install dependencies and build ${{ matrix.example-path }}
         run: |
-          cd ${{ matrix.example-path }}
+          example_path="${{ matrix.example-path }}"
+          # The browser UI imports the compiled contracts of its sibling
+          # package, so that package has to be built first.
+          if [[ "$example_path" == "examples/zkapps/04-zkapp-browser-ui/ui" ]]; then
+            (cd examples/zkapps/04-zkapp-browser-ui/contracts && npm ci && npm run build)
+          fi
+          cd "$example_path"
           npm ci
           npm run build
 
