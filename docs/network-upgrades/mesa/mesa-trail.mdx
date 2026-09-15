@@ -115,7 +115,7 @@ sudo apt-get install -y mina-rosetta-devnet=4.0.0-rc2-3418329
 
 mina-rosetta \
   --port 3087 \
-  --archive-uri http://localhost:3086/graphql \
+  --archive-uri postgresql://archive_user:your-secure-password@localhost:5432/archive \
   --graphql-uri http://localhost:3085/graphql
 ```
 

@@ -54,7 +54,7 @@ The all-in-one image bundles the daemon, archive node, PostgreSQL, and Rosetta A
 ```bash
 docker run -it --rm --name rosetta \
   --entrypoint=./docker-start.sh \
-  -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
+  -p 8302:8302 -p 3085:3085 -p 127.0.0.1:3086:3086 -p 3087:3087 \
   minaprotocol/mina-rosetta:3.3.1-7b34378-noble-mainnet
 ```
 
@@ -63,7 +63,7 @@ docker run -it --rm --name rosetta \
 ```bash
 docker run -it --rm --name rosetta \
   --entrypoint=./docker-start.sh \
-  -p 8302:8302 -p 3085:3085 -p 3086:3086 -p 3087:3087 \
+  -p 8302:8302 -p 3085:3085 -p 127.0.0.1:3086:3086 -p 3087:3087 \
   -e MINA_NETWORK=devnet \
   -e PEER_LIST_URL=https://bootnodes.minaprotocol.com/networks/devnet.txt \
   minaprotocol/mina-rosetta:3.2.0-97ad487-bookworm-devnet
