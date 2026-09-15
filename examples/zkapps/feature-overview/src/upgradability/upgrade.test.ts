@@ -26,23 +26,39 @@ const v2Contract = await AddV2.compile();
 const v3Contract = await AddV3.compile();
 const v3ContractUnsafe = await AddV3Unsafe.compile();
 
-test('Compiled ZkApps have the correct verification keys', () => {
-  assert(
-    v1Contract.verificationKey.hash.toString() ===
-      '27729068461170601362912907281403262888852363473424470267835507636847418791713'
-  );
-  assert(
-    v2Contract.verificationKey.hash.toString() ===
-      '18150279532259194644722165513074833862035641840431153413486908511595437348455'
-  );
-  assert(
-    v3Contract.verificationKey.hash.toString() ===
-      '1506085513050586213214677404600577260206748125662881436145933448267982347548'
-  );
-  assert(
-    v3ContractUnsafe.verificationKey.hash.toString() ===
-      '17290804741578456408307855134893698043927309834541841443824450909276443460626'
-  );
+// A verification key hash is a function of the proof system as well as of the
+// contract, so it changes with an o1js release. Assert the properties the
+// upgradability example depends on instead of literal hashes, which go stale
+// on every release and say nothing about the contracts.
+const compiled = {
+  AddV1: v1Contract,
+  AddV2: v2Contract,
+  AddV3: v3Contract,
+  AddV3Unsafe: v3ContractUnsafe,
+};
+
+test('Every contract compiles to a verification key', () => {
+  for (const [name, contract] of Object.entries(compiled)) {
+    const hash = contract.verificationKey.hash.toString();
+    assert(hash.length > 0, `${name} produced an empty verification key hash`);
+    assert(hash !== '0', `${name} produced a zero verification key hash`);
+  }
+});
+
+test('Each contract version has its own verification key', () => {
+  const names = Object.keys(compiled);
+
+  for (const name of names) {
+    for (const other of names) {
+      if (name === other) continue;
+
+      assert(
+        compiled[name as keyof typeof compiled].verificationKey.hash.toString() !==
+          compiled[other as keyof typeof compiled].verificationKey.hash.toString(),
+        `${name} and ${other} share a verification key, so an upgrade between them would not be observable`
+      );
+    }
+  }
 });
 
 let tx = await Mina.transaction({ sender, fee }, async () => {
