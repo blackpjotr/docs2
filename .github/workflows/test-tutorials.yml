@@ -3,15 +3,26 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'examples/zkapps/**'
+      - '.github/workflows/test-tutorials.yml'
+  schedule:
+    # Daily, to catch an o1js release that breaks the tutorials
+    - cron: '0 5 * * *'
   workflow_dispatch: {}
 
 jobs:
-  test-tutorials:
+  # Examples with an entry point that runs against a local blockchain.
+  run-examples:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [22, 24]
         example-path:
           - examples/zkapps/01-hello-world
           - examples/zkapps/02-private-inputs-and-hash-functions
@@ -22,18 +33,18 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-      
+
       - name: Set Git config (global)
         run: |
           git config --global user.email "test@example.com"
           git config --global user.name "Test"
 
-      - name: Install dependencies, build and run ${{ matrix.example-path }}/build/src/main.js
+      - name: Install dependencies, build and run ${{ matrix.example-path }}
         run: |
           cd ${{ matrix.example-path }}
           npm ci
@@ -45,61 +56,112 @@ jobs:
           else
             node build/src/main.js
           fi
-  
-  test-features:
+
+  # Examples whose behaviour is covered by a test suite.
+  test-examples:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18, 20, 22]
-    
+        node-version: [22, 24]
+        example-path:
+          - examples/zkapps/feature-overview
+          - examples/zkapps/04-zkapp-browser-ui/contracts
+          - examples/zkapps/07-oracles/contracts
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-      
-      - name: Install dependencies, build and test
-        run: |
-          cd examples/zkapps/feature-overview
-          npm ci
-          npm run test
 
-  build-tutorials:
+      - name: Install dependencies, build and test ${{ matrix.example-path }}
+        run: |
+          cd ${{ matrix.example-path }}
+          npm ci
+          npm run build
+          npm test
+
+  # Examples with no offline entry point yet: the browser and oracle front
+  # ends, the message board contract, and the server-side guide, which talks
+  # to a live devnet. Tracked in #1249 (phases 2 and 3).
+  build-examples:
     runs-on: ubuntu-latest
 
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18, 20, 22]
+        node-version: [22, 24]
         example-path:
-          - examples/zkapps/04-zkapp-browser-ui
-          - examples/zkapps/07-oracles
+          - examples/zkapps/04-zkapp-browser-ui/ui
+          - examples/zkapps/07-oracles/oracle
           - examples/zkapps/anonymous-message-board
           - examples/zkapps/interacting-with-zkApps-server-side
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
-      
+
       - name: Set Git config (global)
         run: |
           git config --global user.email "test@example.com"
           git config --global user.name "Test"
 
-      - name: Install dependencies and build  ${{ matrix.example-path }}
+      - name: Install dependencies and build ${{ matrix.example-path }}
         run: |
-          cd ${{ matrix.example-path }}
-          if [ -d "contracts" ]; then
-            cd contracts 
+          example_path="${{ matrix.example-path }}"
+          # The browser UI imports the compiled contracts of its sibling
+          # package, so that package has to be built first.
+          if [[ "$example_path" == "examples/zkapps/04-zkapp-browser-ui/ui" ]]; then
+            (cd examples/zkapps/04-zkapp-browser-ui/contracts && npm ci && npm run build)
           fi
+          cd "$example_path"
           npm ci
           npm run build
 
+  # Canary: build every example against the o1js the reader would install
+  # today, so the next release shows up here and not in a stale tutorial.
+  o1js-latest-canary:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        example-path:
+          - examples/zkapps/01-hello-world
+          - examples/zkapps/02-private-inputs-and-hash-functions
+          - examples/zkapps/05-common-types-and-functions
+          - examples/zkapps/09-recursion
+          - examples/zkapps/10-account-updates
+          - examples/zkapps/feature-overview
+          - examples/zkapps/04-zkapp-browser-ui/contracts
+          - examples/zkapps/07-oracles/contracts
+          - examples/zkapps/anonymous-message-board
+          - examples/zkapps/interacting-with-zkApps-server-side
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Build ${{ matrix.example-path }} against o1js@latest
+        run: |
+          cd ${{ matrix.example-path }}
+          npm install --no-audit --no-fund
+          npm install o1js@latest --no-audit --no-fund
+          echo "o1js $(node -e "import('o1js/package.json', { with: { type: 'json' } }).then(m => console.log(m.default.version))" 2>/dev/null || echo unknown)"
+          npm run build
