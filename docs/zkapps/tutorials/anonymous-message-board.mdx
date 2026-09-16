@@ -202,6 +202,9 @@ The `init` method is similar to the `constructor` in Solidity. It's where you de
 
 ```ts
 init() {
+  // Reset the whole state first
+  super.init();
+
   // Define initial values of on-chain state
   this.user1.set(users['Bob'].toPublicKey());
   this.user2.set(users['SuperBob'].toPublicKey());
@@ -210,6 +213,11 @@ init() {
   this.messageHistoryHash.set(Field(0));
 }
 ```
+
+Start with `super.init()`. It resets every state field to its default, and
+without it o1js warns that the zkApp will lack the `provedState === true`
+status — the status that certifies the state was produced by proofs rather than
+set by the developer. Your own values go after it.
 
 ### Define `publishMessage()`
 
@@ -297,6 +305,46 @@ $ npm run build
 ```
 
 If everything is correct, you see a new `./build` directory where the compiled version of your project lives that you can import into a user interface.
+
+## Deploy and run it
+
+The tutorial above builds the contract. To see it work end to end, the example
+in this repository deploys it to a local blockchain and posts to it — no
+network, no faucet and no funded accounts:
+
+```sh
+cd examples/zkapps/anonymous-message-board
+npm install
+npm start
+```
+
+```
+deploying the message board...
+approved posters:
+  user1: B62qkCkKQ5vSRkTQyEEj22vnHH4hVKfp4pc3QYd4GPSv7u6S4aBE4Fx
+  ...
+Bob publishes a message...       message: 42
+SuperBob publishes another...    message: 99
+history hash is the chain of both messages: true
+Jack tries to publish...         rejected, as it should be
+```
+
+The deployment is an ordinary zkApp deployment — the account creation fee, the
+verification key, and `init()` running as part of it, exactly as in
+[Tutorial 3](deploying-to-a-network):
+
+```ts
+const deployTx = await Mina.transaction(deployer, async () => {
+  AccountUpdate.fundNewAccount(deployer);
+  await zkApp.deploy();
+});
+await deployTx.prove();
+await deployTx.sign([deployer.key, zkAppKey]).send();
+```
+
+`npm test` runs the same flow as assertions, including the two cases worth
+proving rather than describing: the history hash commits to every message in
+sequence, and a key the contract does not know is rejected.
 
 ## Wrapping up
 
