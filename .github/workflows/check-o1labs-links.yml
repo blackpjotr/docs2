@@ -4,10 +4,13 @@ name: Check o1Labs documentation links
 # o1-labs/o1js-documentation-site, so they break through upstream edits
 # rather than through anything in a Mina docs pull request. Blocking
 # unrelated PRs on someone else's rename helps nobody.
+#
+# Daily, because the job is around sixty HEAD requests and a link broken
+# upstream should surface within a day rather than within a week.
 
 on:
   schedule:
-    - cron: '0 6 * * 1'
+    - cron: '0 6 * * *'
   workflow_dispatch: {}
 
 jobs:
