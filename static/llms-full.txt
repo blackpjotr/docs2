@@ -16567,8 +16567,7 @@ url: /zkapps/o1js/basic-concepts
 
 o1js is a TypeScript (TS) library for writing general-purpose zero knowledge (zk) programs and writing zk smart contracts for Mina.
 
-For a reference-level treatment of each primitive, see the o1Labs
-[basic types](https://docs.o1labs.org/o1js/basic-types/field) section:
+For a reference-level treatment of each primitive, see the o1Labs basic types pages:
 [Field](https://docs.o1labs.org/o1js/basic-types/field),
 [integers](https://docs.o1labs.org/o1js/basic-types/int),
 [arrays](https://docs.o1labs.org/o1js/basic-types/arrays),
