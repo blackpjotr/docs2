@@ -1,20 +1,21 @@
 ---
-title: 'Example: Anonymous Message Board Tutorial'
+title: 'Tutorial 11: Anonymous Message Board'
 hide_title: true
-sidebar_label: 'Example: Anonymous Message Board'
+sidebar_label: 'Tutorial 11: Anonymous Message Board'
 description: Steps to design and implement a semi-anonymous messaging protocol.
 keywords:
   - smart contracts
   - zkapps
   - messages
+  - tutorial
   - permissions
   - DAO
   - mina
 ---
 
-# Anonymous Message Board Tutorial
+# Tutorial 11: Anonymous Message Board
 
-This example shows you how to put building zkApp ideas into practice as you walk through designing and implementing of a semi-anonymous messaging protocol.
+This tutorial shows you how to put building zkApp ideas into practice as you walk through designing and implementing of a semi-anonymous messaging protocol.
 
 In this tutorial, you build a smart contract that allows users to publish messages semi-anonymously.
 - The contract allows a specific set of users to create new messages but does not disclose which user creates the message.
@@ -56,7 +57,7 @@ This tutorial has been tested with:
 
   For this tutorial, you run commands from the root of the `message-board` directory as you work in the `src` directory on files that contain the TypeScript code for the smart contract.
 
-  Each time you make updates, then build or deploy, the TypeScript code is compiled into JavaScript in the `build` directory. See the included [README](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/anonymous-message-board/README.md) file with usage instructions.
+  Each time you make updates, then build or deploy, the TypeScript code is compiled into JavaScript in the `build` directory. See the included [README](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/11-anonymous-message-board/README.md) file with usage instructions.
 
 ### Prepare the project
 
@@ -74,7 +75,7 @@ Example smart contract files come with the new project, you can delete them if y
   $ zk file message
   ```
 
-1. Copy the entire contents of the [message.ts](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/anonymous-message-board/src/message.ts) example file into your local `message-board/src/message.ts` file.
+1. Copy the entire contents of the [message.ts](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/11-anonymous-message-board/src/message.ts) example file into your local `message-board/src/message.ts` file.
 
   ```ts
   import {
@@ -313,7 +314,7 @@ in this repository deploys it to a local blockchain and posts to it — no
 network, no faucet and no funded accounts:
 
 ```sh
-cd examples/zkapps/anonymous-message-board
+cd examples/zkapps/11-anonymous-message-board
 npm install
 npm start
 ```

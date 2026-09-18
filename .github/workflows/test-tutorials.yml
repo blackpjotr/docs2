@@ -27,12 +27,12 @@ jobs:
           - examples/zkapps/01-hello-world
           - examples/zkapps/02-private-inputs-and-hash-functions
           - examples/zkapps/03-deploying-to-a-network
-          - examples/zkapps/anonymous-message-board
           - examples/zkapps/05-common-types-and-functions
           - examples/zkapps/06-offchain-storage
           - examples/zkapps/08-custom-tokens
           - examples/zkapps/09-recursion
           - examples/zkapps/10-account-updates
+          - examples/zkapps/11-anonymous-message-board
 
     steps:
       - name: Checkout repository
@@ -71,7 +71,7 @@ jobs:
         node-version: [22, 24]
         example-path:
           - examples/zkapps/feature-overview
-          - examples/zkapps/anonymous-message-board
+          - examples/zkapps/11-anonymous-message-board
           - examples/zkapps/03-deploying-to-a-network
           - examples/zkapps/06-offchain-storage
           - examples/zkapps/08-custom-tokens
@@ -156,7 +156,7 @@ jobs:
           - examples/zkapps/feature-overview
           - examples/zkapps/04-zkapp-browser-ui/contracts
           - examples/zkapps/07-oracles/contracts
-          - examples/zkapps/anonymous-message-board
+          - examples/zkapps/11-anonymous-message-board
           - examples/zkapps/interacting-with-zkApps-server-side
 
     steps:
