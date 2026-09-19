@@ -22583,6 +22583,171 @@ You have finished writing a script to initialize the state and interact with it!
 Check out other tutorials and documentation to keep going!
 
 ---
+url: /zkapps/tutorials/upgrading-a-zkapp
+---
+
+# Upgrading a zkApp
+
+A zkApp account holds the verification key of its contract. Change the contract
+and the verification key changes with it, so an upgrade means writing a new key
+to an account that already holds state.
+
+This example shows the upgrade working, and then shows it going wrong in the way
+that produces no error at all.
+
+The code is in
+[examples/zkapps/feature-overview/src/upgradability](https://github.com/MinaProtocol/docs2/tree/main/examples/zkapps/feature-overview/src/upgradability)
+and runs on a local blockchain:
+
+```sh
+cd examples/zkapps/feature-overview
+npm install
+npm test
+```
+
+## Prerequisites
+
+- [Tutorial 10: Account Updates](account-updates), because an upgrade is an
+  account update that sets the verification key
+- Node.js 22.19.5 or later, which is what o1js 3 requires
+
+## The permission that decides
+
+Whether an upgrade is possible at all is a permission on the account:
+
+```ts
+this.account.permissions.set({
+  ...Permissions.default(),
+  setVerificationKey:
+    Permissions.VerificationKey.signature(),
+});
+```
+
+- `signature()` — the holder of the private key can replace the contract. The
+  zkApp is upgradable, and its users trust the key holder.
+- `impossibleDuringCurrentVersion()` — the contract cannot change.
+- `proofDuringCurrentVersion()` — the key can be replaced only by a transaction
+  that satisfies a method of the contract itself, so the upgrade follows rules
+  the contract states.
+- `none()` — anyone can replace the contract. Almost never what you want.
+
+The two names that end in `DuringCurrentVersion` say what they mean: the
+restriction holds as long as the network accepts the current transaction
+version. **After a hard fork that increments that version, both are treated as
+`signature`**, so the original account owner can redeploy. An immutable zkApp is
+immutable until the protocol itself changes underneath it.
+
+See [Permissions](https://docs.o1labs.org/o1js/zkapps/permissions) for the full
+set, and [Secure zkApps](/zkapps/writing-a-zkapp/introduction-to-zkapps/secure-zkapps)
+for how to choose.
+
+## An upgrade that works
+
+`AddV1` keeps one state field and adds 2 to it:
+
+```ts
+export class AddV1 extends SmartContract {
+  @state(Field) num = State<Field>();
+
+  init() {
+    super.init();
+    this.num.set(Field(1));
+  }
+
+  @method async update() {
+    const currentState = this.num.getAndRequireEquals();
+    this.num.set(currentState.add(2));
+  }
+}
+```
+
+Deploy it and call `update()` once, and `num` is 3.
+
+`AddV2` is the same contract with one number changed — it adds 4 instead of 2 —
+so it compiles to a different verification key. Writing that key to the account
+is an account update like any other:
+
+```ts
+const tx = await Mina.transaction({ sender, fee }, async () => {
+  const update = AccountUpdate.createSigned(zkApp.address);
+  update.account.verificationKey.set(v2Contract.verificationKey);
+});
+await tx.sign([senderKey, zkAppKey]).prove();
+await tx.send().wait();
+```
+
+After that, build transactions with the new class, because the proof has to
+match the key now on the account:
+
+```ts
+zkApp = new AddV2(address);
+```
+
+Call `update()` again and `num` is 7: 1 at deployment, plus 2 from V1, plus 4
+from V2. **The state survives the upgrade** — only the code that reads and
+writes it changed.
+
+## Adding state in an upgrade
+
+`AddV3` adds a second state field, `callCount`, and three methods that add
+different amounts. It declares the new field **after** the existing one:
+
+```ts
+export class AddV3 extends SmartContract {
+  @state(Field) num = State<Field>();
+  @state(Field) callCount = State<Field>();
+```
+
+Upgrade to it and call `add10()`, and `num` is 17 and `callCount` is 1. The
+existing value is still where the new contract expects it.
+
+## The same upgrade, done unsafely
+
+`AddV3Unsafe` is the same contract with the two fields declared the other way
+round:
+
+```ts
+export class AddV3Unsafe extends SmartContract {
+  @state(Field) callCount = State<Field>();
+  @state(Field) num = State<Field>();
+```
+
+On-chain state is positional. It is eight field elements in a fixed order, and
+the names live in your TypeScript, not on the chain. `@state` assigns slot 0 to
+the first declaration, slot 1 to the second.
+
+So on an account deployed with V1, where slot 0 holds `num = 3`:
+
+| slot | V1 reads it as | V3Unsafe reads it as |
+| --- | --- | --- |
+| 0 | `num` = 3 | `callCount` = 3 |
+| 1 | unused = 0 | `num` = 0 |
+
+Call `add5()` on the upgraded account and the result is `callCount` = 4 and
+`num` = 5. The balance of 3 that the account held is now a call counter, and the
+counter of 0 is now the balance.
+
+:::caution
+
+Nothing fails. There is no error, no rejected transaction and no warning — the
+transaction succeeds and the state is silently wrong.
+
+:::
+
+The rule that follows: **in an upgrade, add new state fields after the existing
+ones and never reorder or remove them.** The same applies to their types.
+
+## Conclusion
+
+You have replaced the verification key of a deployed zkApp, kept its state
+across the change, and seen the one mistake that produces corrupted state
+instead of an error.
+
+For the concept behind this, see
+[Upgradability](https://docs.o1labs.org/o1js/advanced-concepts/ZkApps/upgradability)
+in the o1Labs docs.
+
+---
 url: /zkapps/writing-a-zkapp/feature-overview/custom-tokens
 ---
 
