@@ -20,7 +20,9 @@ const https = require('https');
 
 const ROOT = path.join(__dirname, '..');
 const SEARCH_DIRS = [path.join(ROOT, 'docs'), path.join(ROOT, 'examples')];
-const SEARCH_EXTENSIONS = ['.mdx', '.md', '.ts', '.tsx'];
+// `.json` matters as much as prose: a zkApp CLI `config.json` holds the
+// endpoint the reader actually deploys against.
+const SEARCH_EXTENSIONS = ['.mdx', '.md', '.ts', '.tsx', '.json'];
 
 // Endpoints, not explorer or website links: a GraphQL path, or an archive
 // node API host, which serves GraphQL at its root.
@@ -136,8 +138,14 @@ async function run() {
 
   const failures = [];
 
-  for (const [url, files] of endpoints) {
-    const result = await check(url);
+  // Probed together rather than one after another, so adding an endpoint costs
+  // no wall-clock time. Results are collected in the order the endpoints were
+  // found, so the output does not depend on which host answers first.
+  const entries = [...endpoints];
+  const results = await Promise.all(entries.map(([url]) => check(url)));
+
+  for (const [index, [url, files]] of entries.entries()) {
+    const result = results[index];
 
     if (result.ok) {
       const note = result.attempt > 1 ? ` (on attempt ${result.attempt})` : '';
