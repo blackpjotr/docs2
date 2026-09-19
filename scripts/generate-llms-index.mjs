@@ -13,7 +13,7 @@
  * drifts from the docs source.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, dirname } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createRequire } from "node:module";
@@ -62,11 +62,34 @@ const OPERATOR_FACTS = [
 
 // ---------------------------------------------------------------------------
 
+/** Find `<dir>/NN-<base>.mdx`, the file a number-prefixed doc id came from. */
+async function findNumberPrefixed(dir, base) {
+  try {
+    const entries = await readdir(join(DOCS_DIR, dir));
+    return entries.find((entry) =>
+      /^\d+-/.test(entry) &&
+      [".mdx", ".md"].some((ext) => entry === `${entry.match(/^\d+-/)[0]}${base}${ext}`)
+    );
+  } catch {
+    return undefined;
+  }
+}
+
 async function readFrontmatter(docId) {
+  // A sidebar id has no number prefix: the site strips "01-" when it derives
+  // an id from a file name, so `zkapps/tutorials/hello-world` is the id of
+  // `zkapps/tutorials/01-hello-world.mdx`. Resolve both spellings, or every
+  // number-prefixed page silently drops out of the index.
+  const slash = docId.lastIndexOf("/");
+  const dir = slash === -1 ? "" : docId.slice(0, slash + 1);
+  const base = slash === -1 ? docId : docId.slice(slash + 1);
+  const numbered = await findNumberPrefixed(dir, base);
+
   for (const ext of [".mdx", ".md"]) {
     const directPath = join(DOCS_DIR, `${docId}${ext}`);
     const indexPath = join(DOCS_DIR, docId, `index${ext}`);
-    for (const path of [directPath, indexPath]) {
+    const numberedPath = numbered ? join(DOCS_DIR, dir, numbered) : null;
+    for (const path of [directPath, indexPath, numberedPath].filter(Boolean)) {
       try {
         const content = await readFile(path, "utf-8");
         const match = content.match(/^---\s*\n([\s\S]*?)\n---/);

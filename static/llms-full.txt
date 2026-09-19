@@ -20848,7 +20848,9 @@ To run the tests:
 Note that writing a test that calls an API is generally not a best practice, but it's convenient for the sake of this tutorial. You can also mock your HTTP requests.
 
 Congratulations! You have just built a simple oracle using o1js and the Mina blockchain.
-You can find the complete code for this example [here](https://github.com/o1-labs/docs2/tree/main/examples/zkapps/07-oracles).
+You can find the complete code for this example [here](https://github.com/MinaProtocol/docs2/tree/main/examples/zkapps/07-oracles).
+
+Check out [Tutorial 8: Custom Tokens](custom-tokens) to learn how to create and manage a token of your own.
 
 ---
 url: /zkapps/tutorials/08-custom-tokens
@@ -21919,6 +21921,8 @@ As described in the code comment, `callSecondary` sets `this.num` to `12` which 
 ## Conclusion
 
 Congratulations! You have explored the core features of AccountUpdates and learned about visualizing the AccountUpdates for a set of transactions. You can build more complicated transactions that involve multiple zkApps. This tutorial builds a foundational understanding of how o1js and zkApps work to enable permissions, preconditions, and composability.
+
+That is the end of the numbered series. Two further walk-throughs build on it: the [Anonymous Message Board](anonymous-message-board), and [Interacting with zkApps Server-Side](interacting-with-zkapps-server-side).
 
 ---
 url: /zkapps/tutorials/anonymous-message-board
