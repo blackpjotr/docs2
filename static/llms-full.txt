@@ -18354,6 +18354,26 @@ state after txn1: 9
 state after txn2: 81
 ```
 
+## Test it
+
+Printing the state and reading the numbers is how you check the contract by
+hand. A test suite checks the same thing on every change, without you reading
+anything. The example project in this repository carries one:
+
+```sh
+cd examples/zkapps/01-hello-world
+npm install
+npm test
+```
+
+It asserts what this page just showed you: the state starts at `3`, an update
+to `9` is accepted, an update to `75` is **rejected** with
+`Field.assertEquals(): 75 != 81` and leaves the state at `9`, and an update to
+`81` is accepted after it.
+
+The rejection matters as much as the two successes. A contract that accepted
+`75` would still print three lines and still look like it worked.
+
 ## Follow along
 
 You can follow along in this video as cryptographer, David Wong, learns how to code a Hello World project.
