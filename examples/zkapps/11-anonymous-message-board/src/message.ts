@@ -40,6 +40,11 @@ export class Message extends SmartContract {
   @state(PublicKey) user3 = State<PublicKey>();
 
   init() {
+    // Reset the whole state first. Without this the zkApp never gains the
+    // `provedState === true` status, which is what certifies that the state
+    // was produced by proofs rather than set by the developer.
+    super.init();
+
     // Define initial values of on-chain state
     this.user1.set(users['Bob'].toPublicKey());
     this.user2.set(users['SuperBob'].toPublicKey());

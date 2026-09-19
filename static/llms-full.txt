@@ -17864,7 +17864,7 @@ The standard implementation can be found on [Github](https://github.com/MinaFoun
 The fungible token implementation separates out the rules for minting tokens into a separate admin contract. This is to allow custom rules without modifications to the token contract itself. Note that if you do modify the token contract, third parties such as wallets that want to integrate your token will need to integrate your modification into their own codebase. It is thus recommended to use the standard token contract when possible, and only modify the admin contract.
 
 ---
-url: /zkapps/tutorials/01-hello-world
+url: /zkapps/tutorials/hello-world
 ---
 
 # Tutorial 1: Hello World
@@ -18370,7 +18370,7 @@ Check out [Tutorial 2: Private Inputs and Hash Functions](private-inputs-hash-fu
 Find more tutorials and resources in the [zkApps docs](/zkapps/writing-a-zkapp).
 
 ---
-url: /zkapps/tutorials/02-private-inputs-hash-functions
+url: /zkapps/tutorials/private-inputs-hash-functions
 ---
 
 # Tutorial 2: Private Inputs and Hash Functions
@@ -18653,7 +18653,7 @@ Congratulations! You built a smart contract that uses privacy and hash functions
 To deploy zkApps to a live network, see [Tutorial 3: Deploy to a Live Network](deploying-to-a-network).
 
 ---
-url: /zkapps/tutorials/03-deploying-to-a-network
+url: /zkapps/tutorials/deploying-to-a-network
 ---
 
 # Tutorial 3: Deploy to a Live Network
@@ -18996,7 +18996,7 @@ Congratulations! You have successfully deployed a smart contract to a live netwo
 Check out [Tutorial 4: Build a zkApp UI in the Browser with React](zkapp-ui-with-react) to implement a browser UI that interacts with a smart contract.
 
 ---
-url: /zkapps/tutorials/04-zkapp-ui-with-react
+url: /zkapps/tutorials/zkapp-ui-with-react
 ---
 
 # Tutorial 4: Build a zkApp UI in the Browser with React
@@ -19665,7 +19665,7 @@ You can build UI for your zkApps using other frameworks like `SvelteKit` and `Nu
 You are ready to continue with [Tutorial 5: Common Types and Functions](common-types-and-functions) to learn about different o1js types you can use in your zkApps.
 
 ---
-url: /zkapps/tutorials/05-common-types-and-functions
+url: /zkapps/tutorials/common-types-and-functions
 ---
 
 # Tutorial 5: Common Types and Functions
@@ -20151,7 +20151,7 @@ Congratulations! You have finished reviewing more common types and functions in 
 To use more data from your zkApp, check out [Tutorial 6](offchain-storage) to learn how to use off-chain storage.
 
 ---
-url: /zkapps/tutorials/06-offchain-storage
+url: /zkapps/tutorials/offchain-storage
 ---
 
 # Tutorial 6: Off-Chain Storage
@@ -20362,7 +20362,7 @@ You have stored more state than a zkApp account can hold, with one commitment on
 Check out [Tutorial 7: Oracles](oracle) to learn how to bring data from the outside world into a zkApp.
 
 ---
-url: /zkapps/tutorials/07-oracle
+url: /zkapps/tutorials/oracle
 ---
 
 # Tutorial 7: Oracles
@@ -20853,7 +20853,7 @@ You can find the complete code for this example [here](https://github.com/MinaPr
 Check out [Tutorial 8: Custom Tokens](custom-tokens) to learn how to create and manage a token of your own.
 
 ---
-url: /zkapps/tutorials/08-custom-tokens
+url: /zkapps/tutorials/custom-tokens
 ---
 
 # Tutorial 8: Custom Tokens
@@ -21121,7 +21121,7 @@ To learn more, see [Custom Token API](/zkapps/writing-a-zkapp/feature-overview/c
 Check out [Tutorial 9: Recursion](/zkapps/tutorials/recursion) to learn how to use recursive ZKPs with o1js, to implement zkRollups, large computations, and more.
 
 ---
-url: /zkapps/tutorials/09-recursion
+url: /zkapps/tutorials/recursion
 ---
 
 # Tutorial 9: Recursion
@@ -21517,7 +21517,7 @@ Recursive zero knowledge proofs can help you build powerful zkApps.
 Check out [Tutorial 10: Account Updates](/zkapps/tutorials/account-updates) to learn about account updates, the underlying structure of zkApps, and how they enable permissions, preconditions, and composability.
 
 ---
-url: /zkapps/tutorials/10-account-updates
+url: /zkapps/tutorials/account-updates
 ---
 
 # Tutorial 10: Account Updates
@@ -21928,9 +21928,9 @@ That is the end of the numbered series. Two further walk-throughs build on it: t
 url: /zkapps/tutorials/anonymous-message-board
 ---
 
-# Anonymous Message Board Tutorial
+# Tutorial 11: Anonymous Message Board
 
-This example shows you how to put building zkApp ideas into practice as you walk through designing and implementing of a semi-anonymous messaging protocol.
+This tutorial shows you how to put building zkApp ideas into practice as you walk through designing and implementing of a semi-anonymous messaging protocol.
 
 In this tutorial, you build a smart contract that allows users to publish messages semi-anonymously.
 - The contract allows a specific set of users to create new messages but does not disclose which user creates the message.
@@ -21972,7 +21972,7 @@ This tutorial has been tested with:
 
   For this tutorial, you run commands from the root of the `message-board` directory as you work in the `src` directory on files that contain the TypeScript code for the smart contract.
 
-  Each time you make updates, then build or deploy, the TypeScript code is compiled into JavaScript in the `build` directory. See the included [README](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/anonymous-message-board/README.md) file with usage instructions.
+  Each time you make updates, then build or deploy, the TypeScript code is compiled into JavaScript in the `build` directory. See the included [README](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/11-anonymous-message-board/README.md) file with usage instructions.
 
 ### Prepare the project
 
@@ -21990,7 +21990,7 @@ Example smart contract files come with the new project, you can delete them if y
   $ zk file message
   ```
 
-1. Copy the entire contents of the [message.ts](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/anonymous-message-board/src/message.ts) example file into your local `message-board/src/message.ts` file.
+1. Copy the entire contents of the [message.ts](https://github.com/o1-labs/docs2/blob/main/examples/zkapps/11-anonymous-message-board/src/message.ts) example file into your local `message-board/src/message.ts` file.
 
   ```ts
   import {
@@ -22118,6 +22118,9 @@ The `init` method is similar to the `constructor` in Solidity. It's where you de
 
 ```ts
 init() {
+  // Reset the whole state first
+  super.init();
+
   // Define initial values of on-chain state
   this.user1.set(users['Bob'].toPublicKey());
   this.user2.set(users['SuperBob'].toPublicKey());
@@ -22126,6 +22129,11 @@ init() {
   this.messageHistoryHash.set(Field(0));
 }
 ```
+
+Start with `super.init()`. It resets every state field to its default, and
+without it o1js warns that the zkApp will lack the `provedState === true`
+status — the status that certifies the state was produced by proofs rather than
+set by the developer. Your own values go after it.
 
 ### Define `publishMessage()`
 
@@ -22213,6 +22221,46 @@ $ npm run build
 ```
 
 If everything is correct, you see a new `./build` directory where the compiled version of your project lives that you can import into a user interface.
+
+## Deploy and run it
+
+The tutorial above builds the contract. To see it work end to end, the example
+in this repository deploys it to a local blockchain and posts to it — no
+network, no faucet and no funded accounts:
+
+```sh
+cd examples/zkapps/11-anonymous-message-board
+npm install
+npm start
+```
+
+```
+deploying the message board...
+approved posters:
+  user1: B62qkCkKQ5vSRkTQyEEj22vnHH4hVKfp4pc3QYd4GPSv7u6S4aBE4Fx
+  ...
+Bob publishes a message...       message: 42
+SuperBob publishes another...    message: 99
+history hash is the chain of both messages: true
+Jack tries to publish...         rejected, as it should be
+```
+
+The deployment is an ordinary zkApp deployment — the account creation fee, the
+verification key, and `init()` running as part of it, exactly as in
+[Tutorial 3](deploying-to-a-network):
+
+```ts
+const deployTx = await Mina.transaction(deployer, async () => {
+  AccountUpdate.fundNewAccount(deployer);
+  await zkApp.deploy();
+});
+await deployTx.prove();
+await deployTx.sign([deployer.key, zkAppKey]).send();
+```
+
+`npm test` runs the same flow as assertions, including the two cases worth
+proving rather than describing: the history hash commits to every message in
+sequence, and a key the contract does not know is rejected.
 
 ## Wrapping up
 

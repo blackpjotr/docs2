@@ -30,6 +30,9 @@ async function collectFiles(dir) {
   return files;
 }
 
+// Same shape as the Docusaurus default numberPrefixParser.
+const NUMBER_PREFIX = /^\d+\s*[-_.]\s*/;
+
 function filePathToUrl(filePath) {
   let rel = relative(DOCS_DIR, filePath);
   // Remove extension
@@ -39,6 +42,12 @@ function filePathToUrl(filePath) {
     rel = dirname(rel);
   }
   if (rel === '.') return '/';
+  // Docusaurus strips a leading number prefix ("09-recursion") from the route,
+  // so the generated URL has to strip it too.
+  rel = rel
+    .split('/')
+    .map((segment) => segment.replace(NUMBER_PREFIX, ''))
+    .join('/');
   return '/' + rel;
 }
 
