@@ -14,7 +14,7 @@ See [Anonymous Message Board Tutorial](https://docs.minaprotocol.com/zkapps/tuto
     ```
 2. Change directory to the project location:
     ```sh
-    cd docs2/examples/zkapps/11-anonymous-message-board
+    cd docs2/examples/zkapps/13-anonymous-message-board
     ```
 3. Install dependencies:
     ```sh
