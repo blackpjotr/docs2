@@ -77,6 +77,7 @@ jobs:
         node-version: [22, 24]
         example-path:
           - examples/zkapps/feature-overview
+          - examples/zkapps/01-hello-world
           - examples/zkapps/11-anonymous-message-board
           - examples/zkapps/03-deploying-to-a-network
           - examples/zkapps/06-offchain-storage
