@@ -33,6 +33,7 @@ jobs:
           - examples/zkapps/09-recursion
           - examples/zkapps/10-account-updates
           - examples/zkapps/11-anonymous-message-board
+          - examples/zkapps/interacting-with-zkApps-server-side
 
     steps:
       - name: Checkout repository
@@ -54,7 +55,12 @@ jobs:
           npm ci
           npm run build
           example_path="${{ matrix.example-path }}"
-          if [[ "$example_path" == "examples/zkapps/09-recursion" ]]; then
+          # A package that declares `start` owns its entry point. That is the
+          # only way to run an example whose `main.ts` needs a live network:
+          # it points `start` at a local-blockchain script instead.
+          if node -e "process.exit(require('./package.json').scripts.start ? 0 : 1)"; then
+            npm start
+          elif [[ "$example_path" == "examples/zkapps/09-recursion" ]]; then
             node build/src/vote.js
             node build/src/rollup.js
           else
@@ -77,6 +83,7 @@ jobs:
           - examples/zkapps/08-custom-tokens
           - examples/zkapps/04-zkapp-browser-ui/contracts
           - examples/zkapps/07-oracles/contracts
+          - examples/zkapps/interacting-with-zkApps-server-side
 
     steps:
       - name: Checkout repository
@@ -107,7 +114,6 @@ jobs:
         example-path:
           - examples/zkapps/04-zkapp-browser-ui/ui
           - examples/zkapps/07-oracles/oracle
-          - examples/zkapps/interacting-with-zkApps-server-side
 
     steps:
       - name: Checkout repository

@@ -270,6 +270,45 @@ This code uses several functionalities of the pending transaction:
 
 Finally, after the transaction was successfully applied on the Mina blockchain, you can double-check that your state was updated by fetching it again with `zkapp.num.fetch()`.
 
+## Run it without a network
+
+Everything above needs a funded account, a key file and a live node, so you
+cannot try it until you have all three, and neither can CI. The example
+project in this repository carries a second entry point that runs the same
+flow against a local blockchain:
+
+```sh
+cd examples/zkapps/interacting-with-zkApps-server-side
+npm install
+npm start
+```
+
+```
+fee payer : B62qj64ad7nEkz7GMTug7YQH7WD7QkuDjHv5yeMDZhFW3mtmv8fnxoA
+zkApp     : B62qkrhrMr6ibTJkReuTgxTKwub8NUXYQCb1ex9Z2ZemUWtY1VeJSBf
+
+deploying...
+current value of num is 3
+
+updating num to its square...
+updated state! 9
+
+rejecting an update that is not the square...
+rejected, as it should be: Field.assertEquals(): 10 != 81
+state is still 9
+```
+
+It keeps what this page teaches — deploying the zkApp to a key that is **not**
+the fee payer's, and driving it from a script — and drops only what needs a
+network. In particular there is no `loopUntilAccountExists`. A remote node is
+eventually consistent, so the account is not readable the moment the
+transaction is sent; a local blockchain applies the transaction as it is sent,
+so there is nothing to poll for.
+
+`npm test` asserts the same ground, including the account creation fee the fee
+payer pays for the zkApp account and the rejection of an update that is not
+the square.
+
 ## Conclusion
 
 You have finished writing a script to initialize the state and interact with it! You can also run this script multiple times to update `x` to its square.
